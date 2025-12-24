@@ -159,7 +159,7 @@ impl StepExecutor {
     /// Runs a single step.
     async fn run_step<W>(
         collection: &step::Collection<W>,
-        id: ScenarioId,
+        _id: ScenarioId,
         feature: Source<gherkin::Feature>,
         rule: Option<Source<gherkin::Rule>>,
         scenario: Source<gherkin::Scenario>,
@@ -189,7 +189,7 @@ impl StepExecutor {
         send_event(event.value);
 
         #[cfg(feature = "tracing")]
-        let span = id.step_span(false);
+        let span = _id.step_span(false);
         #[cfg(feature = "tracing")]
         let _guard = span.enter();
 
