@@ -11,10 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use futures::{
-    channel::mpsc,
-    lock::Mutex,
-};
+use futures::{channel::mpsc, lock::Mutex};
 use itertools::Itertools as _;
 
 use crate::{
@@ -23,7 +20,10 @@ use crate::{
 };
 
 use super::{
-    cli_and_types::{Cli, RetryOptions, RetryOptionsFn, RetryOptionsWithDeadline, ScenarioType},
+    cli_and_types::{
+        Cli, RetryOptions, RetryOptionsFn, RetryOptionsWithDeadline,
+        ScenarioType,
+    },
     supporting_structures::{IsFailed, IsRetried, ScenarioId},
 };
 
@@ -514,16 +514,16 @@ impl FinishedRulesAndFeatures {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::runner::basic::{Cli, RetryOptions, RetryOptionsFn};
+    use crate::test_utils::common::TestWorld;
     use futures::channel::mpsc;
     use std::sync::Arc;
-    use crate::test_utils::common::TestWorld;
-    use crate::runner::basic::{RetryOptions, Cli, RetryOptionsFn};
 
     #[tokio::test]
     async fn test_features_empty() {
         let features = Features::default();
         features.finish();
-        
+
         assert!(features.is_finished(false).await);
         assert!(features.is_finished(true).await);
     }
@@ -532,7 +532,7 @@ mod tests {
     async fn test_features_get_empty() {
         let features = Features::default();
         let (scenarios, min_dur) = features.get(Some(5)).await;
-        
+
         assert!(scenarios.is_empty());
         assert!(min_dur.is_none());
     }
@@ -541,7 +541,7 @@ mod tests {
     async fn test_features_get_zero_concurrency() {
         let features = Features::default();
         let (scenarios, min_dur) = features.get(Some(0)).await;
-        
+
         assert!(scenarios.is_empty());
         assert!(min_dur.is_none());
     }
@@ -549,7 +549,7 @@ mod tests {
     #[tokio::test]
     async fn test_features_insert_retried_scenario() {
         let features = Features::default();
-        
+
         let feature = Source::new(gherkin::Feature {
             tags: vec![],
             keyword: "Feature".to_string(),
@@ -562,7 +562,7 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
         });
-        
+
         let scenario = Source::new(gherkin::Scenario {
             tags: vec![],
             keyword: "Scenario".to_string(),
@@ -573,15 +573,17 @@ mod tests {
             steps: vec![],
             examples: vec![],
         });
-        
-        features.insert_retried_scenario(
-            feature,
-            None,
-            scenario,
-            ScenarioType::Concurrent,
-            None,
-        ).await;
-        
+
+        features
+            .insert_retried_scenario(
+                feature,
+                None,
+                scenario,
+                ScenarioType::Concurrent,
+                None,
+            )
+            .await;
+
         let (scenarios, _) = features.get(Some(5)).await;
         assert_eq!(scenarios.len(), 1);
         assert_eq!(scenarios[0].4, ScenarioType::Concurrent);
@@ -590,7 +592,7 @@ mod tests {
     #[tokio::test]
     async fn test_features_insert_with_which_scenario() {
         let features = Features::default();
-        
+
         let feature = gherkin::Feature {
             tags: vec![],
             keyword: "Feature".to_string(),
@@ -624,25 +626,34 @@ mod tests {
             position: gherkin::LineCol { line: 1, col: 1 },
             path: None,
         };
-        
-        let which_scenario = |_: &gherkin::Feature, _: Option<&gherkin::Rule>, scenario: &gherkin::Scenario| {
-            if scenario.tags.contains(&"@serial".to_string()) {
-                ScenarioType::Serial
-            } else {
-                ScenarioType::Concurrent
-            }
-        };
-        
-        let retry_fn: RetryOptionsFn = Arc::new(|_: &gherkin::Feature, _: Option<&gherkin::Rule>, _: &gherkin::Scenario, _: &Cli| -> Option<RetryOptions> { None });
+
+        let which_scenario =
+            |_: &gherkin::Feature,
+             _: Option<&gherkin::Rule>,
+             scenario: &gherkin::Scenario| {
+                if scenario.tags.contains(&"@serial".to_string()) {
+                    ScenarioType::Serial
+                } else {
+                    ScenarioType::Concurrent
+                }
+            };
+
+        let retry_fn: RetryOptionsFn = Arc::new(
+            |_: &gherkin::Feature,
+             _: Option<&gherkin::Rule>,
+             _: &gherkin::Scenario,
+             _: &Cli|
+             -> Option<RetryOptions> { None },
+        );
         let cli = Cli::default();
-        
+
         features.insert(feature, &which_scenario, &retry_fn, &cli).await;
-        
+
         // Should get serial scenario first
         let (scenarios, _) = features.get(Some(5)).await;
         assert_eq!(scenarios.len(), 1);
         assert_eq!(scenarios[0].4, ScenarioType::Serial);
-        
+
         // Then concurrent scenario
         let (scenarios, _) = features.get(Some(5)).await;
         assert_eq!(scenarios.len(), 1);
@@ -653,7 +664,7 @@ mod tests {
     fn test_finished_rules_and_features_new() {
         let (_, receiver) = mpsc::unbounded();
         let storage = FinishedRulesAndFeatures::new(receiver);
-        
+
         assert!(storage.features_scenarios_count.is_empty());
         assert!(storage.rule_scenarios_count.is_empty());
     }
@@ -662,7 +673,7 @@ mod tests {
     fn test_finished_rules_and_features_start_scenarios() {
         let (_, receiver) = mpsc::unbounded();
         let mut storage = FinishedRulesAndFeatures::new(receiver);
-        
+
         let feature = Source::new(gherkin::Feature {
             tags: vec![],
             keyword: "Feature".to_string(),
@@ -675,7 +686,7 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
         });
-        
+
         let scenario = Source::new(gherkin::Scenario {
             tags: vec![],
             keyword: "Scenario".to_string(),
@@ -686,7 +697,7 @@ mod tests {
             steps: vec![],
             examples: vec![],
         });
-        
+
         let runnable = vec![(
             ScenarioId::new(),
             feature,
@@ -695,8 +706,9 @@ mod tests {
             ScenarioType::Concurrent,
             None,
         )];
-        
-        let events: Vec<event::Cucumber<TestWorld>> = storage.start_scenarios(runnable).collect();
+
+        let events: Vec<event::Cucumber<TestWorld>> =
+            storage.start_scenarios(runnable).collect();
         assert_eq!(events.len(), 1); // Should have feature started event
     }
 
@@ -704,7 +716,7 @@ mod tests {
     fn test_finished_rules_and_features_feature_scenario_finished() {
         let (_, receiver) = mpsc::unbounded();
         let mut storage = FinishedRulesAndFeatures::new(receiver);
-        
+
         let feature = Source::new(gherkin::Feature {
             tags: vec![],
             keyword: "Feature".to_string(),
@@ -712,30 +724,29 @@ mod tests {
             span: gherkin::Span { start: 0, end: 0 },
             description: None,
             background: None,
-            scenarios: vec![
-                gherkin::Scenario {
-                    tags: vec![],
-                    keyword: "Scenario".to_string(),
-                    name: "Scenario 1".to_string(),
-                    span: gherkin::Span { start: 0, end: 0 },
-                    position: gherkin::LineCol { line: 1, col: 1 },
-                    description: None,
-                    steps: vec![],
-                    examples: vec![],
-                },
-            ],
+            scenarios: vec![gherkin::Scenario {
+                tags: vec![],
+                keyword: "Scenario".to_string(),
+                name: "Scenario 1".to_string(),
+                span: gherkin::Span { start: 0, end: 0 },
+                position: gherkin::LineCol { line: 1, col: 1 },
+                description: None,
+                steps: vec![],
+                examples: vec![],
+            }],
             rules: vec![],
             position: gherkin::LineCol { line: 1, col: 1 },
             path: None,
         });
-        
+
         // Start tracking this feature
         storage.features_scenarios_count.insert(feature.clone(), 0);
-        
+
         // Finish the scenario (not retried)
-        let result: Option<event::Cucumber<()>> = storage.feature_scenario_finished(feature, false);
+        let result: Option<event::Cucumber<()>> =
+            storage.feature_scenario_finished(feature, false);
         assert!(result.is_some());
-        
+
         // Feature should be removed from tracking
         assert!(storage.features_scenarios_count.is_empty());
     }
@@ -744,7 +755,7 @@ mod tests {
     fn test_finished_rules_and_features_feature_scenario_finished_retried() {
         let (_, receiver) = mpsc::unbounded();
         let mut storage = FinishedRulesAndFeatures::new(receiver);
-        
+
         let feature = Source::new(gherkin::Feature {
             tags: vec![],
             keyword: "Feature".to_string(),
@@ -757,9 +768,10 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
         });
-        
+
         // Finish a retried scenario - should return None
-        let result: Option<event::Cucumber<()>> = storage.feature_scenario_finished(feature, true);
+        let result: Option<event::Cucumber<()>> =
+            storage.feature_scenario_finished(feature, true);
         assert!(result.is_none());
     }
 
@@ -767,7 +779,7 @@ mod tests {
     fn test_finished_rules_and_features_finish_all() {
         let (_, receiver) = mpsc::unbounded();
         let mut storage = FinishedRulesAndFeatures::new(receiver);
-        
+
         let feature = Source::new(gherkin::Feature {
             tags: vec![],
             keyword: "Feature".to_string(),
@@ -780,13 +792,14 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
         });
-        
+
         // Add some unfinished features and rules
         storage.features_scenarios_count.insert(feature.clone(), 0);
-        
-        let events: Vec<event::Cucumber<()>> = storage.finish_all_rules_and_features().collect();
+
+        let events: Vec<event::Cucumber<()>> =
+            storage.finish_all_rules_and_features().collect();
         assert_eq!(events.len(), 1); // Should have one feature finished event
-        
+
         // Storage should be empty after finishing all
         assert!(storage.features_scenarios_count.is_empty());
         assert!(storage.rule_scenarios_count.is_empty());

@@ -12,7 +12,7 @@
 //! corresponding [`Regex`] patterns.
 //!
 //! This module has been refactored into smaller, focused modules while maintaining
-//! backward compatibility through re-exports. Each module follows the Single 
+//! backward compatibility through re-exports. Each module follows the Single
 //! Responsibility Principle:
 //!
 //! - [`collection`]: Step collection management and matching

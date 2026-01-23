@@ -4,10 +4,7 @@ use std::path::Path;
 
 use derive_more::with_trait::Debug;
 
-use crate::{
-    World, runner, parser, writer,
-    writer::Ext as _,
-};
+use crate::{World, parser, runner, writer, writer::Ext as _};
 
 use super::core::Cucumber;
 

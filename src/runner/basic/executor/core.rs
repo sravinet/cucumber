@@ -1,9 +1,6 @@
 //! Core Executor struct and main scenario execution logic.
 
-use futures::{
-    channel::mpsc,
-    future::LocalBoxFuture,
-};
+use futures::{channel::mpsc, future::LocalBoxFuture};
 
 #[cfg(feature = "tracing")]
 use crate::tracing::SpanCloseWaiter;
@@ -17,16 +14,12 @@ use super::super::{
     cli_and_types::{RetryOptions, ScenarioType},
     scenario_storage::{Features, FinishedFeaturesSender},
     supporting_structures::{
-        ScenarioId, ExecutionFailure, AfterHookEventsMeta, IsFailed, IsRetried,
+        AfterHookEventsMeta, ExecutionFailure, IsFailed, IsRetried, ScenarioId,
         coerce_into_info,
     },
 };
 
-use super::{
-    events::EventSender,
-    hooks::HookExecutor,
-    steps::StepExecutor,
-};
+use super::{events::EventSender, hooks::HookExecutor, steps::StepExecutor};
 
 /// Runs [`Scenario`]s and notifies about their state of completion.
 ///
@@ -102,26 +95,27 @@ pub struct Executor<W: World, Before, After> {
     ///
     /// [`Scenario`]: gherkin::Scenario
     storage: Features,
-    
+
     /// Observer registry for external monitoring
-    observers: std::sync::Arc<std::sync::Mutex<crate::observer::ObserverRegistry<W>>>,
+    observers:
+        std::sync::Arc<std::sync::Mutex<crate::observer::ObserverRegistry<W>>>,
 }
 
 impl<W: World, Before, After> Executor<W, Before, After>
 where
     Before: for<'a> Fn(
-            &'a gherkin::Feature,
-            Option<&'a gherkin::Rule>,
-            &'a gherkin::Scenario,
-            &'a mut W,
-        ) -> LocalBoxFuture<'a, ()>,
+        &'a gherkin::Feature,
+        Option<&'a gherkin::Rule>,
+        &'a gherkin::Scenario,
+        &'a mut W,
+    ) -> LocalBoxFuture<'a, ()>,
     After: for<'a> Fn(
-            &'a gherkin::Feature,
-            Option<&'a gherkin::Rule>,
-            &'a gherkin::Scenario,
-            &'a event::ScenarioFinished,
-            Option<&'a mut W>,
-        ) -> LocalBoxFuture<'a, ()>,
+        &'a gherkin::Feature,
+        Option<&'a gherkin::Rule>,
+        &'a gherkin::Scenario,
+        &'a event::ScenarioFinished,
+        Option<&'a mut W>,
+    ) -> LocalBoxFuture<'a, ()>,
 {
     /// Creates a new [`Executor`].
     pub fn new(
@@ -133,8 +127,9 @@ where
         >,
         finished_sender: FinishedFeaturesSender,
         storage: Features,
-        #[cfg(feature = "observability")]
-        observers: std::sync::Arc<std::sync::Mutex<crate::observer::ObserverRegistry<W>>>,
+        #[cfg(feature = "observability")] observers: std::sync::Arc<
+            std::sync::Mutex<crate::observer::ObserverRegistry<W>>,
+        >,
     ) -> Self {
         Self {
             collection,
@@ -143,17 +138,23 @@ where
             #[cfg(not(feature = "observability"))]
             event_sender: EventSender::new_with_sender(event_sender),
             #[cfg(feature = "observability")]
-            event_sender: EventSender::with_observers(event_sender, observers.clone()),
+            event_sender: EventSender::with_observers(
+                event_sender,
+                observers.clone(),
+            ),
             finished_sender,
             storage,
             #[cfg(feature = "observability")]
             observers,
         }
     }
-    
+
     /// Register an observer for monitoring test execution
     #[cfg(feature = "observability")]
-    pub fn register_observer(&self, observer: Box<dyn crate::observer::TestObserver<W>>) {
+    pub fn register_observer(
+        &self,
+        observer: Box<dyn crate::observer::TestObserver<W>>,
+    ) {
         if let Ok(mut registry) = self.observers.lock() {
             registry.register(observer);
         }
@@ -199,13 +200,13 @@ where
                     event::RetryableScenario {
                         event: event::Scenario::Hook(
                             HookType::Before,
-                            event::Hook::Failed(None, error_info.clone())
+                            event::Hook::Failed(None, error_info.clone()),
                         ),
                         retries,
                     },
                 );
                 self.event_sender.send_event(started_event);
-                
+
                 let finished_event = event::Cucumber::scenario(
                     feature.clone(),
                     rule.clone(),
@@ -216,11 +217,10 @@ where
                     },
                 );
                 self.event_sender.send_event(finished_event);
-                
+
                 // Check if scenario will be retried
-                let next_try = retry_options
-                    .and_then(RetryOptions::next_try);
-                
+                let next_try = retry_options.and_then(RetryOptions::next_try);
+
                 if let Some(next_try) = next_try {
                     self.storage
                         .insert_retried_scenario(
@@ -232,7 +232,7 @@ where
                         )
                         .await;
                 }
-                
+
                 self.scenario_finished(
                     id,
                     feature,
@@ -284,7 +284,7 @@ where
             waiter,
         )
         .await;
-        
+
         // Clear the scenario context after completion
         #[cfg(feature = "observability")]
         self.event_sender.clear_scenario_context();
@@ -349,13 +349,16 @@ where
         let retries = retry_options.map(|opts| opts.retries);
         // Check if this is actually a retry attempt (current > 0)
         let _is_retry = retries.as_ref().is_some_and(|r| r.current > 0);
-        
+
         let (_meta, scenario_finished, is_failed) = match step_results {
             Ok(meta) => {
                 let finished = meta.scenario_finished.clone();
-                let failed = matches!(finished, event::ScenarioFinished::StepFailed(_, _, _));
+                let failed = matches!(
+                    finished,
+                    event::ScenarioFinished::StepFailed(_, _, _)
+                );
                 (meta, finished, failed)
-            },
+            }
             Err(failure) => {
                 let _finished = failure.get_scenario_finished_event();
                 let failed = true; // ExecutionFailure always indicates failure
@@ -369,12 +372,12 @@ where
                     retries,
                 )
                 .await;
-                
+
                 // Check if scenario will be retried
                 let next_try = retry_options
                     .filter(|_| failed)
                     .and_then(RetryOptions::next_try);
-                
+
                 if let Some(next_try) = next_try {
                     // Insert scenario back into storage for retry
                     self.storage
@@ -387,7 +390,7 @@ where
                         )
                         .await;
                 }
-                
+
                 // Notify scenario finished
                 self.scenario_finished(
                     id,
@@ -433,7 +436,7 @@ where
         let next_try = retry_options
             .filter(|_| is_failed)
             .and_then(RetryOptions::next_try);
-        
+
         if let Some(next_try) = next_try {
             // Insert scenario back into storage for retry
             self.storage
@@ -458,7 +461,7 @@ where
     }
 
     /// Handles execution failures during scenario execution.
-    /// 
+    ///
     /// Note: The actual failure events are already emitted by the respective
     /// modules (hooks, steps) where the failures occur. This method is kept
     /// for potential future use but currently just sends the finished event.
@@ -474,7 +477,7 @@ where
         // Failure events are already emitted by the respective modules
         // (hooks module for hook failures, steps module for step failures)
         // This method just sends the finished event
-        
+
         let failure_event = event::Cucumber::scenario(
             feature,
             rule,
@@ -492,7 +495,7 @@ where
         // Send through normal channel
         let _event_wrapped = Event::new(event.clone());
         self.event_sender.send_event(event);
-        
+
         // Notify observers if enabled
         #[cfg(feature = "observability")]
         {
@@ -501,33 +504,49 @@ where
                 let context = match &event {
                     event::Cucumber::Feature(feature_src, feature_event) => {
                         let feature_name = feature_src.name.clone();
-                        
+
                         // Extract scenario, rule, and retry information from the event
-                        let (scenario_name, rule_name, retry_info, tags) = match feature_event {
-                            event::Feature::Scenario(scenario_src, retryable) => {
-                                (
+                        let (scenario_name, rule_name, retry_info, tags) =
+                            match feature_event {
+                                event::Feature::Scenario(
+                                    scenario_src,
+                                    retryable,
+                                ) => (
                                     scenario_src.name.clone(),
                                     None,
                                     Some(retryable.retries),
-                                    scenario_src.tags.iter().map(|t| t.to_string()).collect(),
-                                )
-                            }
-                            event::Feature::Rule(rule_src, rule_event) => {
-                                match rule_event {
-                                    event::Rule::Scenario(scenario_src, retryable) => {
-                                        (
+                                    scenario_src
+                                        .tags
+                                        .iter()
+                                        .map(|t| t.to_string())
+                                        .collect(),
+                                ),
+                                event::Feature::Rule(rule_src, rule_event) => {
+                                    match rule_event {
+                                        event::Rule::Scenario(
+                                            scenario_src,
+                                            retryable,
+                                        ) => (
                                             scenario_src.name.clone(),
                                             Some(rule_src.name.clone()),
                                             Some(retryable.retries),
-                                            scenario_src.tags.iter().map(|t| t.to_string()).collect(),
-                                        )
+                                            scenario_src
+                                                .tags
+                                                .iter()
+                                                .map(|t| t.to_string())
+                                                .collect(),
+                                        ),
+                                        _ => (
+                                            String::new(),
+                                            Some(rule_src.name.clone()),
+                                            None,
+                                            Vec::new(),
+                                        ),
                                     }
-                                    _ => (String::new(), Some(rule_src.name.clone()), None, Vec::new()),
                                 }
-                            }
-                            _ => (String::new(), None, None, Vec::new()),
-                        };
-                        
+                                _ => (String::new(), None, None, Vec::new()),
+                            };
+
                         crate::observer::ObservationContext {
                             scenario_id: None, // ScenarioId is not available at this level
                             feature_name,
@@ -551,7 +570,7 @@ where
                         }
                     }
                 };
-                
+
                 registry.notify(&event_wrapped, &context);
             }
         }
@@ -589,13 +608,24 @@ mod tests {
     use crate::test_utils::common::TestWorld;
     use futures::TryStreamExt as _;
 
-    type BeforeHook = for<'a> fn(&'a gherkin::Feature, Option<&'a gherkin::Rule>, &'a gherkin::Scenario, &'a mut TestWorld) -> LocalBoxFuture<'a, ()>;
-    type AfterHook = for<'a> fn(&'a gherkin::Feature, Option<&'a gherkin::Rule>, &'a gherkin::Scenario, &'a event::ScenarioFinished, Option<&'a mut TestWorld>) -> LocalBoxFuture<'a, ()>;
+    type BeforeHook = for<'a> fn(
+        &'a gherkin::Feature,
+        Option<&'a gherkin::Rule>,
+        &'a gherkin::Scenario,
+        &'a mut TestWorld,
+    ) -> LocalBoxFuture<'a, ()>;
+    type AfterHook = for<'a> fn(
+        &'a gherkin::Feature,
+        Option<&'a gherkin::Rule>,
+        &'a gherkin::Scenario,
+        &'a event::ScenarioFinished,
+        Option<&'a mut TestWorld>,
+    ) -> LocalBoxFuture<'a, ()>;
 
     #[test]
     fn test_executor_creation() {
         let (_executor, _receiver) = create_test_executor();
-        
+
         // Verify executor is created successfully
         assert!(true); // Basic creation test
     }
@@ -604,13 +634,16 @@ mod tests {
     fn test_send_event() {
         let (executor, mut receiver) = create_test_executor();
         let test_event = event::Cucumber::<TestWorld>::Started;
-        
+
         executor.send_event(test_event);
-        
+
         // Verify event was sent
         let received = receiver.try_next().unwrap();
         assert!(received.is_some());
-        assert!(matches!(received.unwrap().unwrap().value, event::Cucumber::Started));
+        assert!(matches!(
+            received.unwrap().unwrap().value,
+            event::Cucumber::Started
+        ));
     }
 
     #[test]
@@ -620,9 +653,9 @@ mod tests {
             event::Cucumber::<TestWorld>::Started,
             event::Cucumber::Finished,
         ];
-        
+
         executor.send_all_events(events);
-        
+
         // Verify both events were sent
         let first = receiver.try_next().unwrap();
         assert!(first.is_some());
@@ -636,34 +669,38 @@ mod tests {
         let (event_sender, _event_receiver) = mpsc::unbounded();
         let (finished_sender, mut finished_receiver) = mpsc::unbounded();
         let storage = Features::default();
-        
-        let executor: Executor<TestWorld, BeforeHook, AfterHook> = Executor::new(
-            collection,
-            None,
-            None,
-            event_sender,
-            finished_sender,
-            storage,
-            #[cfg(feature = "observability")]
-            std::sync::Arc::new(std::sync::Mutex::new(crate::observer::ObserverRegistry::new())),
-        );
-        
+
+        let executor: Executor<TestWorld, BeforeHook, AfterHook> =
+            Executor::new(
+                collection,
+                None,
+                None,
+                event_sender,
+                finished_sender,
+                storage,
+                #[cfg(feature = "observability")]
+                std::sync::Arc::new(std::sync::Mutex::new(
+                    crate::observer::ObserverRegistry::new(),
+                )),
+            );
+
         let id = ScenarioId::new();
         let (feature, _scenario) = create_test_feature_and_scenario();
-        
+
         // Notify scenario finished
         executor.scenario_finished(
             id,
             feature.clone(),
-            None, // No rule
+            None,  // No rule
             false, // Not failed
             false, // Not retried
         );
-        
+
         // Verify notification was sent
         let notification = finished_receiver.try_next().unwrap();
         assert!(notification.is_some());
-        let (received_id, received_feature, _rule, is_failed, is_retried) = notification.unwrap();
+        let (received_id, received_feature, _rule, is_failed, is_retried) =
+            notification.unwrap();
         assert_eq!(received_id, id);
         assert_eq!(received_feature.name, feature.name);
         assert!(!is_failed);
@@ -675,32 +712,43 @@ mod tests {
         let (executor, mut receiver) = create_test_executor();
         let (feature, scenario) = create_test_feature_and_scenario();
         let id = ScenarioId::new();
-        
-        let info = crate::runner::basic::supporting_structures::coerce_into_info("Before hook failed");
+
+        let info =
+            crate::runner::basic::supporting_structures::coerce_into_info(
+                "Before hook failed",
+            );
         let meta = event::Metadata::new(());
         let failure = ExecutionFailure::BeforeHookPanicked {
             world: None,
             panic_info: info,
             meta,
         };
-        
-        executor.handle_execution_failure(
-            failure,
-            id,
-            feature.clone(),
-            None, // No rule
-            scenario.clone(),
-            None, // No retries
-        ).await;
-        
+
+        executor
+            .handle_execution_failure(
+                failure,
+                id,
+                feature.clone(),
+                None, // No rule
+                scenario.clone(),
+                None, // No retries
+            )
+            .await;
+
         // Should send finished event
         let event = receiver.try_next().unwrap();
         assert!(event.is_some());
         match event.unwrap().unwrap().value {
-            event::Cucumber::Feature(_, event::Feature::Scenario(_, event::RetryableScenario { 
-                event: event::Scenario::Finished, 
-                .. 
-            })) => {},
+            event::Cucumber::Feature(
+                _,
+                event::Feature::Scenario(
+                    _,
+                    event::RetryableScenario {
+                        event: event::Scenario::Finished,
+                        ..
+                    },
+                ),
+            ) => {}
             _ => panic!("Expected Scenario::Finished event"),
         }
     }
@@ -708,43 +756,57 @@ mod tests {
     #[cfg(feature = "observability")]
     #[test]
     fn test_register_observer() {
-        use crate::observer::{TestObserver, ObservationContext};
-        
+        use crate::observer::{ObservationContext, TestObserver};
+
         struct MockObserver;
         impl TestObserver<TestWorld> for MockObserver {
-            fn on_event(&mut self, _event: &Event<event::Cucumber<TestWorld>>, _ctx: &ObservationContext) {}
+            fn on_event(
+                &mut self,
+                _event: &Event<event::Cucumber<TestWorld>>,
+                _ctx: &ObservationContext,
+            ) {
+            }
         }
-        
+
         let (executor, _) = create_test_executor();
         let observer = Box::new(MockObserver);
-        
+
         // Should not panic
         executor.register_observer(observer);
     }
 
-    fn create_test_executor() -> (Executor<TestWorld, BeforeHook, AfterHook>, mpsc::UnboundedReceiver<parser::Result<Event<event::Cucumber<TestWorld>>>>) {
+    fn create_test_executor() -> (
+        Executor<TestWorld, BeforeHook, AfterHook>,
+        mpsc::UnboundedReceiver<
+            parser::Result<Event<event::Cucumber<TestWorld>>>,
+        >,
+    ) {
         let collection = step::Collection::<TestWorld>::new();
         let (event_sender, event_receiver) = mpsc::unbounded();
         let (finished_sender, _finished_receiver) = mpsc::unbounded();
         let storage = Features::default();
-        
-        let executor: Executor<TestWorld, BeforeHook, AfterHook> = Executor::new(
-            collection,
-            None,
-            None,
-            event_sender,
-            finished_sender,
-            storage,
-            #[cfg(feature = "observability")]
-            std::sync::Arc::new(std::sync::Mutex::new(crate::observer::ObserverRegistry::new())),
-        );
-        
+
+        let executor: Executor<TestWorld, BeforeHook, AfterHook> =
+            Executor::new(
+                collection,
+                None,
+                None,
+                event_sender,
+                finished_sender,
+                storage,
+                #[cfg(feature = "observability")]
+                std::sync::Arc::new(std::sync::Mutex::new(
+                    crate::observer::ObserverRegistry::new(),
+                )),
+            );
+
         (executor, event_receiver)
     }
 
-    fn create_test_feature_and_scenario() -> (Source<gherkin::Feature>, Source<gherkin::Scenario>) {
+    fn create_test_feature_and_scenario()
+    -> (Source<gherkin::Feature>, Source<gherkin::Scenario>) {
         use gherkin::{Feature, Scenario};
-        
+
         let feature = Feature {
             keyword: "Feature".to_string(),
             name: "Test Feature".to_string(),
@@ -753,14 +815,11 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
             tags: vec![],
-            span: gherkin::Span {
-                start: 0,
-                end: 0,
-            },
+            span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 1, col: 1 },
             path: None,
         };
-        
+
         let scenario = Scenario {
             keyword: "Scenario".to_string(),
             name: "Test Scenario".to_string(),
@@ -768,13 +827,10 @@ mod tests {
             steps: vec![],
             examples: vec![],
             tags: vec![],
-            span: gherkin::Span {
-                start: 0,
-                end: 0,
-            },
+            span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 2, col: 1 },
         };
-        
+
         (Source::new(feature), Source::new(scenario))
     }
 }

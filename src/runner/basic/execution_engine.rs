@@ -1,24 +1,17 @@
 //! Execution orchestration and feature insertion logic.
 
-use std::{
-    ops::ControlFlow,
-    panic,
-    thread,
-};
+use std::{ops::ControlFlow, panic, thread};
 
 use futures::{
     Stream, StreamExt as _,
     channel::{mpsc, oneshot},
-    future,
-    pin_mut,
-    stream,
+    future, pin_mut, stream,
 };
 
 #[cfg(feature = "tracing")]
 use crate::tracing::{Collector as TracingCollector, SpanCloseWaiter};
 use crate::{
-    Event, World,
-    event,
+    Event, World, event,
     feature::Ext as _,
     future::{FutureExt as _, select_with_biased_first},
     parser, step,
@@ -119,7 +112,9 @@ pub(super) async fn execute<W, Before, After>(
     after_hook: Option<After>,
     fail_fast: bool,
     #[cfg(feature = "tracing")] mut logs_collector: Option<TracingCollector>,
-    #[cfg(feature = "observability")] observers: std::sync::Arc<std::sync::Mutex<crate::observer::ObserverRegistry<W>>>,
+    #[cfg(feature = "observability")] observers: std::sync::Arc<
+        std::sync::Mutex<crate::observer::ObserverRegistry<W>>,
+    >,
 ) where
     W: World,
     Before: 'static
@@ -300,10 +295,10 @@ pub(super) async fn execute<W, Before, After>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::runner::basic::RetryOptions;
+    use crate::test_utils::common::TestWorld;
     use futures::stream;
     use std::sync::{Arc, Mutex};
-    use crate::test_utils::common::TestWorld;
-    use crate::runner::basic::RetryOptions;
 
     // Using common TestWorld from test_utils
 
@@ -312,13 +307,20 @@ mod tests {
         let features = Features::default();
         let (sender, mut receiver) = mpsc::unbounded();
         let cli = Cli::default();
-        
-        let which_scenario = |_: &gherkin::Feature, _: Option<&gherkin::Rule>, _: &gherkin::Scenario| {
-            ScenarioType::Concurrent
-        };
-        
-        let retry_fn = Arc::new(|_: &gherkin::Feature, _: Option<&gherkin::Rule>, _: &gherkin::Scenario, _: &Cli| -> Option<RetryOptions> { None });
-        
+
+        let which_scenario =
+            |_: &gherkin::Feature,
+             _: Option<&gherkin::Rule>,
+             _: &gherkin::Scenario| { ScenarioType::Concurrent };
+
+        let retry_fn = Arc::new(
+            |_: &gherkin::Feature,
+             _: Option<&gherkin::Rule>,
+             _: &gherkin::Scenario,
+             _: &Cli|
+             -> Option<RetryOptions> { None },
+        );
+
         insert_features(
             features.clone(),
             stream::empty(),
@@ -327,12 +329,20 @@ mod tests {
             sender,
             cli,
             false,
-        ).await;
-        
+        )
+        .await;
+
         // Should receive ParsingFinished event
-        let event: event::Event<event::Cucumber<TestWorld>> = receiver.next().await.unwrap().unwrap();
+        let event: event::Event<event::Cucumber<TestWorld>> =
+            receiver.next().await.unwrap().unwrap();
         match event.value {
-            event::Cucumber::ParsingFinished { features, rules, scenarios, steps, parser_errors } => {
+            event::Cucumber::ParsingFinished {
+                features,
+                rules,
+                scenarios,
+                steps,
+                parser_errors,
+            } => {
                 assert_eq!(features, 0);
                 assert_eq!(rules, 0);
                 assert_eq!(scenarios, 0);
@@ -341,7 +351,7 @@ mod tests {
             }
             _ => panic!("Expected ParsingFinished event"),
         }
-        
+
         // No more events
         assert!(receiver.next().await.is_none());
     }
@@ -351,20 +361,32 @@ mod tests {
         let features = Features::default();
         let (sender, mut receiver) = mpsc::unbounded();
         let cli = Cli::default();
-        
-        let which_scenario = |_: &gherkin::Feature, _: Option<&gherkin::Rule>, _: &gherkin::Scenario| {
-            ScenarioType::Concurrent
-        };
-        
-        let retry_fn = Arc::new(|_: &gherkin::Feature, _: Option<&gherkin::Rule>, _: &gherkin::Scenario, _: &Cli| -> Option<RetryOptions> { None });
-        
-        let error_stream = stream::once(async { 
-            Err(parser::Error::Parsing(std::sync::Arc::new(gherkin::ParseFileError::Reading {
-                path: std::path::PathBuf::from("test.feature"),
-                source: std::io::Error::new(std::io::ErrorKind::NotFound, "Test file not found"),
-            }))) 
+
+        let which_scenario =
+            |_: &gherkin::Feature,
+             _: Option<&gherkin::Rule>,
+             _: &gherkin::Scenario| { ScenarioType::Concurrent };
+
+        let retry_fn = Arc::new(
+            |_: &gherkin::Feature,
+             _: Option<&gherkin::Rule>,
+             _: &gherkin::Scenario,
+             _: &Cli|
+             -> Option<RetryOptions> { None },
+        );
+
+        let error_stream = stream::once(async {
+            Err(parser::Error::Parsing(std::sync::Arc::new(
+                gherkin::ParseFileError::Reading {
+                    path: std::path::PathBuf::from("test.feature"),
+                    source: std::io::Error::new(
+                        std::io::ErrorKind::NotFound,
+                        "Test file not found",
+                    ),
+                },
+            )))
         });
-        
+
         insert_features(
             features.clone(),
             error_stream,
@@ -373,14 +395,16 @@ mod tests {
             sender,
             cli,
             false,
-        ).await;
-        
+        )
+        .await;
+
         // Should receive error first
         let error_event = receiver.next().await.unwrap();
         assert!(error_event.is_err());
-        
+
         // Then ParsingFinished event
-        let event: Event<event::Cucumber<TestWorld>> = receiver.next().await.unwrap().unwrap();
+        let event: Event<event::Cucumber<TestWorld>> =
+            receiver.next().await.unwrap().unwrap();
         match event.value {
             event::Cucumber::ParsingFinished { parser_errors, .. } => {
                 assert_eq!(parser_errors, 1);
@@ -393,52 +417,75 @@ mod tests {
     async fn test_execute_with_empty_features() {
         let features = Features::default();
         features.finish(); // Mark as finished
-        
+
         let (sender, mut receiver) = mpsc::unbounded();
         let collection = step::Collection::<TestWorld>::new();
-        
+
         execute(
             features,
             Some(1),
             collection,
             sender,
-            None::<for<'a> fn(&'a gherkin::Feature, Option<&'a gherkin::Rule>, &'a gherkin::Scenario, &'a mut TestWorld) -> futures::future::LocalBoxFuture<'a, ()>>,
-            None::<for<'a> fn(&'a gherkin::Feature, Option<&'a gherkin::Rule>, &'a gherkin::Scenario, &'a event::ScenarioFinished, Option<&'a mut TestWorld>) -> futures::future::LocalBoxFuture<'a, ()>>,
+            None::<
+                for<'a> fn(
+                    &'a gherkin::Feature,
+                    Option<&'a gherkin::Rule>,
+                    &'a gherkin::Scenario,
+                    &'a mut TestWorld,
+                )
+                    -> futures::future::LocalBoxFuture<'a, ()>,
+            >,
+            None::<
+                for<'a> fn(
+                    &'a gherkin::Feature,
+                    Option<&'a gherkin::Rule>,
+                    &'a gherkin::Scenario,
+                    &'a event::ScenarioFinished,
+                    Option<&'a mut TestWorld>,
+                )
+                    -> futures::future::LocalBoxFuture<'a, ()>,
+            >,
             false,
             #[cfg(feature = "tracing")]
             None,
             #[cfg(feature = "observability")]
-            std::sync::Arc::new(std::sync::Mutex::new(crate::observer::ObserverRegistry::new())),
-        ).await;
-        
+            std::sync::Arc::new(std::sync::Mutex::new(
+                crate::observer::ObserverRegistry::new(),
+            )),
+        )
+        .await;
+
         // Should receive Started event
         let started = receiver.next().await.unwrap().unwrap();
         match started.value {
-            event::Cucumber::Started => {},
+            event::Cucumber::Started => {}
             _ => panic!("Expected Started event"),
         }
-        
+
         // Should receive Finished event
         let finished = receiver.next().await.unwrap().unwrap();
         match finished.value {
-            event::Cucumber::Finished => {},
+            event::Cucumber::Finished => {}
             _ => panic!("Expected Finished event"),
         }
-        
+
         // No more events
         assert!(receiver.next().await.is_none());
     }
 
     #[test]
     fn test_scenario_type_determination() {
-        let which_scenario = |_: &gherkin::Feature, _: Option<&gherkin::Rule>, scenario: &gherkin::Scenario| {
-            if scenario.tags.contains(&"@serial".to_string()) {
-                ScenarioType::Serial
-            } else {
-                ScenarioType::Concurrent
-            }
-        };
-        
+        let which_scenario =
+            |_: &gherkin::Feature,
+             _: Option<&gherkin::Rule>,
+             scenario: &gherkin::Scenario| {
+                if scenario.tags.contains(&"@serial".to_string()) {
+                    ScenarioType::Serial
+                } else {
+                    ScenarioType::Concurrent
+                }
+            };
+
         let feature = gherkin::Feature {
             tags: vec![],
             keyword: "Feature".to_string(),
@@ -451,7 +498,7 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
         };
-        
+
         let concurrent_scenario = gherkin::Scenario {
             tags: vec![],
             keyword: "Scenario".to_string(),
@@ -462,7 +509,7 @@ mod tests {
             steps: vec![],
             examples: vec![],
         };
-        
+
         let serial_scenario = gherkin::Scenario {
             tags: vec!["@serial".to_string()],
             keyword: "Scenario".to_string(),
@@ -473,8 +520,14 @@ mod tests {
             steps: vec![],
             examples: vec![],
         };
-        
-        assert_eq!(which_scenario(&feature, None, &concurrent_scenario), ScenarioType::Concurrent);
-        assert_eq!(which_scenario(&feature, None, &serial_scenario), ScenarioType::Serial);
+
+        assert_eq!(
+            which_scenario(&feature, None, &concurrent_scenario),
+            ScenarioType::Concurrent
+        );
+        assert_eq!(
+            which_scenario(&feature, None, &serial_scenario),
+            ScenarioType::Serial
+        );
     }
 }

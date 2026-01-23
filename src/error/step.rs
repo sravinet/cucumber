@@ -67,10 +67,7 @@ impl StepError {
     /// Creates a new panic error.
     #[must_use]
     pub fn panic(message: impl Into<String>) -> Self {
-        Self::Panic {
-            message: message.into(),
-            payload: None,
-        }
+        Self::Panic { message: message.into(), payload: None }
     }
 
     /// Creates a new panic error with payload.
@@ -79,36 +76,25 @@ impl StepError {
         message: impl Into<String>,
         payload: Arc<dyn std::any::Any + Send + 'static>,
     ) -> Self {
-        Self::Panic {
-            message: message.into(),
-            payload: Some(payload),
-        }
+        Self::Panic { message: message.into(), payload: Some(payload) }
     }
 
     /// Creates a new no match error.
     #[must_use]
     pub fn no_match(step_text: impl Into<String>) -> Self {
-        Self::NoMatch {
-            step_text: step_text.into(),
-        }
+        Self::NoMatch { step_text: step_text.into() }
     }
 
     /// Creates a new ambiguous error.
     #[must_use]
     pub fn ambiguous(step_text: impl Into<String>, count: usize) -> Self {
-        Self::Ambiguous {
-            step_text: step_text.into(),
-            count,
-        }
+        Self::Ambiguous { step_text: step_text.into(), count }
     }
 
     /// Creates a new timeout error.
     #[must_use]
     pub fn timeout(step_text: impl Into<String>, duration: Duration) -> Self {
-        Self::Timeout {
-            step_text: step_text.into(),
-            duration,
-        }
+        Self::Timeout { step_text: step_text.into(), duration }
     }
 
     /// Returns the step text if available.
@@ -170,18 +156,23 @@ mod tests {
 
         let ambiguous_err = StepError::ambiguous("Given ambiguous", 3);
         assert_eq!(ambiguous_err.step_text(), Some("Given ambiguous"));
-        assert!(ambiguous_err.to_string().contains("matches 3 step definitions"));
+        assert!(
+            ambiguous_err.to_string().contains("matches 3 step definitions")
+        );
 
-        let timeout_err = StepError::timeout("Given I wait", Duration::from_secs(30));
+        let timeout_err =
+            StepError::timeout("Given I wait", Duration::from_secs(30));
         assert!(timeout_err.is_timeout());
         assert_eq!(timeout_err.step_text(), Some("Given I wait"));
     }
 
     #[test]
     fn test_step_error_with_payload() {
-        let payload: Arc<dyn std::any::Any + Send + 'static> = Arc::new("payload".to_string());
-        let err = StepError::panic_with_payload("panic message", payload.clone());
-        
+        let payload: Arc<dyn std::any::Any + Send + 'static> =
+            Arc::new("payload".to_string());
+        let err =
+            StepError::panic_with_payload("panic message", payload.clone());
+
         if let StepError::Panic { message, payload: Some(p) } = err {
             assert_eq!(message, "panic message");
             assert_eq!(p.to_readable_string(), "payload");
@@ -201,7 +192,8 @@ mod tests {
         let ambiguous_err = StepError::ambiguous("When step", 2);
         assert_eq!(ambiguous_err.step_text(), Some("When step"));
 
-        let timeout_err = StepError::timeout("Then step", Duration::from_millis(500));
+        let timeout_err =
+            StepError::timeout("Then step", Duration::from_millis(500));
         assert_eq!(timeout_err.step_text(), Some("Then step"));
     }
 
@@ -222,14 +214,20 @@ mod tests {
 
     #[test]
     fn test_panic_payload_ext() {
-        let string_payload: Arc<dyn std::any::Any + Send + 'static> = Arc::new("string panic".to_string());
+        let string_payload: Arc<dyn std::any::Any + Send + 'static> =
+            Arc::new("string panic".to_string());
         assert_eq!(string_payload.to_readable_string(), "string panic");
 
-        let str_payload: Arc<dyn std::any::Any + Send + 'static> = Arc::new("str panic");
+        let str_payload: Arc<dyn std::any::Any + Send + 'static> =
+            Arc::new("str panic");
         assert_eq!(str_payload.to_readable_string(), "str panic");
 
-        let unknown_payload: Arc<dyn std::any::Any + Send + 'static> = Arc::new(42i32);
-        assert_eq!(unknown_payload.to_readable_string(), "Unknown panic payload");
+        let unknown_payload: Arc<dyn std::any::Any + Send + 'static> =
+            Arc::new(42i32);
+        assert_eq!(
+            unknown_payload.to_readable_string(),
+            "Unknown panic payload"
+        );
     }
 
     #[test]
@@ -241,16 +239,21 @@ mod tests {
         assert!(timeout_err.to_string().contains("Step timed out after"));
         assert!(timeout_err.to_string().contains("Given I wait"));
 
-        let no_match_err = StepError::NoMatch {
-            step_text: "Given unknown step".to_string(),
-        };
-        assert!(no_match_err.to_string().contains("No matching step found for: Given unknown step"));
+        let no_match_err =
+            StepError::NoMatch { step_text: "Given unknown step".to_string() };
+        assert!(
+            no_match_err
+                .to_string()
+                .contains("No matching step found for: Given unknown step")
+        );
 
         let ambiguous_err = StepError::Ambiguous {
             step_text: "Given ambiguous step".to_string(),
             count: 2,
         };
-        assert!(ambiguous_err.to_string().contains("Ambiguous step: Given ambiguous step matches 2 step definitions"));
+        assert!(ambiguous_err.to_string().contains(
+            "Ambiguous step: Given ambiguous step matches 2 step definitions"
+        ));
     }
 
     #[test]

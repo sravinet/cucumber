@@ -2,10 +2,7 @@
 
 use regex::Regex;
 
-use crate::{
-    Parser, World, Writer, Step,
-    runner, step,
-};
+use crate::{Parser, Step, World, Writer, runner, step};
 
 use super::core::Cucumber;
 

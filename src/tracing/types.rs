@@ -1,7 +1,7 @@
 //! Type definitions and aliases for the tracing integration.
 
-use std::collections::HashMap;
 use futures::channel::{mpsc, oneshot};
+use std::collections::HashMap;
 use tracing::span;
 
 use crate::{
@@ -23,7 +23,8 @@ pub type Scenarios = HashMap<
 >;
 
 /// All [`Callback`]s for [`Span`]s closing events with their completion status.
-pub type SpanEventsCallbacks = HashMap<span::Id, (Option<Vec<Callback>>, IsReceived)>;
+pub type SpanEventsCallbacks =
+    HashMap<span::Id, (Option<Vec<Callback>>, IsReceived)>;
 
 /// Indication whether a [`Span`] closing event was received.
 pub type IsReceived = bool;
@@ -73,21 +74,28 @@ mod tests {
 
     #[test]
     fn test_log_message_type() {
-        let (log_sender, _log_receiver): (LogSender, LogReceiver) = mpsc::unbounded();
+        let (log_sender, _log_receiver): (LogSender, LogReceiver) =
+            mpsc::unbounded();
         let message: LogMessage = (None, "test message".to_string());
         assert!(log_sender.unbounded_send(message).is_ok());
     }
 
     #[test]
     fn test_span_close_channels() {
-        let (span_sender, _span_receiver): (SpanCloseSender, SpanCloseReceiver) = mpsc::unbounded();
+        let (span_sender, _span_receiver): (
+            SpanCloseSender,
+            SpanCloseReceiver,
+        ) = mpsc::unbounded();
         let span_id = span::Id::from_u64(42);
         assert!(span_sender.unbounded_send(span_id).is_ok());
     }
 
     #[test]
     fn test_callback_type() {
-        let (_callback_sender, callback_receiver): (Callback, oneshot::Receiver<()>) = oneshot::channel();
+        let (_callback_sender, callback_receiver): (
+            Callback,
+            oneshot::Receiver<()>,
+        ) = oneshot::channel();
         // Callback should be a oneshot sender
         drop(callback_receiver);
     }
@@ -97,7 +105,7 @@ mod tests {
         let mut callbacks: SpanEventsCallbacks = HashMap::new();
         let span_id = span::Id::from_u64(1);
         let (sender, _receiver) = oneshot::channel();
-        
+
         callbacks.insert(span_id, (Some(vec![sender]), false));
         assert_eq!(callbacks.len(), 1);
     }

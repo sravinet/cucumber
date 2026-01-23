@@ -3,10 +3,7 @@
 //! This module provides the [`Collection`] struct for storing and matching
 //! step definitions with their corresponding regex patterns.
 
-use std::{
-    collections::HashMap,
-    iter,
-};
+use std::{collections::HashMap, iter};
 
 use derive_more::with_trait::Debug;
 use futures::future::LocalBoxFuture;
@@ -15,9 +12,7 @@ use itertools::Itertools as _;
 use regex::Regex;
 
 use super::{
-    context::Context,
-    error::AmbiguousMatchError,
-    location::Location,
+    context::Context, error::AmbiguousMatchError, location::Location,
     regex::HashableRegex,
 };
 
@@ -215,7 +210,10 @@ mod tests {
     #[derive(Default)]
     struct TestWorld;
 
-    fn test_step(_world: &mut TestWorld, _ctx: Context) -> LocalBoxFuture<'_, ()> {
+    fn test_step(
+        _world: &mut TestWorld,
+        _ctx: Context,
+    ) -> LocalBoxFuture<'_, ()> {
         Box::pin(async {})
     }
 
@@ -223,7 +221,7 @@ mod tests {
     fn collection_creation_and_step_addition() {
         let collection: Collection<TestWorld> = Collection::new();
         assert!(collection.given.is_empty());
-        
+
         let regex = Regex::new(r"I have (\d+) cucumbers").unwrap();
         let collection = collection.given(None, regex, test_step);
         assert_eq!(collection.given.len(), 1);
@@ -233,7 +231,7 @@ mod tests {
     fn collection_find_functionality() {
         let regex = Regex::new(r"I have (\d+) cucumbers").unwrap();
         let collection = Collection::new().given(None, regex, test_step);
-        
+
         let step = GherkinStep {
             keyword: "Given".to_string(),
             ty: StepType::Given,
@@ -243,10 +241,10 @@ mod tests {
             span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 1, col: 1 },
         };
-        
+
         let result = collection.find(&step).unwrap();
         assert!(result.is_some());
-        
+
         let (_, _, _, context) = result.unwrap();
         assert_eq!(context.matches.len(), 2);
         assert_eq!(context.matches[1].1, "5");
@@ -258,7 +256,7 @@ mod tests {
         let collection = Collection::new().given(None, regex, test_step);
         let cloned = collection.clone();
         assert_eq!(cloned.given.len(), 1);
-        
+
         let default_collection: Collection<TestWorld> = Collection::default();
         assert!(default_collection.given.is_empty());
     }

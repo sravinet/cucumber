@@ -3,29 +3,29 @@
 //! This module provides the default [`Runner`] implementation that executes
 //! scenarios with configurable concurrency, retry logic, and hooks.
 
-mod cli_and_types;
 mod basic_struct;
-mod runner_impl;
+mod cli_and_types;
 mod execution_engine;
 mod executor;
+mod runner_impl;
 mod scenario_storage;
 mod supporting_structures;
 
 // Re-export public APIs for backward compatibility
-pub use cli_and_types::{
-    Cli, ScenarioType, RetryOptions, RetryOptionsWithDeadline,
-    WhichScenarioFn, RetryOptionsFn, BeforeHookFn, AfterHookFn,
-};
 pub use basic_struct::Basic;
+pub use cli_and_types::{
+    AfterHookFn, BeforeHookFn, Cli, RetryOptions, RetryOptionsFn,
+    RetryOptionsWithDeadline, ScenarioType, WhichScenarioFn,
+};
 pub use supporting_structures::ScenarioId;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{World, Runner};
+    use crate::test_utils::common::TestWorld;
+    use crate::{Runner, World};
     use futures::stream;
     use gherkin::Feature;
-    use crate::test_utils::common::TestWorld;
 
     // Using common TestWorld from test_utils
 
@@ -51,10 +51,10 @@ mod tests {
     #[test]
     fn test_scenario_type_enum() {
         use ScenarioType::*;
-        
+
         assert_eq!(Serial, Serial);
         assert_ne!(Serial, Concurrent);
-        
+
         // Test that enum can be pattern matched
         match Concurrent {
             Concurrent => {}
@@ -64,8 +64,8 @@ mod tests {
 
     #[test]
     fn test_retry_options_creation() {
-        use std::time::Duration;
         use crate::event::Retries;
+        use std::time::Duration;
 
         let opts = RetryOptions {
             retries: Retries::initial(3),

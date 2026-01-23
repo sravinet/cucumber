@@ -1,14 +1,14 @@
 //! Writer implementation for collecting tracing events and sending them to the collector.
 
-use std::io;
 use futures::channel::mpsc;
+use std::io;
 use tracing_subscriber::fmt::MakeWriter;
 
-use crate::runner::basic::ScenarioId;
 use super::{
-    types::{LogMessage, LogSender},
     formatter::suffix,
+    types::{LogMessage, LogSender},
 };
+use crate::runner::basic::ScenarioId;
 
 /// [`io::Write`]r sending [`tracing::Event`]s to a `Collector`.
 #[derive(Clone, Debug)]
@@ -90,7 +90,7 @@ mod tests {
     fn test_collector_writer_creation() {
         let (sender, _receiver) = mpsc::unbounded();
         let writer = CollectorWriter::new(sender);
-        
+
         // Test that the writer was created successfully
         assert!(std::mem::size_of_val(&writer) > 0);
     }
@@ -99,7 +99,7 @@ mod tests {
     fn test_make_writer() {
         let (sender, _receiver) = mpsc::unbounded();
         let writer = CollectorWriter::new(sender);
-        
+
         let made_writer = writer.make_writer();
         assert!(std::mem::size_of_val(&made_writer) > 0);
     }
@@ -108,17 +108,21 @@ mod tests {
     fn test_write_message_without_scenario_id() -> io::Result<()> {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
-        let message = format!("test log message{}{}", suffix::NO_SCENARIO_ID, suffix::END);
+
+        let message = format!(
+            "test log message{}{}",
+            suffix::NO_SCENARIO_ID,
+            suffix::END
+        );
         let written = writer.write(message.as_bytes())?;
-        
+
         assert_eq!(written, message.len());
-        
+
         // Check that the message was sent correctly
         let (scenario_id, content) = receiver.try_next().unwrap().unwrap();
         assert!(scenario_id.is_none());
         assert_eq!(content, "test log message");
-        
+
         Ok(())
     }
 
@@ -126,7 +130,7 @@ mod tests {
     fn test_write_message_with_scenario_id() -> io::Result<()> {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
+
         let message = format!(
             "test log message{}{}{}",
             suffix::BEFORE_SCENARIO_ID,
@@ -134,14 +138,14 @@ mod tests {
             suffix::END
         );
         let written = writer.write(message.as_bytes())?;
-        
+
         assert_eq!(written, message.len());
-        
+
         // Check that the message was sent correctly
         let (scenario_id, content) = receiver.try_next().unwrap().unwrap();
         assert_eq!(scenario_id, Some(ScenarioId(42)));
         assert_eq!(content, "test log message");
-        
+
         Ok(())
     }
 
@@ -149,8 +153,9 @@ mod tests {
     fn test_write_multiple_messages() -> io::Result<()> {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
-        let message1 = format!("message1{}{}", suffix::NO_SCENARIO_ID, suffix::END);
+
+        let message1 =
+            format!("message1{}{}", suffix::NO_SCENARIO_ID, suffix::END);
         let message2 = format!(
             "message2{}{}{}",
             suffix::BEFORE_SCENARIO_ID,
@@ -158,20 +163,20 @@ mod tests {
             suffix::END
         );
         let combined = format!("{}{}", message1, message2);
-        
+
         let written = writer.write(combined.as_bytes())?;
         assert_eq!(written, combined.len());
-        
+
         // Check first message
         let (scenario_id1, content1) = receiver.try_next().unwrap().unwrap();
         assert!(scenario_id1.is_none());
         assert_eq!(content1, "message1");
-        
+
         // Check second message
         let (scenario_id2, content2) = receiver.try_next().unwrap().unwrap();
         assert_eq!(scenario_id2, Some(ScenarioId(123)));
         assert_eq!(content2, "message2");
-        
+
         Ok(())
     }
 
@@ -179,10 +184,11 @@ mod tests {
     fn test_write_invalid_separator_after_no_scenario() {
         let (sender, _receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
-        let message = format!("test{}extra{}", suffix::NO_SCENARIO_ID, suffix::END);
+
+        let message =
+            format!("test{}extra{}", suffix::NO_SCENARIO_ID, suffix::END);
         let result = writer.write(message.as_bytes());
-        
+
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind(), io::ErrorKind::InvalidData);
     }
@@ -191,14 +197,14 @@ mod tests {
     fn test_write_invalid_scenario_id() {
         let (sender, _receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
+
         let message = format!(
             "test{}invalid_number{}",
             suffix::BEFORE_SCENARIO_ID,
             suffix::END
         );
         let result = writer.write(message.as_bytes());
-        
+
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind(), io::ErrorKind::InvalidData);
     }
@@ -207,10 +213,10 @@ mod tests {
     fn test_write_missing_separator() {
         let (sender, _receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
+
         let message = format!("test message{}", suffix::END);
         let result = writer.write(message.as_bytes());
-        
+
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind(), io::ErrorKind::InvalidData);
     }
@@ -219,7 +225,7 @@ mod tests {
     fn test_flush() -> io::Result<()> {
         let (sender, _receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
+
         writer.flush()?;
         Ok(())
     }
@@ -228,14 +234,14 @@ mod tests {
     fn test_write_with_closed_receiver() -> io::Result<()> {
         let (sender, receiver) = mpsc::unbounded();
         drop(receiver); // Close the receiver
-        
+
         let mut writer = CollectorWriter::new(sender);
-        
+
         let message = format!("test{}{}", suffix::NO_SCENARIO_ID, suffix::END);
         // This should still succeed even with closed receiver
         let written = writer.write(message.as_bytes())?;
         assert_eq!(written, message.len());
-        
+
         Ok(())
     }
 
@@ -243,10 +249,10 @@ mod tests {
     fn test_write_empty_message() -> io::Result<()> {
         let (sender, _receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
+
         let written = writer.write(&[])?;
         assert_eq!(written, 0);
-        
+
         Ok(())
     }
 
@@ -254,16 +260,17 @@ mod tests {
     fn test_write_utf8_handling() -> io::Result<()> {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
-        let unicode_message = format!("тест 🎯 message{}{}", suffix::NO_SCENARIO_ID, suffix::END);
+
+        let unicode_message =
+            format!("тест 🎯 message{}{}", suffix::NO_SCENARIO_ID, suffix::END);
         let written = writer.write(unicode_message.as_bytes())?;
-        
+
         assert_eq!(written, unicode_message.as_bytes().len());
-        
+
         let (scenario_id, content) = receiver.try_next().unwrap().unwrap();
         assert!(scenario_id.is_none());
         assert_eq!(content, "тест 🎯 message");
-        
+
         Ok(())
     }
 
@@ -271,23 +278,29 @@ mod tests {
     fn test_scenario_id_parsing_edge_cases() -> io::Result<()> {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
-        
+
         // Test zero scenario ID
-        let message = format!("test{}0{}", suffix::BEFORE_SCENARIO_ID, suffix::END);
+        let message =
+            format!("test{}0{}", suffix::BEFORE_SCENARIO_ID, suffix::END);
         writer.write(message.as_bytes())?;
-        
+
         let (scenario_id, content) = receiver.try_next().unwrap().unwrap();
         assert_eq!(scenario_id, Some(ScenarioId(0)));
         assert_eq!(content, "test");
-        
+
         // Test large scenario ID
-        let message = format!("test{}{}{}", suffix::BEFORE_SCENARIO_ID, u64::MAX, suffix::END);
+        let message = format!(
+            "test{}{}{}",
+            suffix::BEFORE_SCENARIO_ID,
+            u64::MAX,
+            suffix::END
+        );
         writer.write(message.as_bytes())?;
-        
+
         let (scenario_id, content) = receiver.try_next().unwrap().unwrap();
         assert_eq!(scenario_id, Some(ScenarioId(u64::MAX)));
         assert_eq!(content, "test");
-        
+
         Ok(())
     }
 }

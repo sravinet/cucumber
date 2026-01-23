@@ -54,9 +54,7 @@ impl WriterError {
     /// Creates a new unavailable error.
     #[must_use]
     pub fn unavailable(reason: impl Into<String>) -> Self {
-        Self::Unavailable {
-            reason: reason.into(),
-        }
+        Self::Unavailable { reason: reason.into() }
     }
 
     /// Creates a new XML error.
@@ -136,19 +134,30 @@ mod tests {
         let unavailable_err = WriterError::unavailable("buffer full");
         assert!(unavailable_err.is_unavailable());
         assert_eq!(unavailable_err.unavailable_reason(), Some("buffer full"));
-        assert!(unavailable_err.to_string().contains("Output unavailable: buffer full"));
+        assert!(
+            unavailable_err
+                .to_string()
+                .contains("Output unavailable: buffer full")
+        );
 
         #[cfg(feature = "output-junit")]
         {
             let xml_err = WriterError::xml("invalid XML structure");
             assert!(xml_err.is_xml_error());
-            assert!(xml_err.to_string().contains("XML generation failed: invalid XML structure"));
+            assert!(
+                xml_err
+                    .to_string()
+                    .contains("XML generation failed: invalid XML structure")
+            );
         }
     }
 
     #[test]
     fn test_writer_error_type_checks() {
-        let io_err = WriterError::Io(io::Error::new(io::ErrorKind::BrokenPipe, "pipe closed"));
+        let io_err = WriterError::Io(io::Error::new(
+            io::ErrorKind::BrokenPipe,
+            "pipe closed",
+        ));
         assert!(io_err.is_io_error());
         assert!(!io_err.is_format_error());
         assert!(!io_err.is_unavailable());
@@ -166,16 +175,22 @@ mod tests {
 
     #[test]
     fn test_writer_error_display() {
-        let io_err = WriterError::Io(io::Error::new(io::ErrorKind::BrokenPipe, "pipe closed"));
+        let io_err = WriterError::Io(io::Error::new(
+            io::ErrorKind::BrokenPipe,
+            "pipe closed",
+        ));
         assert!(io_err.to_string().contains("I/O error"));
 
         let format_err = WriterError::Format(fmt::Error);
         assert!(format_err.to_string().contains("Format error"));
 
-        let unavailable_err = WriterError::Unavailable {
-            reason: "buffer full".to_string(),
-        };
-        assert!(unavailable_err.to_string().contains("Output unavailable: buffer full"));
+        let unavailable_err =
+            WriterError::Unavailable { reason: "buffer full".to_string() };
+        assert!(
+            unavailable_err
+                .to_string()
+                .contains("Output unavailable: buffer full")
+        );
     }
 
     #[test]
@@ -193,19 +208,21 @@ mod tests {
     #[test]
     fn test_serialization_error() {
         use serde_json::json;
-        
+
         // Create a serialization error by trying to serialize an invalid value
         let invalid_json = "\x00\x01\x02";
-        let parse_err = serde_json::from_str::<serde_json::Value>(invalid_json).unwrap_err();
+        let parse_err = serde_json::from_str::<serde_json::Value>(invalid_json)
+            .unwrap_err();
         let writer_err: WriterError = parse_err.into();
-        
+
         assert!(writer_err.is_serialization_error());
         assert!(writer_err.to_string().contains("Serialization failed"));
     }
 
     #[test]
     fn test_unavailable_reason_extraction() {
-        let io_err = WriterError::Io(io::Error::new(io::ErrorKind::Other, "test"));
+        let io_err =
+            WriterError::Io(io::Error::new(io::ErrorKind::Other, "test"));
         assert_eq!(io_err.unavailable_reason(), None);
 
         let unavailable_err = WriterError::unavailable("output closed");
@@ -218,36 +235,50 @@ mod tests {
         assert!(ok_result.is_ok());
         assert_eq!(ok_result.unwrap(), "success");
 
-        let err_result: WriterResult<String> = Err(WriterError::unavailable("test"));
+        let err_result: WriterResult<String> =
+            Err(WriterError::unavailable("test"));
         assert!(err_result.is_err());
         assert!(err_result.unwrap_err().is_unavailable());
     }
 
     #[test]
     fn test_writer_error_variants() {
-        let io_err = WriterError::Io(io::Error::new(io::ErrorKind::BrokenPipe, "pipe closed"));
+        let io_err = WriterError::Io(io::Error::new(
+            io::ErrorKind::BrokenPipe,
+            "pipe closed",
+        ));
         assert!(io_err.to_string().contains("I/O error"));
 
         let format_err = WriterError::Format(fmt::Error);
         assert!(format_err.to_string().contains("Format error"));
 
-        let unavailable_err = WriterError::Unavailable {
-            reason: "buffer full".to_string(),
-        };
-        assert!(unavailable_err.to_string().contains("Output unavailable: buffer full"));
+        let unavailable_err =
+            WriterError::Unavailable { reason: "buffer full".to_string() };
+        assert!(
+            unavailable_err
+                .to_string()
+                .contains("Output unavailable: buffer full")
+        );
 
         #[cfg(feature = "output-junit")]
         {
             let xml_err = WriterError::Xml("malformed XML".to_string());
-            assert!(xml_err.to_string().contains("XML generation failed: malformed XML"));
+            assert!(
+                xml_err
+                    .to_string()
+                    .contains("XML generation failed: malformed XML")
+            );
         }
     }
 
     #[test]
     fn test_error_chain() {
-        let io_err = io::Error::new(io::ErrorKind::PermissionDenied, "write permission denied");
+        let io_err = io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "write permission denied",
+        );
         let writer_err = WriterError::Io(io_err);
-        
+
         assert!(writer_err.source().is_some());
         if let Some(source) = writer_err.source() {
             assert!(source.to_string().contains("write permission denied"));

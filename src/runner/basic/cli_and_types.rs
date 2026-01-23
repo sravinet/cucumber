@@ -111,7 +111,9 @@ impl RetryOptions {
         let parse_tags = |tags: &[String]| {
             tags.iter().find_map(|tag| {
                 // Check if tag starts with "@retry" or "retry"
-                let retry_part = tag.strip_prefix("@retry").or_else(|| tag.strip_prefix("retry"));
+                let retry_part = tag
+                    .strip_prefix("@retry")
+                    .or_else(|| tag.strip_prefix("retry"));
                 retry_part.map(|retries| {
                     let (num, rest) = retries
                         .strip_prefix('(')
@@ -179,7 +181,10 @@ impl RetryOptions {
     ///
     /// [`after`]: RetryOptions::after
     /// [`Scenario`]: gherkin::Scenario
-    pub(super) fn with_deadline(self, now: Instant) -> RetryOptionsWithDeadline {
+    pub(super) fn with_deadline(
+        self,
+        now: Instant,
+    ) -> RetryOptionsWithDeadline {
         RetryOptionsWithDeadline {
             retries: self.retries,
             after: self.after.map(|at| (at, Some(now))),
@@ -277,7 +282,6 @@ pub type AfterHookFn<World> = for<'a> fn(
     Option<&'a mut World>,
 ) -> LocalBoxFuture<'a, ()>;
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -302,7 +306,7 @@ mod tests {
             retry_after: Some(Duration::from_secs(2)),
             retry_tag_filter: None, // TagOperation parsing would be complex for test
         };
-        
+
         let cloned = cli.clone();
         assert_eq!(cloned.concurrency, Some(4));
         assert!(cloned.fail_fast);
@@ -315,12 +319,12 @@ mod tests {
     fn test_scenario_type() {
         assert_eq!(ScenarioType::Serial, ScenarioType::Serial);
         assert_ne!(ScenarioType::Serial, ScenarioType::Concurrent);
-        
+
         // Test Copy trait
         let serial = ScenarioType::Serial;
         let copied = serial;
         assert_eq!(serial, copied);
-        
+
         // Test Hash trait by using in HashSet
         use std::collections::HashSet;
         let mut set = HashSet::new();
@@ -342,7 +346,7 @@ mod tests {
 
         let next2 = next.next_try().unwrap();
         assert_eq!(next2.retries.left, 0);
-        
+
         let last = next2.next_try();
         assert!(last.is_none());
     }
@@ -353,19 +357,19 @@ mod tests {
             retries: Retries::initial(1),
             after: Some(Duration::from_secs(1)),
         };
-        
+
         let opts2 = RetryOptions {
             retries: Retries::initial(1),
             after: Some(Duration::from_secs(1)),
         };
-        
+
         assert_eq!(opts1, opts2);
-        
+
         let opts3 = RetryOptions {
             retries: Retries::initial(2),
             after: Some(Duration::from_secs(1)),
         };
-        
+
         assert_ne!(opts1, opts3);
     }
 
@@ -374,8 +378,9 @@ mod tests {
         let feature = create_test_feature(vec![]);
         let scenario = create_test_scenario(vec!["@retry(3)".to_string()]);
         let cli = Cli::default();
-        
-        let opts = RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
+
+        let opts =
+            RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
         assert!(opts.is_some());
         let opts = opts.unwrap();
         assert_eq!(opts.retries.left, 3);
@@ -385,10 +390,12 @@ mod tests {
     #[test]
     fn test_retry_options_parse_from_tags_with_after() {
         let feature = create_test_feature(vec![]);
-        let scenario = create_test_scenario(vec!["@retry(2).after(1s)".to_string()]);
+        let scenario =
+            create_test_scenario(vec!["@retry(2).after(1s)".to_string()]);
         let cli = Cli::default();
-        
-        let opts = RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
+
+        let opts =
+            RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
         assert!(opts.is_some());
         let opts = opts.unwrap();
         assert_eq!(opts.retries.left, 2);
@@ -401,8 +408,13 @@ mod tests {
         let rule = create_test_rule(vec!["@retry(4)".to_string()]);
         let scenario = create_test_scenario(vec![]);
         let cli = Cli::default();
-        
-        let opts = RetryOptions::parse_from_tags(&feature, Some(&rule), &scenario, &cli);
+
+        let opts = RetryOptions::parse_from_tags(
+            &feature,
+            Some(&rule),
+            &scenario,
+            &cli,
+        );
         assert!(opts.is_some());
         let opts = opts.unwrap();
         assert_eq!(opts.retries.left, 4);
@@ -413,8 +425,9 @@ mod tests {
         let feature = create_test_feature(vec!["@retry(5)".to_string()]);
         let scenario = create_test_scenario(vec![]);
         let cli = Cli::default();
-        
-        let opts = RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
+
+        let opts =
+            RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
         assert!(opts.is_some());
         let opts = opts.unwrap();
         assert_eq!(opts.retries.left, 5);
@@ -427,8 +440,13 @@ mod tests {
         let rule = create_test_rule(vec!["@retry(2)".to_string()]);
         let scenario = create_test_scenario(vec!["@retry(3)".to_string()]);
         let cli = Cli::default();
-        
-        let opts = RetryOptions::parse_from_tags(&feature, Some(&rule), &scenario, &cli);
+
+        let opts = RetryOptions::parse_from_tags(
+            &feature,
+            Some(&rule),
+            &scenario,
+            &cli,
+        );
         assert!(opts.is_some());
         let opts = opts.unwrap();
         assert_eq!(opts.retries.left, 3); // Scenario tag wins
@@ -443,8 +461,9 @@ mod tests {
             retry_after: Some(Duration::from_millis(500)),
             ..Default::default()
         };
-        
-        let opts = RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
+
+        let opts =
+            RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
         assert!(opts.is_some());
         let opts = opts.unwrap();
         assert_eq!(opts.retries.left, 2);
@@ -455,14 +474,16 @@ mod tests {
     fn test_retry_options_parse_cli_override_tags() {
         // When both tags and CLI options are present, tags take precedence for retry count
         let feature = create_test_feature(vec![]);
-        let scenario = create_test_scenario(vec!["@retry(1).after(2s)".to_string()]);
+        let scenario =
+            create_test_scenario(vec!["@retry(1).after(2s)".to_string()]);
         let cli = Cli {
             retry: Some(3),
             retry_after: Some(Duration::from_secs(5)),
             ..Default::default()
         };
-        
-        let opts = RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
+
+        let opts =
+            RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
         assert!(opts.is_some());
         let opts = opts.unwrap();
         assert_eq!(opts.retries.left, 1); // Tag value is used when present
@@ -478,8 +499,9 @@ mod tests {
             retry_tag_filter: None, // TagOperation parsing would be complex for test
             ..Default::default()
         };
-        
-        let opts = RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
+
+        let opts =
+            RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
         assert!(opts.is_some());
         let opts = opts.unwrap();
         assert_eq!(opts.retries.left, 2);
@@ -494,8 +516,9 @@ mod tests {
             retry_tag_filter: None, // With no tag filter and retry set, it should apply retry
             ..Default::default()
         };
-        
-        let opts = RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
+
+        let opts =
+            RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
         // With CLI retry set and no tag filter, retry should be applied
         assert!(opts.is_some());
         let opts = opts.unwrap();
@@ -508,8 +531,9 @@ mod tests {
         let feature = create_test_feature(vec![]);
         let scenario = create_test_scenario(vec!["@retry".to_string()]);
         let cli = Cli::default();
-        
-        let opts = RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
+
+        let opts =
+            RetryOptions::parse_from_tags(&feature, None, &scenario, &cli);
         assert!(opts.is_some());
         let opts = opts.unwrap();
         assert_eq!(opts.retries.left, 1); // Default to 1
@@ -524,7 +548,7 @@ mod tests {
 
         let now = Instant::now();
         let with_deadline = opts.with_deadline(now);
-        
+
         assert_eq!(with_deadline.retries, opts.retries);
         assert!(with_deadline.after.is_some());
         let (duration, instant) = with_deadline.after.unwrap();
@@ -540,7 +564,7 @@ mod tests {
         };
 
         let without_deadline = opts.without_deadline();
-        
+
         assert_eq!(without_deadline.retries, opts.retries);
         assert!(without_deadline.after.is_some());
         let (duration, instant) = without_deadline.after.unwrap();
@@ -550,14 +574,11 @@ mod tests {
 
     #[test]
     fn test_retry_options_with_deadline_no_after() {
-        let opts = RetryOptions {
-            retries: Retries::initial(1),
-            after: None,
-        };
+        let opts = RetryOptions { retries: Retries::initial(1), after: None };
 
         let now = Instant::now();
         let with_deadline = opts.with_deadline(now);
-        
+
         assert_eq!(with_deadline.retries, opts.retries);
         assert!(with_deadline.after.is_none());
     }
@@ -568,10 +589,10 @@ mod tests {
             retries: Retries::initial(2),
             after: Some(Duration::from_secs(1)),
         };
-        
+
         let with_deadline = opts.with_deadline(Instant::now());
         let converted: RetryOptions = with_deadline.into();
-        
+
         assert_eq!(converted.retries, opts.retries);
         assert_eq!(converted.after, opts.after);
     }
@@ -582,35 +603,35 @@ mod tests {
             retries: Retries::initial(1),
             after: None,
         };
-        
+
         // No after duration, should return None
         assert!(opts.left_until_retry().is_none());
-        
+
         // With duration but no instant
         let opts_no_instant = RetryOptionsWithDeadline {
             retries: Retries::initial(1),
             after: Some((Duration::from_secs(1), None)),
         };
         assert!(opts_no_instant.left_until_retry().is_none());
-        
+
         // With both duration and instant
         let now = Instant::now();
         let opts_with_instant = RetryOptionsWithDeadline {
             retries: Retries::initial(1),
             after: Some((Duration::from_millis(100), Some(now))),
         };
-        
+
         // Should have some time left
         let left = opts_with_instant.left_until_retry();
         assert!(left.is_some());
         assert!(left.unwrap() <= Duration::from_millis(100));
-        
+
         // Wait a bit and check again
         thread::sleep(Duration::from_millis(50));
         let left_after = opts_with_instant.left_until_retry();
         assert!(left_after.is_some());
         assert!(left_after.unwrap() < left.unwrap());
-        
+
         // Wait until after deadline
         thread::sleep(Duration::from_millis(60));
         let left_expired = opts_with_instant.left_until_retry();
@@ -621,11 +642,11 @@ mod tests {
     fn test_type_aliases() {
         // Test that type aliases compile and can be used
         let _which_fn: WhichScenarioFn = |_f, _r, _s| ScenarioType::Serial;
-        
+
         // Test that basic bool types work (IsFailed and IsRetried are defined in supporting_structures)
         let failed: bool = true;
         assert!(failed);
-        
+
         let retried: bool = false;
         assert!(!retried);
     }
@@ -645,7 +666,7 @@ mod tests {
             path: None,
         }
     }
-    
+
     fn create_test_scenario(tags: Vec<String>) -> gherkin::Scenario {
         gherkin::Scenario {
             keyword: "Scenario".to_string(),
@@ -658,7 +679,7 @@ mod tests {
             position: gherkin::LineCol { line: 2, col: 1 },
         }
     }
-    
+
     fn create_test_rule(tags: Vec<String>) -> gherkin::Rule {
         gherkin::Rule {
             keyword: "Rule".to_string(),

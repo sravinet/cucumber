@@ -176,6 +176,7 @@ pub mod world;
 pub mod cli;
 mod cucumber;
 mod cucumber_ext;
+pub mod data_table;
 pub mod error;
 pub mod event;
 pub mod feature;
@@ -185,16 +186,15 @@ pub mod runner;
 pub mod step;
 pub mod tag;
 pub mod writer;
-pub mod data_table;
 
 /// Prelude module with commonly used types for external integrations
 pub mod prelude;
 
 // Feature-dependent modules
-#[cfg(feature = "observability")]
-pub mod observer;
 #[cfg(feature = "macros")]
 pub mod codegen;
+#[cfg(feature = "observability")]
+pub mod observer;
 #[cfg(feature = "tracing")]
 pub mod tracing;
 

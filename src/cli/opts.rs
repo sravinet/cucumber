@@ -170,7 +170,7 @@ mod tests {
     fn test_opts_parsing() {
         let args = vec!["cucumber", "--name", "test.*", "--custom-flag"];
         let opts = Opts::<MockParser, MockRunner, MockWriter, CustomOpts>::try_parse_from(args).unwrap();
-        
+
         assert!(opts.re_filter.is_some());
         assert_eq!(opts.re_filter.unwrap().as_str(), "test.*");
         assert!(opts.custom.custom_flag);
@@ -179,8 +179,12 @@ mod tests {
     #[test]
     fn test_opts_with_tags_filter() {
         let args = vec!["cucumber", "--tags", "@smoke and not @slow"];
-        let opts = Opts::<MockParser, MockRunner, MockWriter, Empty>::try_parse_from(args).unwrap();
-        
+        let opts =
+            Opts::<MockParser, MockRunner, MockWriter, Empty>::try_parse_from(
+                args,
+            )
+            .unwrap();
+
         assert!(opts.tags_filter.is_some());
         assert!(opts.re_filter.is_none());
     }
@@ -188,8 +192,11 @@ mod tests {
     #[test]
     fn test_conflicting_filters() {
         let args = vec!["cucumber", "--name", "test.*", "--tags", "@smoke"];
-        let result = Opts::<MockParser, MockRunner, MockWriter, Empty>::try_parse_from(args);
-        
+        let result =
+            Opts::<MockParser, MockRunner, MockWriter, Empty>::try_parse_from(
+                args,
+            );
+
         assert!(result.is_err());
     }
 

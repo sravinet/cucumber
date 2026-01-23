@@ -11,7 +11,7 @@ use crate::{
 };
 
 use super::super::supporting_structures::{
-    ScenarioId, AfterHookEventsMeta, coerce_into_info,
+    AfterHookEventsMeta, ScenarioId, coerce_into_info,
 };
 
 /// Step execution functionality for the Executor.
@@ -28,7 +28,9 @@ impl StepExecutor {
         world: &mut W,
         retries: Option<crate::event::Retries>,
         send_event: impl Fn(event::Cucumber<W>) + Clone,
-        #[cfg(feature = "tracing")] waiter: Option<&crate::tracing::SpanCloseWaiter>,
+        #[cfg(feature = "tracing")] waiter: Option<
+            &crate::tracing::SpanCloseWaiter,
+        >,
     ) -> AfterHookEventsMeta
     where
         W: World,
@@ -37,18 +39,22 @@ impl StepExecutor {
         let mut skipped_steps = 0;
         let mut _failed_steps = 0;
         let mut step_failed = false;
-        let mut last_failure: Option<(Option<regex::CaptureLocations>, Option<step::Location>, event::StepError)> = None;
+        let mut last_failure: Option<(
+            Option<regex::CaptureLocations>,
+            Option<step::Location>,
+            event::StepError,
+        )> = None;
 
         // Collect all steps to execute (background steps + scenario steps)
         let mut all_steps = Vec::new();
-        
+
         // 1. Add feature-level background steps (if any)
         if let Some(background) = &feature.background {
             for step in &background.steps {
                 all_steps.push((step.clone(), true)); // true = background step
             }
         }
-        
+
         // 2. Add rule-level background steps (if any)
         if let Some(ref rule) = rule {
             if let Some(background) = &rule.background {
@@ -57,7 +63,7 @@ impl StepExecutor {
                 }
             }
         }
-        
+
         // 3. Add scenario steps
         for step in &scenario.steps {
             all_steps.push((step.clone(), false)); // false = regular step
@@ -141,14 +147,15 @@ impl StepExecutor {
         // 1. If any step failed -> StepFailed
         // 2. If any step was skipped (but none failed) -> StepSkipped
         // 3. If all steps passed -> StepPassed
-        let scenario_finished = if let Some((captures, location, error)) = last_failure {
-            event::ScenarioFinished::StepFailed(captures, location, error)
-        } else if skipped_steps > 0 {
-            event::ScenarioFinished::StepSkipped
-        } else {
-            event::ScenarioFinished::StepPassed
-        };
-        
+        let scenario_finished =
+            if let Some((captures, location, error)) = last_failure {
+                event::ScenarioFinished::StepFailed(captures, location, error)
+            } else if skipped_steps > 0 {
+                event::ScenarioFinished::StepSkipped
+            } else {
+                event::ScenarioFinished::StepPassed
+            };
+
         AfterHookEventsMeta {
             started: event::Metadata::new(()),
             finished: event::Metadata::new(()),
@@ -167,25 +174,25 @@ impl StepExecutor {
         world: &mut W,
         retries: Option<crate::event::Retries>,
         send_event: impl Fn(event::Cucumber<W>),
-        #[cfg(feature = "tracing")] waiter: Option<&crate::tracing::SpanCloseWaiter>,
+        #[cfg(feature = "tracing")] waiter: Option<
+            &crate::tracing::SpanCloseWaiter,
+        >,
     ) -> event::Step<W>
     where
         W: World,
     {
-        let event = Event::new(
-            event::Cucumber::scenario(
-                feature.clone(),
-                rule.clone(),
-                scenario.clone(),
-                event::RetryableScenario {
-                    event: event::Scenario::Step(
-                        step.clone(),
-                        event::Step::Started,
-                    ),
-                    retries,
-                },
-            )
-        );
+        let event = Event::new(event::Cucumber::scenario(
+            feature.clone(),
+            rule.clone(),
+            scenario.clone(),
+            event::RetryableScenario {
+                event: event::Scenario::Step(
+                    step.clone(),
+                    event::Step::Started,
+                ),
+                retries,
+            },
+        ));
         send_event(event.value);
 
         #[cfg(feature = "tracing")]
@@ -199,9 +206,8 @@ impl StepExecutor {
                 // Extract the actual capture locations for the event
                 let actual_captures = captures.clone();
 
-                let result = AssertUnwindSafe(step_fn(world, ctx))
-                            .catch_unwind()
-                            .await;
+                let result =
+                    AssertUnwindSafe(step_fn(world, ctx)).catch_unwind().await;
 
                 (result, loc, Some(actual_captures))
             }
@@ -233,7 +239,9 @@ impl StepExecutor {
 
         let step_event = match result {
             Ok(()) => event::Step::Passed {
-                captures: step_captures.unwrap_or_else(|| regex::Regex::new("").unwrap().capture_locations()),
+                captures: step_captures.unwrap_or_else(|| {
+                    regex::Regex::new("").unwrap().capture_locations()
+                }),
                 location,
             },
             Err(err) => {
@@ -247,17 +255,15 @@ impl StepExecutor {
             }
         };
 
-        let event = Event::new(
-            event::Cucumber::scenario(
-                feature,
-                rule,
-                scenario,
-                event::RetryableScenario {
-                    event: event::Scenario::Step(step, step_event.clone()),
-                    retries,
-                },
-            )
-        );
+        let event = Event::new(event::Cucumber::scenario(
+            feature,
+            rule,
+            scenario,
+            event::RetryableScenario {
+                event: event::Scenario::Step(step, step_event.clone()),
+                retries,
+            },
+        ));
         send_event(event.value);
 
         step_event
@@ -274,26 +280,26 @@ impl StepExecutor {
         world: &mut W,
         retries: Option<crate::event::Retries>,
         send_event: impl Fn(event::Cucumber<W>),
-        #[cfg(feature = "tracing")] waiter: Option<&crate::tracing::SpanCloseWaiter>,
+        #[cfg(feature = "tracing")] waiter: Option<
+            &crate::tracing::SpanCloseWaiter,
+        >,
     ) -> event::Step<W>
     where
         W: World,
     {
         // Send background step started event
-        let event = Event::new(
-            event::Cucumber::scenario(
-                feature.clone(),
-                rule.clone(),
-                scenario.clone(),
-                event::RetryableScenario {
-                    event: event::Scenario::Background(
-                        step.clone(),
-                        event::Step::Started,
-                    ),
-                    retries,
-                },
-            )
-        );
+        let event = Event::new(event::Cucumber::scenario(
+            feature.clone(),
+            rule.clone(),
+            scenario.clone(),
+            event::RetryableScenario {
+                event: event::Scenario::Background(
+                    step.clone(),
+                    event::Step::Started,
+                ),
+                retries,
+            },
+        ));
         send_event(event.value);
 
         #[cfg(feature = "tracing")]
@@ -308,9 +314,8 @@ impl StepExecutor {
                 // Extract the actual capture locations for the event
                 let actual_captures = captures.clone();
 
-                let result = AssertUnwindSafe(step_fn(world, ctx))
-                            .catch_unwind()
-                            .await;
+                let result =
+                    AssertUnwindSafe(step_fn(world, ctx)).catch_unwind().await;
 
                 (result, loc, Some(actual_captures))
             }
@@ -342,7 +347,9 @@ impl StepExecutor {
 
         let step_event = match result {
             Ok(()) => event::Step::Passed {
-                captures: step_captures.unwrap_or_else(|| regex::Regex::new("").unwrap().capture_locations()),
+                captures: step_captures.unwrap_or_else(|| {
+                    regex::Regex::new("").unwrap().capture_locations()
+                }),
                 location,
             },
             Err(err) => {
@@ -357,17 +364,15 @@ impl StepExecutor {
         };
 
         // Send background step finished event
-        let event = Event::new(
-            event::Cucumber::scenario(
-                feature,
-                rule,
-                scenario,
-                event::RetryableScenario {
-                    event: event::Scenario::Background(step, step_event.clone()),
-                    retries,
-                },
-            )
-        );
+        let event = Event::new(event::Cucumber::scenario(
+            feature,
+            rule,
+            scenario,
+            event::RetryableScenario {
+                event: event::Scenario::Background(step, step_event.clone()),
+                retries,
+            },
+        ));
         send_event(event.value);
 
         step_event
@@ -384,20 +389,15 @@ impl StepExecutor {
     ) where
         W: World,
     {
-        let event = Event::new(
-            event::Cucumber::scenario(
-                feature,
-                rule,
-                scenario,
-                event::RetryableScenario {
-                    event: event::Scenario::Background(
-                        step,
-                        event::Step::Skipped,
-                    ),
-                    retries,
-                },
-            )
-        );
+        let event = Event::new(event::Cucumber::scenario(
+            feature,
+            rule,
+            scenario,
+            event::RetryableScenario {
+                event: event::Scenario::Background(step, event::Step::Skipped),
+                retries,
+            },
+        ));
         send_event(event.value);
     }
 
@@ -414,17 +414,15 @@ impl StepExecutor {
     {
         let step_event = event::Step::Skipped;
 
-        let event = Event::new(
-            event::Cucumber::scenario(
-                feature,
-                rule,
-                scenario,
-                event::RetryableScenario {
-                    event: event::Scenario::Step(step, step_event),
-                    retries,
-                },
-            )
-        );
+        let event = Event::new(event::Cucumber::scenario(
+            feature,
+            rule,
+            scenario,
+            event::RetryableScenario {
+                event: event::Scenario::Step(step, step_event),
+                retries,
+            },
+        ));
         send_event(event.value);
     }
 }
@@ -443,7 +441,7 @@ mod tests {
         let mut world = TestWorld;
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
-        
+
         let _meta = StepExecutor::run_steps(
             &collection,
             id,
@@ -455,8 +453,9 @@ mod tests {
             move |event| events_clone.lock().unwrap().push(event),
             #[cfg(feature = "tracing")]
             None,
-        ).await;
-        
+        )
+        .await;
+
         // AfterHookEventsMeta only contains timing metadata
         // Test that it was properly created
         #[cfg(feature = "timestamps")]
@@ -474,7 +473,7 @@ mod tests {
         let mut world = TestWorld;
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
-        
+
         let _meta = StepExecutor::run_steps(
             &collection,
             id,
@@ -486,8 +485,9 @@ mod tests {
             move |event| events_clone.lock().unwrap().push(event),
             #[cfg(feature = "tracing")]
             None,
-        ).await;
-        
+        )
+        .await;
+
         // AfterHookEventsMeta only contains timing metadata
         // Just verify it was created
         #[cfg(feature = "timestamps")]
@@ -503,16 +503,18 @@ mod tests {
         let step = create_test_step();
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
-        
+
         StepExecutor::emit_skipped_step_event(
             feature,
             None,
             scenario,
             step,
             None, // retries
-            &move |event: event::Cucumber<TestWorld>| events_clone.lock().unwrap().push(event),
+            &move |event: event::Cucumber<TestWorld>| {
+                events_clone.lock().unwrap().push(event)
+            },
         );
-        
+
         let captured_events = events.lock().unwrap();
         assert_eq!(captured_events.len(), 1);
     }
@@ -524,7 +526,7 @@ mod tests {
             finished: event::Metadata::new(()),
             scenario_finished: event::ScenarioFinished::StepPassed,
         };
-        
+
         // Just verify it can be created
         assert!(matches!(meta.started, _));
         assert!(matches!(meta.finished, _));
@@ -537,15 +539,16 @@ mod tests {
             finished: event::Metadata::new(()),
             scenario_finished: event::ScenarioFinished::StepPassed,
         };
-        
+
         // Verify both fields exist
         assert!(matches!(meta.started, _));
         assert!(matches!(meta.finished, _));
     }
 
-    fn create_test_feature_and_scenario() -> (Source<gherkin::Feature>, Source<gherkin::Scenario>) {
+    fn create_test_feature_and_scenario()
+    -> (Source<gherkin::Feature>, Source<gherkin::Scenario>) {
         use gherkin::{Feature, Scenario};
-        
+
         let feature = Feature {
             keyword: "Feature".to_string(),
             name: "Test Feature".to_string(),
@@ -558,7 +561,7 @@ mod tests {
             position: gherkin::LineCol { line: 1, col: 1 },
             path: None,
         };
-        
+
         let scenario = Scenario {
             keyword: "Scenario".to_string(),
             name: "Test Scenario".to_string(),
@@ -569,13 +572,14 @@ mod tests {
             span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 2, col: 1 },
         };
-        
+
         (Source::new(feature), Source::new(scenario))
     }
 
-    fn create_test_scenario_with_steps() -> (Source<gherkin::Feature>, Source<gherkin::Scenario>) {
+    fn create_test_scenario_with_steps()
+    -> (Source<gherkin::Feature>, Source<gherkin::Scenario>) {
         use gherkin::{Feature, Scenario, Step};
-        
+
         let feature = Feature {
             keyword: "Feature".to_string(),
             name: "Test Feature".to_string(),
@@ -588,7 +592,7 @@ mod tests {
             position: gherkin::LineCol { line: 1, col: 1 },
             path: None,
         };
-        
+
         let step = Step {
             ty: gherkin::StepType::Given,
             keyword: "Given".to_string(),
@@ -598,7 +602,7 @@ mod tests {
             span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 3, col: 1 },
         };
-        
+
         let scenario = Scenario {
             keyword: "Scenario".to_string(),
             name: "Test Scenario".to_string(),
@@ -609,13 +613,13 @@ mod tests {
             span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 2, col: 1 },
         };
-        
+
         (Source::new(feature), Source::new(scenario))
     }
 
     fn create_test_step() -> Source<gherkin::Step> {
         use gherkin::Step;
-        
+
         let step = Step {
             ty: gherkin::StepType::Given,
             keyword: "Given".to_string(),
@@ -625,7 +629,7 @@ mod tests {
             span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 3, col: 1 },
         };
-        
+
         Source::new(step)
     }
 }

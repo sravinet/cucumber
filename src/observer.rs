@@ -1,9 +1,8 @@
 /// Observer trait for external systems like ObservaBDD
-/// 
+///
 /// This provides a lightweight integration point for observability
 /// without adding runtime overhead when not in use.
-
-use crate::{event, Event, World};
+use crate::{Event, World, event};
 
 /// Context provided to observers containing execution metadata
 #[derive(Clone, Debug)]
@@ -20,11 +19,15 @@ pub struct ObservationContext {
 /// Observer trait for monitoring test execution
 pub trait TestObserver<W: World>: Send + Sync {
     /// Called when an event occurs
-    fn on_event(&mut self, event: &Event<event::Cucumber<W>>, context: &ObservationContext);
-    
+    fn on_event(
+        &mut self,
+        event: &Event<event::Cucumber<W>>,
+        context: &ObservationContext,
+    );
+
     /// Called when execution starts
     fn on_start(&mut self) {}
-    
+
     /// Called when execution completes
     fn on_finish(&mut self) {}
 }
@@ -33,7 +36,12 @@ pub trait TestObserver<W: World>: Send + Sync {
 pub struct NullObserver;
 
 impl<W: World> TestObserver<W> for NullObserver {
-    fn on_event(&mut self, _: &Event<event::Cucumber<W>>, _: &ObservationContext) {}
+    fn on_event(
+        &mut self,
+        _: &Event<event::Cucumber<W>>,
+        _: &ObservationContext,
+    ) {
+    }
 }
 
 /// Registry for managing multiple observers
@@ -44,23 +52,23 @@ pub struct ObserverRegistry<W> {
 
 impl<W> ObserverRegistry<W> {
     pub fn new() -> Self {
-        Self {
-            observers: Vec::new(),
-            enabled: false,
-        }
+        Self { observers: Vec::new(), enabled: false }
     }
-    
-    pub fn register(&mut self, observer: Box<dyn TestObserver<W>>) 
-    where 
+
+    pub fn register(&mut self, observer: Box<dyn TestObserver<W>>)
+    where
         W: World,
     {
         self.observers.push(observer);
         self.enabled = true;
     }
-    
+
     #[inline]
-    pub fn notify(&mut self, event: &Event<event::Cucumber<W>>, context: &ObservationContext)
-    where
+    pub fn notify(
+        &mut self,
+        event: &Event<event::Cucumber<W>>,
+        context: &ObservationContext,
+    ) where
         W: World,
     {
         if self.enabled {

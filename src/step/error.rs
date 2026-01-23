@@ -23,7 +23,9 @@ pub struct AmbiguousMatchError {
 impl AmbiguousMatchError {
     /// Creates a new [`AmbiguousMatchError`] with the given possible matches.
     #[must_use]
-    pub fn new(possible_matches: Vec<(HashableRegex, Option<Location>)>) -> Self {
+    pub fn new(
+        possible_matches: Vec<(HashableRegex, Option<Location>)>,
+    ) -> Self {
         Self { possible_matches }
     }
 
@@ -77,15 +79,21 @@ mod tests {
     fn create_test_matches() -> Vec<(HashableRegex, Option<Location>)> {
         vec![
             (
-                HashableRegex::from(Regex::new(r"I have (\d+) cucumbers").unwrap()),
+                HashableRegex::from(
+                    Regex::new(r"I have (\d+) cucumbers").unwrap(),
+                ),
                 Some(Location::new("src/steps.rs", 10, 5)),
             ),
             (
-                HashableRegex::from(Regex::new(r"I have \d+ cucumbers").unwrap()),
+                HashableRegex::from(
+                    Regex::new(r"I have \d+ cucumbers").unwrap(),
+                ),
                 Some(Location::new("src/more_steps.rs", 20, 10)),
             ),
             (
-                HashableRegex::from(Regex::new(r"I have .+ cucumbers").unwrap()),
+                HashableRegex::from(
+                    Regex::new(r"I have .+ cucumbers").unwrap(),
+                ),
                 None,
             ),
         ]
@@ -117,7 +125,7 @@ mod tests {
     fn ambiguous_match_error_patterns_returns_regex_patterns() {
         let matches = create_test_matches();
         let error = AmbiguousMatchError::new(matches);
-        
+
         let patterns: Vec<&str> = error.patterns().collect();
         assert_eq!(patterns.len(), 3);
         assert!(patterns.contains(&r"I have (\d+) cucumbers"));
@@ -129,20 +137,20 @@ mod tests {
     fn ambiguous_match_error_locations_returns_locations() {
         let matches = create_test_matches();
         let error = AmbiguousMatchError::new(matches);
-        
+
         let locations: Vec<Option<&Location>> = error.locations().collect();
         assert_eq!(locations.len(), 3);
-        
+
         // First two should have locations, third should be None
         assert!(locations[0].is_some());
         assert!(locations[1].is_some());
         assert!(locations[2].is_none());
-        
+
         if let Some(loc) = locations[0] {
             assert_eq!(loc.path(), "src/steps.rs");
             assert_eq!(loc.line(), 10);
         }
-        
+
         if let Some(loc) = locations[1] {
             assert_eq!(loc.path(), "src/more_steps.rs");
             assert_eq!(loc.line(), 20);
@@ -153,12 +161,13 @@ mod tests {
     fn ambiguous_match_error_sorted_matches_returns_sorted_copy() {
         let matches = create_test_matches();
         let error = AmbiguousMatchError::new(matches);
-        
+
         let sorted = error.sorted_matches();
         assert_eq!(sorted.len(), 3);
-        
+
         // Should be sorted by regex pattern (alphabetically)
-        let patterns: Vec<&str> = sorted.iter().map(|(r, _)| r.as_str()).collect();
+        let patterns: Vec<&str> =
+            sorted.iter().map(|(r, _)| r.as_str()).collect();
         assert!(patterns[0] < patterns[1]);
         assert!(patterns[1] < patterns[2]);
     }
@@ -170,15 +179,12 @@ mod tests {
                 HashableRegex::from(Regex::new(r"pattern1").unwrap()),
                 Some(Location::new("src/test.rs", 10, 5)),
             ),
-            (
-                HashableRegex::from(Regex::new(r"pattern2").unwrap()),
-                None,
-            ),
+            (HashableRegex::from(Regex::new(r"pattern2").unwrap()), None),
         ];
-        
+
         let error = AmbiguousMatchError::new(matches);
         let display_output = format!("{}", error);
-        
+
         assert!(display_output.contains("Possible matches:"));
         assert!(display_output.contains("pattern1"));
         assert!(display_output.contains("pattern2"));
@@ -187,16 +193,12 @@ mod tests {
 
     #[test]
     fn ambiguous_match_error_display_without_location() {
-        let matches = vec![
-            (
-                HashableRegex::from(Regex::new(r"pattern").unwrap()),
-                None,
-            ),
-        ];
-        
+        let matches =
+            vec![(HashableRegex::from(Regex::new(r"pattern").unwrap()), None)];
+
         let error = AmbiguousMatchError::new(matches);
         let display_output = format!("{}", error);
-        
+
         assert!(display_output.contains("Possible matches:"));
         assert!(display_output.contains("pattern"));
         // Should not contain " --> " when no location
@@ -208,7 +210,7 @@ mod tests {
         let matches = create_test_matches();
         let error = AmbiguousMatchError::new(matches.clone());
         let cloned = error.clone();
-        
+
         assert_eq!(cloned.possible_matches, matches);
         assert_eq!(cloned.match_count(), error.match_count());
     }
@@ -218,7 +220,7 @@ mod tests {
         let matches = create_test_matches();
         let error = AmbiguousMatchError::new(matches);
         let debug_output = format!("{:?}", error);
-        
+
         assert!(debug_output.contains("AmbiguousMatchError"));
         assert!(debug_output.contains("possible_matches"));
     }
@@ -236,7 +238,7 @@ mod tests {
     fn ambiguous_match_error_is_error_trait() {
         let matches = create_test_matches();
         let error = AmbiguousMatchError::new(matches);
-        
+
         // Should implement std::error::Error
         let _: &dyn std::error::Error = &error;
     }

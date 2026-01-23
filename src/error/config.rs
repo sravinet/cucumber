@@ -58,33 +58,25 @@ impl ConfigError {
     /// Creates a new invalid retry error.
     #[must_use]
     pub fn invalid_retry(reason: impl Into<String>) -> Self {
-        Self::InvalidRetry {
-            reason: reason.into(),
-        }
+        Self::InvalidRetry { reason: reason.into() }
     }
 
     /// Creates a new invalid tag filter error.
     #[must_use]
     pub fn invalid_tag_filter(expression: impl Into<String>) -> Self {
-        Self::InvalidTagFilter {
-            expression: expression.into(),
-        }
+        Self::InvalidTagFilter { expression: expression.into() }
     }
 
     /// Creates a new feature file not found error.
     #[must_use]
     pub fn feature_file_not_found(path: impl Into<String>) -> Self {
-        Self::FeatureFileNotFound {
-            path: path.into(),
-        }
+        Self::FeatureFileNotFound { path: path.into() }
     }
 
     /// Creates a new invalid CLI arguments error.
     #[must_use]
     pub fn invalid_cli_args(reason: impl Into<String>) -> Self {
-        Self::InvalidCliArgs {
-            reason: reason.into(),
-        }
+        Self::InvalidCliArgs { reason: reason.into() }
     }
 
     /// Returns true if this is an invalid retry error.
@@ -157,22 +149,49 @@ mod tests {
         let retry_err = ConfigError::invalid_retry("negative count");
         assert!(retry_err.is_invalid_retry());
         assert_eq!(retry_err.invalid_retry_reason(), Some("negative count"));
-        assert!(retry_err.to_string().contains("Invalid retry configuration: negative count"));
+        assert!(
+            retry_err
+                .to_string()
+                .contains("Invalid retry configuration: negative count")
+        );
 
-        let tag_filter_err = ConfigError::invalid_tag_filter("@invalid &&& @bad");
+        let tag_filter_err =
+            ConfigError::invalid_tag_filter("@invalid &&& @bad");
         assert!(tag_filter_err.is_invalid_tag_filter());
-        assert_eq!(tag_filter_err.invalid_tag_filter_expression(), Some("@invalid &&& @bad"));
-        assert!(tag_filter_err.to_string().contains("Invalid tag filter: @invalid &&& @bad"));
+        assert_eq!(
+            tag_filter_err.invalid_tag_filter_expression(),
+            Some("@invalid &&& @bad")
+        );
+        assert!(
+            tag_filter_err
+                .to_string()
+                .contains("Invalid tag filter: @invalid &&& @bad")
+        );
 
-        let file_not_found_err = ConfigError::feature_file_not_found("/path/to/missing.feature");
+        let file_not_found_err =
+            ConfigError::feature_file_not_found("/path/to/missing.feature");
         assert!(file_not_found_err.is_feature_file_not_found());
-        assert_eq!(file_not_found_err.missing_feature_file_path(), Some("/path/to/missing.feature"));
-        assert!(file_not_found_err.to_string().contains("Feature file not found: /path/to/missing.feature"));
+        assert_eq!(
+            file_not_found_err.missing_feature_file_path(),
+            Some("/path/to/missing.feature")
+        );
+        assert!(
+            file_not_found_err
+                .to_string()
+                .contains("Feature file not found: /path/to/missing.feature")
+        );
 
         let cli_args_err = ConfigError::invalid_cli_args("conflicting options");
         assert!(cli_args_err.is_invalid_cli_args());
-        assert_eq!(cli_args_err.invalid_cli_args_reason(), Some("conflicting options"));
-        assert!(cli_args_err.to_string().contains("Invalid CLI arguments: conflicting options"));
+        assert_eq!(
+            cli_args_err.invalid_cli_args_reason(),
+            Some("conflicting options")
+        );
+        assert!(
+            cli_args_err
+                .to_string()
+                .contains("Invalid CLI arguments: conflicting options")
+        );
     }
 
     #[test]
@@ -189,7 +208,8 @@ mod tests {
         assert!(!tag_filter_err.is_feature_file_not_found());
         assert!(!tag_filter_err.is_invalid_cli_args());
 
-        let file_not_found_err = ConfigError::feature_file_not_found("test.feature");
+        let file_not_found_err =
+            ConfigError::feature_file_not_found("test.feature");
         assert!(!file_not_found_err.is_invalid_retry());
         assert!(!file_not_found_err.is_invalid_tag_filter());
         assert!(file_not_found_err.is_feature_file_not_found());
@@ -212,44 +232,69 @@ mod tests {
 
         let tag_filter_err = ConfigError::invalid_tag_filter("@bad-syntax");
         assert_eq!(tag_filter_err.invalid_retry_reason(), None);
-        assert_eq!(tag_filter_err.invalid_tag_filter_expression(), Some("@bad-syntax"));
+        assert_eq!(
+            tag_filter_err.invalid_tag_filter_expression(),
+            Some("@bad-syntax")
+        );
         assert_eq!(tag_filter_err.missing_feature_file_path(), None);
         assert_eq!(tag_filter_err.invalid_cli_args_reason(), None);
 
-        let file_not_found_err = ConfigError::feature_file_not_found("missing.feature");
+        let file_not_found_err =
+            ConfigError::feature_file_not_found("missing.feature");
         assert_eq!(file_not_found_err.invalid_retry_reason(), None);
         assert_eq!(file_not_found_err.invalid_tag_filter_expression(), None);
-        assert_eq!(file_not_found_err.missing_feature_file_path(), Some("missing.feature"));
+        assert_eq!(
+            file_not_found_err.missing_feature_file_path(),
+            Some("missing.feature")
+        );
         assert_eq!(file_not_found_err.invalid_cli_args_reason(), None);
 
         let cli_args_err = ConfigError::invalid_cli_args("incompatible flags");
         assert_eq!(cli_args_err.invalid_retry_reason(), None);
         assert_eq!(cli_args_err.invalid_tag_filter_expression(), None);
         assert_eq!(cli_args_err.missing_feature_file_path(), None);
-        assert_eq!(cli_args_err.invalid_cli_args_reason(), Some("incompatible flags"));
+        assert_eq!(
+            cli_args_err.invalid_cli_args_reason(),
+            Some("incompatible flags")
+        );
     }
 
     #[test]
     fn test_config_error_display() {
-        let retry_err = ConfigError::InvalidRetry {
-            reason: "negative count".to_string(),
-        };
-        assert!(retry_err.to_string().contains("Invalid retry configuration: negative count"));
+        let retry_err =
+            ConfigError::InvalidRetry { reason: "negative count".to_string() };
+        assert!(
+            retry_err
+                .to_string()
+                .contains("Invalid retry configuration: negative count")
+        );
 
         let tag_filter_err = ConfigError::InvalidTagFilter {
             expression: "@invalid &&& @bad".to_string(),
         };
-        assert!(tag_filter_err.to_string().contains("Invalid tag filter: @invalid &&& @bad"));
+        assert!(
+            tag_filter_err
+                .to_string()
+                .contains("Invalid tag filter: @invalid &&& @bad")
+        );
 
         let file_not_found_err = ConfigError::FeatureFileNotFound {
             path: "/path/to/missing.feature".to_string(),
         };
-        assert!(file_not_found_err.to_string().contains("Feature file not found: /path/to/missing.feature"));
+        assert!(
+            file_not_found_err
+                .to_string()
+                .contains("Feature file not found: /path/to/missing.feature")
+        );
 
         let cli_args_err = ConfigError::InvalidCliArgs {
             reason: "conflicting arguments".to_string(),
         };
-        assert!(cli_args_err.to_string().contains("Invalid CLI arguments: conflicting arguments"));
+        assert!(
+            cli_args_err
+                .to_string()
+                .contains("Invalid CLI arguments: conflicting arguments")
+        );
     }
 
     #[test]
@@ -258,31 +303,47 @@ mod tests {
         assert!(ok_result.is_ok());
         assert_eq!(ok_result.unwrap(), "success");
 
-        let err_result: ConfigResult<String> = Err(ConfigError::invalid_retry("test"));
+        let err_result: ConfigResult<String> =
+            Err(ConfigError::invalid_retry("test"));
         assert!(err_result.is_err());
         assert!(err_result.unwrap_err().is_invalid_retry());
     }
 
     #[test]
     fn test_config_error_variants() {
-        let retry_err = ConfigError::InvalidRetry {
-            reason: "negative count".to_string(),
-        };
-        assert!(retry_err.to_string().contains("Invalid retry configuration: negative count"));
+        let retry_err =
+            ConfigError::InvalidRetry { reason: "negative count".to_string() };
+        assert!(
+            retry_err
+                .to_string()
+                .contains("Invalid retry configuration: negative count")
+        );
 
         let tag_filter_err = ConfigError::InvalidTagFilter {
             expression: "@invalid &&& @bad".to_string(),
         };
-        assert!(tag_filter_err.to_string().contains("Invalid tag filter: @invalid &&& @bad"));
+        assert!(
+            tag_filter_err
+                .to_string()
+                .contains("Invalid tag filter: @invalid &&& @bad")
+        );
 
         let file_not_found_err = ConfigError::FeatureFileNotFound {
             path: "/path/to/missing.feature".to_string(),
         };
-        assert!(file_not_found_err.to_string().contains("Feature file not found: /path/to/missing.feature"));
+        assert!(
+            file_not_found_err
+                .to_string()
+                .contains("Feature file not found: /path/to/missing.feature")
+        );
 
         let cli_args_err = ConfigError::InvalidCliArgs {
             reason: "conflicting arguments".to_string(),
         };
-        assert!(cli_args_err.to_string().contains("Invalid CLI arguments: conflicting arguments"));
+        assert!(
+            cli_args_err
+                .to_string()
+                .contains("Invalid CLI arguments: conflicting arguments")
+        );
     }
 }

@@ -121,11 +121,11 @@ mod tests {
         let regex1 = Regex::new(r"test").unwrap();
         let regex2 = Regex::new(r"test").unwrap();
         let regex3 = Regex::new(r"different").unwrap();
-        
+
         let hashable1 = HashableRegex::new(regex1);
         let hashable2 = HashableRegex::new(regex2);
         let hashable3 = HashableRegex::new(regex3);
-        
+
         assert_eq!(hashable1, hashable2);
         assert_ne!(hashable1, hashable3);
     }
@@ -135,15 +135,15 @@ mod tests {
         let regex_a = Regex::new(r"a").unwrap();
         let regex_b = Regex::new(r"b").unwrap();
         let regex_z = Regex::new(r"z").unwrap();
-        
+
         let hashable_a = HashableRegex::new(regex_a);
         let hashable_b = HashableRegex::new(regex_b);
         let hashable_z = HashableRegex::new(regex_z);
-        
+
         assert!(hashable_a < hashable_b);
         assert!(hashable_b < hashable_z);
         assert!(hashable_a < hashable_z);
-        
+
         assert_eq!(hashable_a.cmp(&hashable_b), Ordering::Less);
         assert_eq!(hashable_b.cmp(&hashable_a), Ordering::Greater);
         assert_eq!(hashable_a.cmp(&hashable_a), Ordering::Equal);
@@ -153,13 +153,13 @@ mod tests {
     fn hashable_regex_can_be_used_in_hashmap() {
         let regex1 = Regex::new(r"pattern1").unwrap();
         let regex2 = Regex::new(r"pattern2").unwrap();
-        
+
         let mut map = HashMap::new();
         map.insert(HashableRegex::new(regex1), "value1");
         map.insert(HashableRegex::new(regex2), "value2");
-        
+
         assert_eq!(map.len(), 2);
-        
+
         let lookup_regex = Regex::new(r"pattern1").unwrap();
         let lookup_key = HashableRegex::new(lookup_regex);
         assert_eq!(map.get(&lookup_key), Some(&"value1"));
@@ -170,12 +170,12 @@ mod tests {
         let regex1 = Regex::new(r"pattern1").unwrap();
         let regex2 = Regex::new(r"pattern2").unwrap();
         let regex1_duplicate = Regex::new(r"pattern1").unwrap();
-        
+
         let mut set = HashSet::new();
         set.insert(HashableRegex::new(regex1));
         set.insert(HashableRegex::new(regex2));
         set.insert(HashableRegex::new(regex1_duplicate));
-        
+
         // Should only contain 2 unique patterns
         assert_eq!(set.len(), 2);
     }
@@ -184,19 +184,19 @@ mod tests {
     fn hashable_regex_hash_consistency() {
         let regex1 = Regex::new(r"test").unwrap();
         let regex2 = Regex::new(r"test").unwrap();
-        
+
         let hashable1 = HashableRegex::new(regex1);
         let hashable2 = HashableRegex::new(regex2);
-        
+
         // Equal objects must have equal hashes
         assert_eq!(hashable1, hashable2);
-        
+
         let mut hasher1 = std::collections::hash_map::DefaultHasher::new();
         let mut hasher2 = std::collections::hash_map::DefaultHasher::new();
-        
+
         hashable1.hash(&mut hasher1);
         hashable2.hash(&mut hasher2);
-        
+
         assert_eq!(hasher1.finish(), hasher2.finish());
     }
 
@@ -204,11 +204,11 @@ mod tests {
     fn hashable_regex_deref_works() {
         let regex = Regex::new(r"test (\d+)").unwrap();
         let hashable = HashableRegex::new(regex);
-        
+
         // Should be able to call Regex methods directly
         assert!(hashable.is_match("test 123"));
         assert!(!hashable.is_match("no match"));
-        
+
         let captures = hashable.captures("test 456").unwrap();
         assert_eq!(captures.get(1).unwrap().as_str(), "456");
     }
@@ -218,7 +218,7 @@ mod tests {
         let regex = Regex::new(r"test").unwrap();
         let hashable = HashableRegex::new(regex);
         let cloned = hashable.clone();
-        
+
         assert_eq!(hashable, cloned);
         assert_eq!(hashable.as_str(), cloned.as_str());
     }

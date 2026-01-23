@@ -40,18 +40,16 @@ pub type WorldResult<T> = std::result::Result<T, WorldError>;
 impl WorldError {
     /// Creates a new creation error.
     #[must_use]
-    pub fn creation(source: impl std::error::Error + Send + Sync + 'static) -> Self {
-        Self::Creation {
-            source: Box::new(source),
-        }
+    pub fn creation(
+        source: impl std::error::Error + Send + Sync + 'static,
+    ) -> Self {
+        Self::Creation { source: Box::new(source) }
     }
 
     /// Creates a new invalid state error.
     #[must_use]
     pub fn invalid_state(reason: impl Into<String>) -> Self {
-        Self::InvalidState {
-            reason: reason.into(),
-        }
+        Self::InvalidState { reason: reason.into() }
     }
 
     /// Returns the reason for invalid state, if applicable.
@@ -94,42 +92,61 @@ mod tests {
 
     #[test]
     fn test_world_error_constructors() {
-        let creation_err = WorldError::creation(io::Error::new(io::ErrorKind::Other, "creation failed"));
+        let creation_err = WorldError::creation(io::Error::new(
+            io::ErrorKind::Other,
+            "creation failed",
+        ));
         assert!(creation_err.is_creation_error());
         assert!(!creation_err.is_invalid_state());
         assert!(creation_err.to_string().contains("Failed to create World"));
 
-        let invalid_state_err = WorldError::invalid_state("missing required field");
+        let invalid_state_err =
+            WorldError::invalid_state("missing required field");
         assert!(!invalid_state_err.is_creation_error());
         assert!(invalid_state_err.is_invalid_state());
-        assert_eq!(invalid_state_err.invalid_state_reason(), Some("missing required field"));
+        assert_eq!(
+            invalid_state_err.invalid_state_reason(),
+            Some("missing required field")
+        );
     }
 
     #[test]
     fn test_world_error_display() {
         let creation_err = WorldError::Creation {
-            source: Box::new(io::Error::new(io::ErrorKind::Other, "creation failed")),
+            source: Box::new(io::Error::new(
+                io::ErrorKind::Other,
+                "creation failed",
+            )),
         };
         assert!(creation_err.to_string().contains("Failed to create World"));
 
         let invalid_state_err = WorldError::InvalidState {
             reason: "missing required field".to_string(),
         };
-        assert!(invalid_state_err.to_string().contains("World is in invalid state: missing required field"));
+        assert!(
+            invalid_state_err
+                .to_string()
+                .contains("World is in invalid state: missing required field")
+        );
     }
 
     #[test]
     fn test_invalid_state_reason_extraction() {
-        let creation_err = WorldError::creation(CustomError("test".to_string()));
+        let creation_err =
+            WorldError::creation(CustomError("test".to_string()));
         assert_eq!(creation_err.invalid_state_reason(), None);
 
         let invalid_state_err = WorldError::invalid_state("test reason");
-        assert_eq!(invalid_state_err.invalid_state_reason(), Some("test reason"));
+        assert_eq!(
+            invalid_state_err.invalid_state_reason(),
+            Some("test reason")
+        );
     }
 
     #[test]
     fn test_error_type_checks() {
-        let creation_err = WorldError::creation(io::Error::new(io::ErrorKind::Other, "test"));
+        let creation_err =
+            WorldError::creation(io::Error::new(io::ErrorKind::Other, "test"));
         assert!(creation_err.is_creation_error());
         assert!(!creation_err.is_invalid_state());
 
@@ -144,7 +161,8 @@ mod tests {
         assert!(ok_result.is_ok());
         assert_eq!(ok_result.unwrap(), 42);
 
-        let err_result: WorldResult<i32> = Err(WorldError::invalid_state("test"));
+        let err_result: WorldResult<i32> =
+            Err(WorldError::invalid_state("test"));
         assert!(err_result.is_err());
         assert!(err_result.unwrap_err().is_invalid_state());
     }
@@ -153,31 +171,41 @@ mod tests {
     fn test_custom_error_source() {
         let custom_err = CustomError("custom message".to_string());
         let world_err = WorldError::creation(custom_err);
-        
+
         assert!(world_err.source().is_some());
         if let Some(source) = world_err.source() {
-            assert!(source.to_string().contains("Custom error: custom message"));
+            assert!(
+                source.to_string().contains("Custom error: custom message")
+            );
         }
     }
 
     #[test]
     fn test_world_error_variants() {
         let creation_err = WorldError::Creation {
-            source: Box::new(io::Error::new(io::ErrorKind::Other, "creation failed")),
+            source: Box::new(io::Error::new(
+                io::ErrorKind::Other,
+                "creation failed",
+            )),
         };
         assert!(creation_err.to_string().contains("Failed to create World"));
 
         let invalid_state_err = WorldError::InvalidState {
             reason: "missing required field".to_string(),
         };
-        assert!(invalid_state_err.to_string().contains("World is in invalid state: missing required field"));
+        assert!(
+            invalid_state_err
+                .to_string()
+                .contains("World is in invalid state: missing required field")
+        );
     }
 
     #[test]
     fn test_error_chain() {
-        let io_err = io::Error::new(io::ErrorKind::PermissionDenied, "access denied");
+        let io_err =
+            io::Error::new(io::ErrorKind::PermissionDenied, "access denied");
         let world_err = WorldError::creation(io_err);
-        
+
         assert!(world_err.source().is_some());
         if let Some(source) = world_err.source() {
             assert!(source.to_string().contains("access denied"));

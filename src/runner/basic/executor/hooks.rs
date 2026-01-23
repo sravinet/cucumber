@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::super::supporting_structures::{
-    ScenarioId, ExecutionFailure, coerce_into_info,
+    ExecutionFailure, ScenarioId, coerce_into_info,
 };
 
 /// Hook execution functionality for the Executor.
@@ -26,29 +26,32 @@ impl HookExecutor {
         scenario: Source<gherkin::Scenario>,
         world: &mut W,
         send_event: impl Fn(event::Cucumber<W>),
-        #[cfg(feature = "tracing")] waiter: Option<&crate::tracing::SpanCloseWaiter>,
+        #[cfg(feature = "tracing")] waiter: Option<
+            &crate::tracing::SpanCloseWaiter,
+        >,
     ) -> Result<(), ExecutionFailure<W>>
     where
         W: World,
         Before: for<'a> Fn(
-                &'a gherkin::Feature,
-                Option<&'a gherkin::Rule>,
-                &'a gherkin::Scenario,
-                &'a mut W,
-            ) -> LocalBoxFuture<'a, ()>,
+            &'a gherkin::Feature,
+            Option<&'a gherkin::Rule>,
+            &'a gherkin::Scenario,
+            &'a mut W,
+        ) -> LocalBoxFuture<'a, ()>,
     {
         if let Some(before_hook) = hook {
-            let event = Event::new(
-                event::Cucumber::scenario(
-                    feature.clone(),
-                    rule.clone(),
-                    scenario.clone(),
-                    event::RetryableScenario {
-                        event: event::Scenario::Hook(HookType::Before, event::Hook::Started),
-                        retries: None,
-                    },
-                )
-            );
+            let event = Event::new(event::Cucumber::scenario(
+                feature.clone(),
+                rule.clone(),
+                scenario.clone(),
+                event::RetryableScenario {
+                    event: event::Scenario::Hook(
+                        HookType::Before,
+                        event::Hook::Started,
+                    ),
+                    retries: None,
+                },
+            ));
             send_event(event.value);
 
             #[cfg(feature = "tracing")]
@@ -81,17 +84,15 @@ impl HookExecutor {
                 }
             };
 
-            let event = Event::new(
-                event::Cucumber::scenario(
-                    feature,
-                    rule,
-                    scenario,
-                    event::RetryableScenario {
-                        event: event::Scenario::Hook(HookType::Before, hook_event),
-                        retries: None,
-                    },
-                )
-            );
+            let event = Event::new(event::Cucumber::scenario(
+                feature,
+                rule,
+                scenario,
+                event::RetryableScenario {
+                    event: event::Scenario::Hook(HookType::Before, hook_event),
+                    retries: None,
+                },
+            ));
             send_event(event.value);
 
             if should_fail {
@@ -112,30 +113,33 @@ impl HookExecutor {
         world: Option<&mut W>,
         scenario_finished: &event::ScenarioFinished,
         send_event: impl Fn(event::Cucumber<W>),
-        #[cfg(feature = "tracing")] waiter: Option<&crate::tracing::SpanCloseWaiter>,
+        #[cfg(feature = "tracing")] waiter: Option<
+            &crate::tracing::SpanCloseWaiter,
+        >,
     ) -> Option<Info>
     where
         W: World,
         After: for<'a> Fn(
-                &'a gherkin::Feature,
-                Option<&'a gherkin::Rule>,
-                &'a gherkin::Scenario,
-                &'a event::ScenarioFinished,
-                Option<&'a mut W>,
-            ) -> LocalBoxFuture<'a, ()>,
+            &'a gherkin::Feature,
+            Option<&'a gherkin::Rule>,
+            &'a gherkin::Scenario,
+            &'a event::ScenarioFinished,
+            Option<&'a mut W>,
+        ) -> LocalBoxFuture<'a, ()>,
     {
         if let Some(after_hook) = hook {
-            let event = Event::new(
-                event::Cucumber::scenario(
-                    feature.clone(),
-                    rule.clone(),
-                    scenario.clone(),
-                    event::RetryableScenario {
-                        event: event::Scenario::Hook(HookType::After, event::Hook::Started),
-                        retries: None,
-                    },
-                )
-            );
+            let event = Event::new(event::Cucumber::scenario(
+                feature.clone(),
+                rule.clone(),
+                scenario.clone(),
+                event::RetryableScenario {
+                    event: event::Scenario::Hook(
+                        HookType::After,
+                        event::Hook::Started,
+                    ),
+                    retries: None,
+                },
+            ));
             send_event(event.value);
 
             #[cfg(feature = "tracing")]
@@ -169,17 +173,15 @@ impl HookExecutor {
                 }
             };
 
-            let event = Event::new(
-                event::Cucumber::scenario(
-                    feature,
-                    rule,
-                    scenario,
-                    event::RetryableScenario {
-                        event: event::Scenario::Hook(HookType::After, hook_event),
-                        retries: None,
-                    },
-                )
-            );
+            let event = Event::new(event::Cucumber::scenario(
+                feature,
+                rule,
+                scenario,
+                event::RetryableScenario {
+                    event: event::Scenario::Hook(HookType::After, hook_event),
+                    retries: None,
+                },
+            ));
             send_event(event.value);
 
             return error;
@@ -201,9 +203,16 @@ mod tests {
         let mut world = TestWorld;
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
-        
+
         let result = HookExecutor::run_before_hook(
-            None::<&for<'a> fn(&'a gherkin::Feature, Option<&'a gherkin::Rule>, &'a gherkin::Scenario, &'a mut TestWorld) -> LocalBoxFuture<'a, ()>>,
+            None::<
+                &for<'a> fn(
+                    &'a gherkin::Feature,
+                    Option<&'a gherkin::Rule>,
+                    &'a gherkin::Scenario,
+                    &'a mut TestWorld,
+                ) -> LocalBoxFuture<'a, ()>,
+            >,
             id,
             feature,
             None,
@@ -212,8 +221,9 @@ mod tests {
             move |event| events_clone.lock().unwrap().push(event),
             #[cfg(feature = "tracing")]
             None,
-        ).await;
-        
+        )
+        .await;
+
         assert!(result.is_ok());
         assert!(events.lock().unwrap().is_empty());
     }
@@ -225,11 +235,16 @@ mod tests {
         let mut world = TestWorld;
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
-        
-        fn before_hook<'a>(_: &'a gherkin::Feature, _: Option<&'a gherkin::Rule>, _: &'a gherkin::Scenario, _: &'a mut TestWorld) -> LocalBoxFuture<'a, ()> {
+
+        fn before_hook<'a>(
+            _: &'a gherkin::Feature,
+            _: Option<&'a gherkin::Rule>,
+            _: &'a gherkin::Scenario,
+            _: &'a mut TestWorld,
+        ) -> LocalBoxFuture<'a, ()> {
             Box::pin(async {})
         }
-        
+
         let result = HookExecutor::run_before_hook(
             Some(&before_hook),
             id,
@@ -240,8 +255,9 @@ mod tests {
             move |event| events_clone.lock().unwrap().push(event),
             #[cfg(feature = "tracing")]
             None,
-        ).await;
-        
+        )
+        .await;
+
         assert!(result.is_ok());
         let captured_events = events.lock().unwrap();
         assert_eq!(captured_events.len(), 2); // Started and Passed events
@@ -254,11 +270,19 @@ mod tests {
         let mut world = TestWorld;
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
-        
+
         let scenario_finished = event::ScenarioFinished::StepPassed;
-        
+
         HookExecutor::run_after_hook(
-            None::<&for<'a> fn(&'a gherkin::Feature, Option<&'a gherkin::Rule>, &'a gherkin::Scenario, &'a event::ScenarioFinished, Option<&'a mut TestWorld>) -> LocalBoxFuture<'a, ()>>,
+            None::<
+                &for<'a> fn(
+                    &'a gherkin::Feature,
+                    Option<&'a gherkin::Rule>,
+                    &'a gherkin::Scenario,
+                    &'a event::ScenarioFinished,
+                    Option<&'a mut TestWorld>,
+                ) -> LocalBoxFuture<'a, ()>,
+            >,
             id,
             feature,
             None,
@@ -268,8 +292,9 @@ mod tests {
             move |event| events_clone.lock().unwrap().push(event),
             #[cfg(feature = "tracing")]
             None,
-        ).await;
-        
+        )
+        .await;
+
         assert!(events.lock().unwrap().is_empty());
     }
 
@@ -280,13 +305,19 @@ mod tests {
         let mut world = TestWorld;
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
-        
+
         let scenario_finished = event::ScenarioFinished::StepPassed;
-        
-        fn after_hook<'a>(_: &'a gherkin::Feature, _: Option<&'a gherkin::Rule>, _: &'a gherkin::Scenario, _: &'a event::ScenarioFinished, _: Option<&'a mut TestWorld>) -> LocalBoxFuture<'a, ()> {
+
+        fn after_hook<'a>(
+            _: &'a gherkin::Feature,
+            _: Option<&'a gherkin::Rule>,
+            _: &'a gherkin::Scenario,
+            _: &'a event::ScenarioFinished,
+            _: Option<&'a mut TestWorld>,
+        ) -> LocalBoxFuture<'a, ()> {
             Box::pin(async {})
         }
-        
+
         HookExecutor::run_after_hook(
             Some(&after_hook),
             id,
@@ -298,15 +329,17 @@ mod tests {
             move |event| events_clone.lock().unwrap().push(event),
             #[cfg(feature = "tracing")]
             None,
-        ).await;
-        
+        )
+        .await;
+
         let captured_events = events.lock().unwrap();
         assert_eq!(captured_events.len(), 2); // Started and Passed events
     }
 
-    fn create_test_feature_and_scenario() -> (Source<gherkin::Feature>, Source<gherkin::Scenario>) {
+    fn create_test_feature_and_scenario()
+    -> (Source<gherkin::Feature>, Source<gherkin::Scenario>) {
         use gherkin::{Feature, Scenario};
-        
+
         let feature = Feature {
             keyword: "Feature".to_string(),
             name: "Test Feature".to_string(),
@@ -319,7 +352,7 @@ mod tests {
             position: gherkin::LineCol { line: 1, col: 1 },
             path: None,
         };
-        
+
         let scenario = Scenario {
             keyword: "Scenario".to_string(),
             name: "Test Scenario".to_string(),
@@ -330,7 +363,7 @@ mod tests {
             span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 2, col: 1 },
         };
-        
+
         (Source::new(feature), Source::new(scenario))
     }
 }

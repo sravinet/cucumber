@@ -8,8 +8,8 @@ use tracing_subscriber::{
     registry::LookupSpan,
 };
 
-use crate::runner::basic::ScenarioId;
 use super::visitor::IsScenarioIdSpan;
+use crate::runner::basic::ScenarioId;
 
 /// [`FormatFields`] wrapper skipping [`Span`]s with a [`ScenarioId`].
 ///
@@ -143,7 +143,7 @@ mod tests {
     fn test_skip_scenario_id_span_creation() {
         let inner_formatter = DefaultFields::new();
         let formatter = SkipScenarioIdSpan(inner_formatter);
-        
+
         // Test that wrapper was created successfully
         assert!(std::mem::size_of_val(&formatter) > 0);
     }
@@ -152,7 +152,7 @@ mod tests {
     fn test_append_scenario_msg_creation() {
         let inner_formatter = Format::default();
         let formatter = AppendScenarioMsg(inner_formatter);
-        
+
         // Test that wrapper was created successfully
         assert!(std::mem::size_of_val(&formatter) > 0);
     }
@@ -161,17 +161,18 @@ mod tests {
     fn test_skip_scenario_id_span_with_normal_fields() {
         let inner_formatter = DefaultFields::new();
         let formatter = SkipScenarioIdSpan(inner_formatter);
-        
+
         let mut writer = TestWriter::new();
         let fmt_writer = format::Writer::new(&mut writer);
-        
+
         // Create a simple field set without scenario ID
         let fieldset = tracing::field::FieldSet::new(
             &["message"],
             tracing::callsite::Identifier::new(()),
         );
-        let values = fieldset.value_set(&[(&fieldset.field("message").unwrap(), Some("test"))]);
-        
+        let values = fieldset
+            .value_set(&[(&fieldset.field("message").unwrap(), Some("test"))]);
+
         // This should format the fields normally
         let result = formatter.format_fields(fmt_writer, &values);
         assert!(result.is_ok());
@@ -181,17 +182,20 @@ mod tests {
     fn test_skip_scenario_id_span_with_scenario_field() {
         let inner_formatter = DefaultFields::new();
         let formatter = SkipScenarioIdSpan(inner_formatter);
-        
+
         let mut writer = TestWriter::new();
         let fmt_writer = format::Writer::new(&mut writer);
-        
+
         // Create field set with scenario ID field
         let fieldset = tracing::field::FieldSet::new(
             &[ScenarioId::SPAN_FIELD_NAME],
             tracing::callsite::Identifier::new(()),
         );
-        let values = fieldset.value_set(&[(&fieldset.field(ScenarioId::SPAN_FIELD_NAME).unwrap(), Some(&42u64))]);
-        
+        let values = fieldset.value_set(&[(
+            &fieldset.field(ScenarioId::SPAN_FIELD_NAME).unwrap(),
+            Some(&42u64),
+        )]);
+
         // This should skip formatting since it contains scenario ID
         let result = formatter.format_fields(fmt_writer, &values);
         assert!(result.is_ok());
@@ -202,13 +206,13 @@ mod tests {
     fn test_append_scenario_msg_with_no_scenario() {
         let inner_formatter = Format::default();
         let formatter = AppendScenarioMsg(inner_formatter);
-        
+
         let subscriber = Registry::default();
         let ctx = FmtContext::new(&subscriber, &DefaultFields::new());
-        
+
         let mut writer = TestWriter::new();
         let fmt_writer = format::Writer::new(&mut writer);
-        
+
         // Create a test event
         let metadata = tracing::Metadata::new(
             "test_event",
@@ -217,15 +221,18 @@ mod tests {
             None,
             None,
             None,
-            tracing::field::FieldSet::new(&[], tracing::callsite::Identifier::new(())),
+            tracing::field::FieldSet::new(
+                &[],
+                tracing::callsite::Identifier::new(()),
+            ),
             tracing::metadata::Kind::EVENT,
         );
         let values = metadata.fields().value_set(&[]);
         let event = Event::new(&metadata, &values);
-        
+
         let result = formatter.format_event(&ctx, fmt_writer, &event);
         assert!(result.is_ok());
-        
+
         let output = writer.to_string();
         assert!(output.contains(suffix::NO_SCENARIO_ID));
         assert!(output.contains(suffix::END));
@@ -234,7 +241,7 @@ mod tests {
     #[test]
     fn test_format_event_error_handling() {
         struct FailingFormatter;
-        
+
         impl<S, N> FormatEvent<S, N> for FailingFormatter
         where
             S: Subscriber + for<'a> LookupSpan<'a>,
@@ -249,14 +256,14 @@ mod tests {
                 Err(fmt::Error)
             }
         }
-        
+
         let formatter = AppendScenarioMsg(FailingFormatter);
         let subscriber = Registry::default();
         let ctx = FmtContext::new(&subscriber, &DefaultFields::new());
-        
+
         let mut writer = TestWriter::new();
         let fmt_writer = format::Writer::new(&mut writer);
-        
+
         let metadata = tracing::Metadata::new(
             "test_event",
             "test_target",
@@ -264,12 +271,15 @@ mod tests {
             None,
             None,
             None,
-            tracing::field::FieldSet::new(&[], tracing::callsite::Identifier::new(())),
+            tracing::field::FieldSet::new(
+                &[],
+                tracing::callsite::Identifier::new(()),
+            ),
             tracing::metadata::Kind::EVENT,
         );
         let values = metadata.fields().value_set(&[]);
         let event = Event::new(&metadata, &values);
-        
+
         let result = formatter.format_event(&ctx, fmt_writer, &event);
         assert!(result.is_err());
     }
@@ -282,7 +292,7 @@ mod tests {
             suffix::BEFORE_SCENARIO_ID,
             suffix::NO_SCENARIO_ID,
         ];
-        
+
         for i in 0..suffixes.len() {
             for j in (i + 1)..suffixes.len() {
                 assert_ne!(suffixes[i], suffixes[j], "Suffixes must be unique");
@@ -293,9 +303,15 @@ mod tests {
     #[test]
     fn test_suffix_parsing_patterns() {
         // Test the expected patterns
-        let with_scenario = format!("test message{}{}{}", suffix::BEFORE_SCENARIO_ID, "42", suffix::END);
-        let without_scenario = format!("test message{}{}", suffix::NO_SCENARIO_ID, suffix::END);
-        
+        let with_scenario = format!(
+            "test message{}{}{}",
+            suffix::BEFORE_SCENARIO_ID,
+            "42",
+            suffix::END
+        );
+        let without_scenario =
+            format!("test message{}{}", suffix::NO_SCENARIO_ID, suffix::END);
+
         assert!(with_scenario.ends_with(suffix::END));
         assert!(without_scenario.ends_with(suffix::END));
         assert!(with_scenario.contains(suffix::BEFORE_SCENARIO_ID));

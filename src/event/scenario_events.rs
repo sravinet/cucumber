@@ -4,7 +4,10 @@ use std::sync::Arc;
 
 use crate::step;
 
-use super::{Hook, HookType, Source, Step, StepError, event_struct::Info, retries::Retries};
+use super::{
+    Hook, HookType, Source, Step, StepError, event_struct::Info,
+    retries::Retries,
+};
 
 /// Event specific to a particular [Scenario].
 ///
@@ -155,7 +158,10 @@ impl<World> Scenario<World> {
         world: Option<Arc<World>>,
         info: impl Into<StepError>,
     ) -> Self {
-        Self::Step(step.into(), Step::Failed { captures, location: loc, world, error: info.into() })
+        Self::Step(
+            step.into(),
+            Step::Failed { captures, location: loc, world, error: info.into() },
+        )
     }
 
     /// Constructs an event of a failed [`Background`] [`Step`].
@@ -256,7 +262,7 @@ mod tests {
     fn test_scenario_started_event() {
         let event: Scenario<TestWorld> = Scenario::Started;
         match event {
-            Scenario::Started => {},
+            Scenario::Started => {}
             _ => panic!("Expected Started event"),
         }
     }
@@ -265,7 +271,7 @@ mod tests {
     fn test_scenario_finished_event() {
         let event: Scenario<TestWorld> = Scenario::Finished;
         match event {
-            Scenario::Finished => {},
+            Scenario::Finished => {}
             _ => panic!("Expected Finished event"),
         }
     }
@@ -293,18 +299,18 @@ mod tests {
         for event in events {
             let cloned = event.clone();
             match (&event, &cloned) {
-                (Scenario::Started, Scenario::Started) => {},
-                (Scenario::Finished, Scenario::Finished) => {},
+                (Scenario::Started, Scenario::Started) => {}
+                (Scenario::Finished, Scenario::Finished) => {}
                 (Scenario::Log(a), Scenario::Log(b)) => assert_eq!(a, b),
                 (Scenario::Hook(t1, h1), Scenario::Hook(t2, h2)) => {
                     assert_eq!(t1, t2);
                     match (h1, h2) {
-                        (Hook::Started, Hook::Started) => {},
-                        (Hook::Passed, Hook::Passed) => {},
-                        _ => {},
+                        (Hook::Started, Hook::Started) => {}
+                        (Hook::Passed, Hook::Passed) => {}
+                        _ => {}
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
     }
@@ -312,20 +318,30 @@ mod tests {
     #[test]
     fn test_hook_events() {
         let started = Scenario::<TestWorld>::hook_started(HookType::Before);
-        assert!(matches!(started, Scenario::Hook(HookType::Before, Hook::Started)));
+        assert!(matches!(
+            started,
+            Scenario::Hook(HookType::Before, Hook::Started)
+        ));
 
         let passed = Scenario::<TestWorld>::hook_passed(HookType::After);
-        assert!(matches!(passed, Scenario::Hook(HookType::After, Hook::Passed)));
+        assert!(matches!(
+            passed,
+            Scenario::Hook(HookType::After, Hook::Passed)
+        ));
 
         let world = Arc::new(TestWorld { value: "test".to_string() });
         let info = Arc::new("Hook failed".to_string());
-        let failed = Scenario::hook_failed(HookType::Before, Some(world.clone()), info.clone());
-        
+        let failed = Scenario::hook_failed(
+            HookType::Before,
+            Some(world.clone()),
+            info.clone(),
+        );
+
         match failed {
             Scenario::Hook(HookType::Before, Hook::Failed(w, i)) => {
                 assert!(w.is_some());
                 assert_eq!(w.unwrap().value, "test");
-            },
+            }
             _ => panic!("Expected Hook::Failed"),
         }
     }
@@ -333,12 +349,17 @@ mod tests {
     #[test]
     fn test_step_started_events() {
         let step = create_test_step();
-        
-        let step_started = Scenario::<TestWorld>::step_started(Source::new(step.clone()));
+
+        let step_started =
+            Scenario::<TestWorld>::step_started(Source::new(step.clone()));
         assert!(matches!(step_started, Scenario::Step(_, Step::Started)));
 
-        let bg_step_started = Scenario::<TestWorld>::background_step_started(Source::new(step));
-        assert!(matches!(bg_step_started, Scenario::Background(_, Step::Started)));
+        let bg_step_started =
+            Scenario::<TestWorld>::background_step_started(Source::new(step));
+        assert!(matches!(
+            bg_step_started,
+            Scenario::Background(_, Step::Started)
+        ));
     }
 
     #[test]
@@ -346,18 +367,18 @@ mod tests {
         let step = create_test_step();
         let captures = regex::Regex::new("test").unwrap().capture_locations();
         let loc = step::Location::new("file.rs", 10, 5);
-        
+
         let step_passed = Scenario::<TestWorld>::step_passed(
             Source::new(step.clone()),
             captures.clone(),
             Some(loc),
         );
-        
+
         match step_passed {
             Scenario::Step(_, Step::Passed { location, .. }) => {
                 assert!(location.is_some());
                 assert_eq!(location.unwrap().line, 10);
-            },
+            }
             _ => panic!("Expected Step::Passed"),
         }
 
@@ -366,19 +387,27 @@ mod tests {
             captures,
             Some(loc),
         );
-        
-        assert!(matches!(bg_step_passed, Scenario::Background(_, Step::Passed { .. })));
+
+        assert!(matches!(
+            bg_step_passed,
+            Scenario::Background(_, Step::Passed { .. })
+        ));
     }
 
     #[test]
     fn test_step_skipped_events() {
         let step = create_test_step();
-        
-        let step_skipped = Scenario::<TestWorld>::step_skipped(Source::new(step.clone()));
+
+        let step_skipped =
+            Scenario::<TestWorld>::step_skipped(Source::new(step.clone()));
         assert!(matches!(step_skipped, Scenario::Step(_, Step::Skipped)));
 
-        let bg_step_skipped = Scenario::<TestWorld>::background_step_skipped(Source::new(step));
-        assert!(matches!(bg_step_skipped, Scenario::Background(_, Step::Skipped)));
+        let bg_step_skipped =
+            Scenario::<TestWorld>::background_step_skipped(Source::new(step));
+        assert!(matches!(
+            bg_step_skipped,
+            Scenario::Background(_, Step::Skipped)
+        ));
     }
 
     #[test]
@@ -388,7 +417,7 @@ mod tests {
         let loc = step::Location::new("file.rs", 10, 5);
         let world = Arc::new(TestWorld { value: "test".to_string() });
         let error = StepError::NotFound;
-        
+
         let step_failed = Scenario::step_failed(
             Source::new(step.clone()),
             Some(captures.clone()),
@@ -396,13 +425,16 @@ mod tests {
             Some(world.clone()),
             error.clone(),
         );
-        
+
         match step_failed {
-            Scenario::Step(_, Step::Failed { location, world: w, error: e, .. }) => {
+            Scenario::Step(
+                _,
+                Step::Failed { location, world: w, error: e, .. },
+            ) => {
                 assert!(location.is_some());
                 assert!(w.is_some());
                 assert!(matches!(e, StepError::NotFound));
-            },
+            }
             _ => panic!("Expected Step::Failed"),
         }
 
@@ -413,21 +445,24 @@ mod tests {
             Some(world),
             error,
         );
-        
-        assert!(matches!(bg_step_failed, Scenario::Background(_, Step::Failed { .. })));
+
+        assert!(matches!(
+            bg_step_failed,
+            Scenario::Background(_, Step::Failed { .. })
+        ));
     }
 
     #[test]
     fn test_with_retries() {
         let event = Scenario::<TestWorld>::Started;
         let retries = Retries { current: 1, left: 2 };
-        
+
         let retryable = event.with_retries(Some(retries));
         assert!(matches!(retryable.event, Scenario::Started));
         assert!(retryable.retries.is_some());
         assert_eq!(retryable.retries.unwrap().current, 1);
         assert_eq!(retryable.retries.unwrap().left, 2);
-        
+
         let no_retry = Scenario::<TestWorld>::Finished.with_retries(None);
         assert!(no_retry.retries.is_none());
     }
@@ -439,7 +474,7 @@ mod tests {
             event: Scenario::<TestWorld>::Started,
             retries: Some(retries),
         };
-        
+
         let cloned = retryable.clone();
         assert!(matches!(cloned.event, Scenario::Started));
         assert_eq!(cloned.retries, retryable.retries);
@@ -450,24 +485,25 @@ mod tests {
         let info = Arc::new("Before hook failed".to_string());
         let before_failed = ScenarioFinished::BeforeHookFailed(info);
         assert!(matches!(before_failed, ScenarioFinished::BeforeHookFailed(_)));
-        
+
         let step_passed = ScenarioFinished::StepPassed;
         assert!(matches!(step_passed, ScenarioFinished::StepPassed));
-        
+
         let step_skipped = ScenarioFinished::StepSkipped;
         assert!(matches!(step_skipped, ScenarioFinished::StepSkipped));
-        
+
         let captures = regex::Regex::new("test").unwrap().capture_locations();
         let loc = step::Location::new("file.rs", 10, 5);
         let error = StepError::NotFound;
-        let step_failed = ScenarioFinished::StepFailed(Some(captures), Some(loc), error);
-        
+        let step_failed =
+            ScenarioFinished::StepFailed(Some(captures), Some(loc), error);
+
         match step_failed {
             ScenarioFinished::StepFailed(c, l, e) => {
                 assert!(c.is_some());
                 assert!(l.is_some());
                 assert!(matches!(e, StepError::NotFound));
-            },
+            }
             _ => panic!("Expected StepFailed"),
         }
     }
@@ -480,14 +516,26 @@ mod tests {
             ScenarioFinished::StepSkipped,
             ScenarioFinished::StepFailed(None, None, StepError::NotFound),
         ];
-        
+
         for variant in variants {
             let cloned = variant.clone();
             match (&variant, &cloned) {
-                (ScenarioFinished::BeforeHookFailed(_), ScenarioFinished::BeforeHookFailed(_)) => {},
-                (ScenarioFinished::StepPassed, ScenarioFinished::StepPassed) => {},
-                (ScenarioFinished::StepSkipped, ScenarioFinished::StepSkipped) => {},
-                (ScenarioFinished::StepFailed(..), ScenarioFinished::StepFailed(..)) => {},
+                (
+                    ScenarioFinished::BeforeHookFailed(_),
+                    ScenarioFinished::BeforeHookFailed(_),
+                ) => {}
+                (
+                    ScenarioFinished::StepPassed,
+                    ScenarioFinished::StepPassed,
+                ) => {}
+                (
+                    ScenarioFinished::StepSkipped,
+                    ScenarioFinished::StepSkipped,
+                ) => {}
+                (
+                    ScenarioFinished::StepFailed(..),
+                    ScenarioFinished::StepFailed(..),
+                ) => {}
                 _ => panic!("Clone produced different variant"),
             }
         }

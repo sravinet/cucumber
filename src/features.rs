@@ -95,7 +95,7 @@ mod tests {
         let summary = features_summary();
         // Test that we get a non-empty string
         assert!(!summary.is_empty());
-        
+
         // Test that it contains expected content
         if enabled_features().is_empty() {
             assert_eq!(summary, "No optional features enabled");
@@ -144,13 +144,13 @@ mod tests {
     fn test_features_consistency() {
         // Test that enabled_features() is consistent with individual feature checks
         let features = enabled_features();
-        
+
         if has_macros_feature() {
             assert!(features.contains(&"macros"));
         } else {
             assert!(!features.contains(&"macros"));
         }
-        
+
         if has_tracing_feature() {
             assert!(features.contains(&"tracing"));
         } else {

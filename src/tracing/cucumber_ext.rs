@@ -3,6 +3,7 @@
 use futures::channel::mpsc;
 use tracing::{Dispatch, Subscriber};
 use tracing_subscriber::{
+    Layer as _,
     field::RecordFields,
     filter::LevelFilter,
     fmt::{
@@ -12,18 +13,14 @@ use tracing_subscriber::{
     layer::{Layered, SubscriberExt as _},
     registry::LookupSpan,
     util::SubscriberInitExt as _,
-    Layer as _,
 };
 
-use crate::{
-    Cucumber, Parser, Runner, World, Writer,
-    runner,
-};
+use crate::{Cucumber, Parser, Runner, World, Writer, runner};
 
 use super::{
     collector::Collector,
-    layer::RecordScenarioId,
     formatter::{AppendScenarioMsg, SkipScenarioIdSpan},
+    layer::RecordScenarioId,
     writer::CollectorWriter,
 };
 
@@ -142,7 +139,7 @@ mod tests {
 
     impl World for TestWorld {
         type Error = ();
-        
+
         async fn new() -> Result<Self, Self::Error> {
             Ok(Self::default())
         }
@@ -150,11 +147,11 @@ mod tests {
 
     #[test]
     fn test_init_tracing_returns_self() {
+        use crate::cucumber::DefaultCli;
         use crate::cucumber::DefaultParser;
         use crate::runner::Basic;
         use crate::writer;
-        use crate::cucumber::DefaultCli;
-        
+
         let cucumber: Cucumber<
             TestWorld,
             DefaultParser,
@@ -163,18 +160,18 @@ mod tests {
             writer::Basic<TestWorld>,
             DefaultCli,
         > = TestWorld::cucumber();
-        
+
         // This should compile and return Self
         let _result = cucumber.init_tracing();
     }
 
     #[test]
     fn test_configure_and_init_tracing_accepts_custom_format() {
+        use crate::cucumber::DefaultCli;
         use crate::cucumber::DefaultParser;
         use crate::runner::Basic;
         use crate::writer;
-        use crate::cucumber::DefaultCli;
-        
+
         let cucumber: Cucumber<
             TestWorld,
             DefaultParser,
@@ -183,7 +180,7 @@ mod tests {
             writer::Basic<TestWorld>,
             DefaultCli,
         > = TestWorld::cucumber();
-        
+
         let _result = cucumber.configure_and_init_tracing(
             format::DefaultFields::new(),
             Format::default(),
@@ -198,17 +195,21 @@ mod tests {
     fn test_tracing_configuration_creates_channels() {
         let (logs_sender, _logs_receiver) = mpsc::unbounded();
         let (span_close_sender, _span_close_receiver) = mpsc::unbounded();
-        
+
         // Test that channels can be created
         assert!(logs_sender.unbounded_send((None, "test".to_string())).is_ok());
-        assert!(span_close_sender.unbounded_send(tracing::span::Id::from_u64(1)).is_ok());
+        assert!(
+            span_close_sender
+                .unbounded_send(tracing::span::Id::from_u64(1))
+                .is_ok()
+        );
     }
 
     #[test]
     fn test_collector_writer_creation() {
         let (logs_sender, _logs_receiver) = mpsc::unbounded();
         let writer = CollectorWriter::new(logs_sender);
-        
+
         // Test that CollectorWriter can be created
         assert!(std::mem::size_of_val(&writer) > 0);
     }

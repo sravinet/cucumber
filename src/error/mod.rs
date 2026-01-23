@@ -45,7 +45,7 @@ pub mod writer;
 pub use config::{ConfigError, ConfigResult};
 pub use core::{CucumberError, Result};
 pub use step::{PanicPayloadExt, StepError, StepResult};
-pub use utilities::{ResultExt, ResultConfigExt};
+pub use utilities::{ResultConfigExt, ResultExt};
 pub use world::{WorldError, WorldResult};
 pub use writer::{WriterError, WriterResult};
 
@@ -96,30 +96,43 @@ mod integration_tests {
         assert!(no_match_err.to_string().contains("No matching step found"));
 
         let ambiguous_err = CucumberError::ambiguous_step("Given ambiguous", 3);
-        assert!(ambiguous_err.to_string().contains("matches 3 step definitions"));
-
-        let world_creation_err = CucumberError::world_creation(
-            io::Error::new(io::ErrorKind::Other, "creation failed")
+        assert!(
+            ambiguous_err.to_string().contains("matches 3 step definitions")
         );
-        assert!(world_creation_err.to_string().contains("Failed to create World"));
 
-        let retry_config_err = CucumberError::invalid_retry_config("negative count");
-        assert!(retry_config_err.to_string().contains("Invalid retry configuration"));
+        let world_creation_err = CucumberError::world_creation(io::Error::new(
+            io::ErrorKind::Other,
+            "creation failed",
+        ));
+        assert!(
+            world_creation_err.to_string().contains("Failed to create World")
+        );
+
+        let retry_config_err =
+            CucumberError::invalid_retry_config("negative count");
+        assert!(
+            retry_config_err
+                .to_string()
+                .contains("Invalid retry configuration")
+        );
     }
 
     #[test]
     fn test_panic_payload_extension() {
-        let string_payload: Arc<dyn std::any::Any + Send + 'static> = 
+        let string_payload: Arc<dyn std::any::Any + Send + 'static> =
             Arc::new("test panic".to_string());
         assert_eq!(string_payload.to_readable_string(), "test panic");
 
-        let str_payload: Arc<dyn std::any::Any + Send + 'static> = 
+        let str_payload: Arc<dyn std::any::Any + Send + 'static> =
             Arc::new("test &str");
         assert_eq!(str_payload.to_readable_string(), "test &str");
 
-        let unknown_payload: Arc<dyn std::any::Any + Send + 'static> = 
+        let unknown_payload: Arc<dyn std::any::Any + Send + 'static> =
             Arc::new(42i32);
-        assert_eq!(unknown_payload.to_readable_string(), "Unknown panic payload");
+        assert_eq!(
+            unknown_payload.to_readable_string(),
+            "Unknown panic payload"
+        );
     }
 
     #[test]
@@ -131,7 +144,7 @@ mod integration_tests {
         assert!(cucumber_result.is_ok());
         assert_eq!(cucumber_result.unwrap(), 42);
 
-        let err_result: std::result::Result<i32, io::Error> = 
+        let err_result: std::result::Result<i32, io::Error> =
             Err(io::Error::new(io::ErrorKind::Other, "test error"));
         let cucumber_result = err_result.with_cucumber_context("test context");
         assert!(cucumber_result.is_err());
@@ -171,7 +184,10 @@ mod integration_tests {
     #[test]
     fn test_error_display_formatting() {
         // Test that all error types have proper display formatting
-        let step_err = StepError::timeout("Given I wait", std::time::Duration::from_secs(30));
+        let step_err = StepError::timeout(
+            "Given I wait",
+            std::time::Duration::from_secs(30),
+        );
         assert!(step_err.to_string().contains("Step timed out after"));
 
         let world_err = WorldError::invalid_state("missing field");
@@ -190,7 +206,7 @@ mod integration_tests {
     #[test]
     fn test_backward_compatibility() {
         // Ensure all original functionality is still accessible through re-exports
-        
+
         // Original error types
         let _: CucumberError = CucumberError::step_panic("test");
         let _: StepError = StepError::no_match("test");

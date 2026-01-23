@@ -2,21 +2,17 @@
 
 use futures::{
     FutureExt as _, Stream, StreamExt as _,
-    future::{self, Either},
     channel::mpsc,
+    future::{self, Either},
     stream,
 };
 
-use crate::{
-    Event, Runner, World,
-    event,
-    parser,
-};
+use crate::{Event, Runner, World, event, parser};
 
 use super::{
     basic_struct::Basic,
     cli_and_types::Cli,
-    execution_engine::{insert_features, execute},
+    execution_engine::{execute, insert_features},
     scenario_storage::Features,
 };
 
@@ -47,8 +43,10 @@ where
 {
     type Cli = Cli;
 
-    type EventStream =
-        futures::stream::LocalBoxStream<'static, parser::Result<Event<event::Cucumber<W>>>>;
+    type EventStream = futures::stream::LocalBoxStream<
+        'static,
+        parser::Result<Event<event::Cucumber<W>>>,
+    >;
 
     fn run<S>(self, features: S, mut cli: Cli) -> Self::EventStream
     where
@@ -117,9 +115,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_utils::common::TestWorld;
     use futures::stream;
     use std::time::Duration;
-    use crate::test_utils::common::TestWorld;
 
     // Using common TestWorld from test_utils
 
@@ -128,33 +126,36 @@ mod tests {
         let runner = Basic::<TestWorld>::default();
         let features = stream::empty();
         let cli = Cli::default();
-        
+
         let mut events = runner.run(features, cli);
-        
+
         // Collect all events until stream ends
         let mut event_count = 0;
         while let Some(_event) = events.next().await {
             event_count += 1;
         }
-        
+
         // Should have received at least ParsingFinished and Finished events
         // May also have Started event
-        assert!(event_count >= 2, "Expected at least 2 events, got {}", event_count);
+        assert!(
+            event_count >= 2,
+            "Expected at least 2 events, got {}",
+            event_count
+        );
     }
 
     #[tokio::test]
     async fn test_runner_with_concurrency_limit() {
-        let runner = Basic::<TestWorld>::default()
-            .max_concurrent_scenarios(2);
-        
+        let runner = Basic::<TestWorld>::default().max_concurrent_scenarios(2);
+
         let features = stream::empty();
         let cli = Cli {
             concurrency: Some(5), // CLI should override
             ..Default::default()
         };
-        
+
         let mut events = runner.run(features, cli);
-        
+
         // Should start with concurrency from CLI
         let parsing_finished = events.next().await;
         assert!(parsing_finished.is_some());
@@ -165,9 +166,9 @@ mod tests {
         let runner = Basic::<TestWorld>::default().fail_fast();
         let features = stream::empty();
         let cli = Cli::default();
-        
+
         let mut events = runner.run(features, cli);
-        
+
         // Should handle fail_fast mode
         let parsing_finished = events.next().await;
         assert!(parsing_finished.is_some());
@@ -180,7 +181,7 @@ mod tests {
             retry_after: Some(Duration::from_secs(1)),
             ..Default::default()
         };
-        
+
         assert_eq!(cli.retry, Some(3));
         assert_eq!(cli.retry_after, Some(Duration::from_secs(1)));
     }

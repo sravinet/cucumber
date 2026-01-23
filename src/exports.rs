@@ -60,8 +60,8 @@ pub mod prelude {
         step::Step,
         world::World,
         writer::{
-            Arbitrary as ArbitraryWriter, Ext as WriterExt, Stats as StatsWriter,
-            Writer,
+            Arbitrary as ArbitraryWriter, Ext as WriterExt,
+            Stats as StatsWriter, Writer,
         },
     };
 
@@ -110,12 +110,29 @@ mod tests {
     #[test]
     fn test_core_exports_accessible() {
         // Test that core types are accessible through exports
-        use crate::exports::{CucumberError, Event, Parser, Runner, Step, Writer};
-        
+        use crate::exports::{
+            CucumberError, Event, Parser, Runner, Step, Writer,
+        };
+
         // Test that these types can be referenced (compilation test)
         let _: Option<CucumberError> = None;
         let _: Option<Event<()>> = None;
-        let _: Option<Box<dyn Parser<(), Cli = crate::cli::Empty, Output = Box<dyn futures::Stream<Item = crate::parser::Result<gherkin::Feature>> + Unpin + Send>>>> = None;
+        let _: Option<
+            Box<
+                dyn Parser<
+                        (),
+                        Cli = crate::cli::Empty,
+                        Output = Box<
+                            dyn futures::Stream<
+                                    Item = crate::parser::Result<
+                                        gherkin::Feature,
+                                    >,
+                                > + Unpin
+                                + Send,
+                        >,
+                    >,
+            >,
+        > = None;
         let _: Option<crate::runner::Basic<()>> = None;
         let _: Option<Step<()>> = None;
         let _: Option<crate::writer::Basic> = None;
@@ -124,11 +141,26 @@ mod tests {
     #[test]
     fn test_prelude_imports() {
         use crate::exports::prelude::*;
-        
+
         // Test that prelude provides easy access to common types
         let _: Option<CucumberError> = None;
         let _: Option<Event<()>> = None;
-        let _: Option<Box<dyn Parser<(), Cli = crate::cli::Empty, Output = Box<dyn futures::Stream<Item = crate::parser::Result<gherkin::Feature>> + Unpin + Send>>>> = None;
+        let _: Option<
+            Box<
+                dyn Parser<
+                        (),
+                        Cli = crate::cli::Empty,
+                        Output = Box<
+                            dyn futures::Stream<
+                                    Item = crate::parser::Result<
+                                        gherkin::Feature,
+                                    >,
+                                > + Unpin
+                                + Send,
+                        >,
+                    >,
+            >,
+        > = None;
         let _: Option<crate::runner::Basic<()>> = None;
         let _: Option<Step<()>> = None;
         let _: Option<crate::writer::Basic> = None;
@@ -137,12 +169,12 @@ mod tests {
     #[test]
     fn test_version_info() {
         use crate::exports::version::*;
-        
+
         // Test version information functions
         assert!(!version().is_empty());
         assert!(!name().is_empty());
         assert!(!description().is_empty());
-        
+
         let version_str = version_string();
         assert!(version_str.contains(name()));
         assert!(version_str.contains(version()));
@@ -153,12 +185,12 @@ mod tests {
     fn test_macros_exports() {
         // Test that macro-related exports are available when feature is enabled
         use crate::exports::{Parameter, given, then, when};
-        
+
         // These should compile when macros feature is enabled
         // The actual usage would be in procedural macro context
         // Parameter trait is not dyn compatible, test trait bounds instead
         fn _test_parameter<T: Parameter>(_: T) {}
-        
+
         // We can't easily test the procedural macros themselves in unit tests,
         // but we can verify they're exported
     }
@@ -166,7 +198,7 @@ mod tests {
     #[test]
     fn test_future_reexport() {
         use crate::exports::Future;
-        
+
         // Test that Future trait is accessible
         fn _test_future() -> impl Future<Output = ()> {
             async {}
@@ -176,7 +208,7 @@ mod tests {
     #[test]
     fn test_writer_type_aliases() {
         use crate::exports::{ArbitraryWriter, StatsWriter, WriterExt};
-        
+
         // Test that writer type aliases are accessible (traits not dyn compatible)
         fn _test_arbitrary_writer<T: ArbitraryWriter<(), String>>(_: T) {}
         fn _test_stats_writer<T: StatsWriter<()>>(_: T) {}
@@ -189,20 +221,20 @@ mod tests {
         use std::fmt::Display;
         // Test that Display trait is properly imported for use in this module
         fn _test_display<T: Display>(_: T) {}
-        
+
         // This compiles if Display is properly imported
         _test_display("test");
     }
 
     #[cfg(feature = "macros")]
-    #[test] 
+    #[test]
     fn test_debug_and_path_imports() {
         use std::{fmt::Debug, path::Path};
-        
+
         // Test that Debug and Path are available for macro features
         fn _test_debug<T: Debug>(_: T) {}
         fn _test_path<P: AsRef<Path>>(_: P) {}
-        
+
         _test_debug("test");
         _test_path("test/path");
     }
