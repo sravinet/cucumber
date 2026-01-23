@@ -1,7 +1,7 @@
 //! Unit tests for writer module core functionality.
 
 use cucumber::writer::*;
-use cucumber::{cli, Event, Writer, event, parser};
+use cucumber::{Event, Writer, cli, event, parser};
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -9,7 +9,7 @@ struct TestWorld;
 
 impl cucumber::World for TestWorld {
     type Error = std::convert::Infallible;
-    
+
     async fn new() -> Result<Self, Self::Error> {
         Ok(Self::default())
     }
@@ -37,10 +37,7 @@ impl MockWriter {
     }
 
     fn with_stats(stats: MockStats) -> Self {
-        Self {
-            stats,
-            ..Default::default()
-        }
+        Self { stats, ..Default::default() }
     }
 
     fn events(&self) -> Vec<String> {
@@ -153,7 +150,7 @@ fn test_verbosity_clone_debug() {
     let verbosity = Verbosity::ShowWorld;
     let cloned = verbosity.clone();
     assert_eq!(verbosity as u8, cloned as u8);
-    
+
     let debug_str = format!("{:?}", verbosity);
     assert!(debug_str.contains("ShowWorld"));
 }
@@ -163,19 +160,19 @@ fn test_verbosity_clone_debug() {
 async fn test_writer_trait() {
     let mut writer = MockWriter::new();
     let cli = MockCli::default();
-    
+
     let event = Event::new(event::Cucumber::<TestWorld>::Started);
     writer.handle_event(Ok(event), &cli).await;
-    
+
     assert_eq!(writer.events(), vec!["event"]);
 }
 
 #[tokio::test]
 async fn test_arbitrary_trait() {
     let mut writer = MockWriter::new();
-    
+
     writer.write("test message").await;
-    
+
     assert_eq!(writer.events(), vec!["write: test message"]);
 }
 
@@ -190,9 +187,9 @@ fn test_stats_trait() {
         parsing_errors: 0,
         hook_errors: 1,
     };
-    
+
     let writer = MockWriter::with_stats(stats);
-    
+
     assert_eq!(writer.passed_steps(), 5);
     assert_eq!(writer.skipped_steps(), 2);
     assert_eq!(writer.failed_steps(), 1);
@@ -213,21 +210,19 @@ fn test_stats_execution_has_failed() {
         hook_errors: 0,
     });
     assert!(!writer1.execution_has_failed());
-    
+
     // Test with failed steps
-    let writer2 = MockWriter::with_stats(MockStats {
-        failed: 1,
-        ..Default::default()
-    });
+    let writer2 =
+        MockWriter::with_stats(MockStats { failed: 1, ..Default::default() });
     assert!(writer2.execution_has_failed());
-    
+
     // Test with parsing errors
     let writer3 = MockWriter::with_stats(MockStats {
         parsing_errors: 1,
         ..Default::default()
     });
     assert!(writer3.execution_has_failed());
-    
+
     // Test with hook errors
     let writer4 = MockWriter::with_stats(MockStats {
         hook_errors: 1,
@@ -241,7 +236,7 @@ fn test_stats_execution_has_failed() {
 fn test_ext_assert_normalized() {
     let writer = MockWriter::new();
     let normalized = writer.assert_normalized();
-    
+
     // Should wrap in AssertNormalized
     let _: AssertNormalized<MockWriter> = normalized;
 }
@@ -250,7 +245,7 @@ fn test_ext_assert_normalized() {
 fn test_ext_normalized() {
     let writer = MockWriter::new();
     let normalized = writer.normalized::<TestWorld>();
-    
+
     // Should wrap in Normalize
     let _: Normalize<TestWorld, MockWriter> = normalized;
 }
@@ -259,7 +254,7 @@ fn test_ext_normalized() {
 fn test_ext_summarized() {
     let writer = MockWriter::new();
     let summarized = writer.summarized();
-    
+
     // Should wrap in Summarize
     let _: Summarize<MockWriter> = summarized;
 }
@@ -268,7 +263,7 @@ fn test_ext_summarized() {
 fn test_ext_fail_on_skipped() {
     let writer = MockWriter::new();
     let fail_on_skipped = writer.fail_on_skipped();
-    
+
     // Should wrap in FailOnSkipped
     let _: FailOnSkipped<MockWriter> = fail_on_skipped;
 }

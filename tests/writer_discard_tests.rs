@@ -1,7 +1,10 @@
 //! Unit tests for writer discard wrappers.
 
 use cucumber::writer::discard::*;
-use cucumber::{cli, Event, Writer, writer::{Arbitrary as ArbitraryTrait, Stats as StatsTrait}};
+use cucumber::{
+    Event, Writer, cli,
+    writer::{Arbitrary as ArbitraryTrait, Stats as StatsTrait},
+};
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Default)]
@@ -9,7 +12,7 @@ struct TestWorld;
 
 impl cucumber::World for TestWorld {
     type Error = std::convert::Infallible;
-    
+
     async fn new() -> Result<Self, Self::Error> {
         Ok(Self::default())
     }
@@ -37,10 +40,7 @@ impl MockWriter {
     }
 
     fn with_stats(stats: MockWriterStats) -> Self {
-        Self {
-            stats,
-            ..Default::default()
-        }
+        Self { stats, ..Default::default() }
     }
 
     #[allow(dead_code)]
@@ -66,12 +66,22 @@ impl Writer<TestWorld> for MockWriter {
 
     async fn handle_event(
         &mut self,
-        event: cucumber::parser::Result<Event<cucumber::event::Cucumber<TestWorld>>>,
+        event: cucumber::parser::Result<
+            Event<cucumber::event::Cucumber<TestWorld>>,
+        >,
         _cli: &Self::Cli,
     ) {
         match &event {
-            Ok(event) if matches!(**event, cucumber::event::Cucumber::Started) => self.push_event("Started"),
-            Ok(event) if matches!(**event, cucumber::event::Cucumber::Finished) => self.push_event("Finished"),
+            Ok(event)
+                if matches!(**event, cucumber::event::Cucumber::Started) =>
+            {
+                self.push_event("Started")
+            }
+            Ok(event)
+                if matches!(**event, cucumber::event::Cucumber::Finished) =>
+            {
+                self.push_event("Finished")
+            }
             _ => self.push_event("Other"),
         }
     }
@@ -122,7 +132,9 @@ async fn test_arbitrary_discard_writer() {
     let started_event = Event::new(cucumber::event::Cucumber::Started);
     let finished_event = Event::new(cucumber::event::Cucumber::Finished);
     arbitrary_writer.handle_event(Ok(started_event), &MockCli::default()).await;
-    arbitrary_writer.handle_event(Ok(finished_event), &MockCli::default()).await;
+    arbitrary_writer
+        .handle_event(Ok(finished_event), &MockCli::default())
+        .await;
 
     // Events should be passed through to inner writer
     assert_eq!(events.lock().unwrap().as_slice(), &["Started", "Finished"]);
@@ -151,7 +163,7 @@ fn test_arbitrary_discard_stats_passthrough() {
         parsing_errors: 1,
         hook_errors: 0,
     };
-    
+
     let inner = MockWriter::with_stats(mock_stats);
     let arbitrary_writer = Arbitrary::wrap(inner);
 
@@ -221,7 +233,7 @@ fn test_stats_discard_all_zero() {
         parsing_errors: 1,
         hook_errors: 2,
     };
-    
+
     let inner = MockWriter::with_stats(mock_stats);
     let stats_writer = Stats::wrap(inner);
 
@@ -238,7 +250,7 @@ fn test_stats_discard_all_zero() {
 fn test_wrapper_construction() {
     let inner = MockWriter::new();
 
-    // Test that both wrappers can be constructed  
+    // Test that both wrappers can be constructed
     let arbitrary_wrapper = Arbitrary::wrap(inner.clone());
     let stats_wrapper = Stats::wrap(inner.clone());
 

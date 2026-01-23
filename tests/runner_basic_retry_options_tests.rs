@@ -1,7 +1,7 @@
 //! Tests for Basic runner RetryOptions parsing functionality.
 
+use cucumber::event::Retries;
 use cucumber::runner::basic::{Cli, RetryOptions};
-use cucumber::event::{Retries};
 use gherkin::GherkinEnv;
 use humantime::parse_duration;
 use std::time::Duration;

@@ -1,12 +1,12 @@
+use cucumber::{Writer, cli, writer};
 use std::sync::{Arc, Mutex};
-use cucumber::{cli, Writer, writer};
 
 #[derive(Debug, Default)]
 struct TestWorld;
 
 impl cucumber::World for TestWorld {
     type Error = std::convert::Infallible;
-    
+
     async fn new() -> Result<Self, Self::Error> {
         Ok(Self::default())
     }
@@ -20,10 +20,7 @@ struct MockWriter {
 
 impl MockWriter {
     fn new(id: &str) -> Self {
-        Self {
-            events: Arc::new(Mutex::new(Vec::new())),
-            id: id.to_string(),
-        }
+        Self { events: Arc::new(Mutex::new(Vec::new())), id: id.to_string() }
     }
 
     #[allow(dead_code)]
@@ -46,12 +43,22 @@ impl Writer<TestWorld> for MockWriter {
 
     async fn handle_event(
         &mut self,
-        event: cucumber::parser::Result<cucumber::Event<cucumber::event::Cucumber<TestWorld>>>,
+        event: cucumber::parser::Result<
+            cucumber::Event<cucumber::event::Cucumber<TestWorld>>,
+        >,
         _cli: &Self::Cli,
     ) {
         match &event {
-            Ok(event) if matches!(**event, cucumber::event::Cucumber::Started) => self.push_event("Started"),
-            Ok(event) if matches!(**event, cucumber::event::Cucumber::Finished) => self.push_event("Finished"),
+            Ok(event)
+                if matches!(**event, cucumber::event::Cucumber::Started) =>
+            {
+                self.push_event("Started")
+            }
+            Ok(event)
+                if matches!(**event, cucumber::event::Cucumber::Finished) =>
+            {
+                self.push_event("Finished")
+            }
             _ => self.push_event("Other"),
         }
     }
@@ -64,23 +71,37 @@ impl writer::Arbitrary<TestWorld, &str> for MockWriter {
 }
 
 impl writer::Stats<TestWorld> for MockWriter {
-    fn passed_steps(&self) -> usize { 3 }
-    fn skipped_steps(&self) -> usize { 1 }
-    fn failed_steps(&self) -> usize { 2 }
-    fn retried_steps(&self) -> usize { 1 }
-    fn parsing_errors(&self) -> usize { 0 }
-    fn hook_errors(&self) -> usize { 0 }
+    fn passed_steps(&self) -> usize {
+        3
+    }
+    fn skipped_steps(&self) -> usize {
+        1
+    }
+    fn failed_steps(&self) -> usize {
+        2
+    }
+    fn retried_steps(&self) -> usize {
+        1
+    }
+    fn parsing_errors(&self) -> usize {
+        0
+    }
+    fn hook_errors(&self) -> usize {
+        0
+    }
 }
 
 impl writer::Normalized for MockWriter {}
 impl writer::NonTransforming for MockWriter {}
 
 // Helper function to create events
-fn create_started_event() -> cucumber::Event<cucumber::event::Cucumber<TestWorld>> {
+fn create_started_event()
+-> cucumber::Event<cucumber::event::Cucumber<TestWorld>> {
     cucumber::Event::new(cucumber::event::Cucumber::Started)
 }
 
-fn create_finished_event() -> cucumber::Event<cucumber::event::Cucumber<TestWorld>> {
+fn create_finished_event()
+-> cucumber::Event<cucumber::event::Cucumber<TestWorld>> {
     cucumber::Event::new(cucumber::event::Cucumber::Finished)
 }
 
@@ -94,18 +115,24 @@ async fn test_or_writer_left_predicate() {
     let left_events = left.events.clone();
     let right_events = right.events.clone();
 
-    fn always_true(_: &cucumber::parser::Result<cucumber::Event<cucumber::event::Cucumber<TestWorld>>>, _: &cli::Compose<MockCli, MockCli>) -> bool {
+    fn always_true(
+        _: &cucumber::parser::Result<
+            cucumber::Event<cucumber::event::Cucumber<TestWorld>>,
+        >,
+        _: &cli::Compose<MockCli, MockCli>,
+    ) -> bool {
         true
     }
 
     let mut or_writer = Or::new(left, right, always_true);
-    let cli = cli::Compose { left: MockCli::default(), right: MockCli::default() };
-    
+    let cli =
+        cli::Compose { left: MockCli::default(), right: MockCli::default() };
+
     or_writer.handle_event(Ok(create_started_event()), &cli).await;
 
     let left_result = left_events.lock().unwrap().clone();
     let right_result = right_events.lock().unwrap().clone();
-    
+
     assert!(!left_result.is_empty());
     assert!(right_result.is_empty());
     assert_eq!(left_result[0], "Left: Started");
@@ -120,18 +147,24 @@ async fn test_or_writer_right_predicate() {
     let left_events = left.events.clone();
     let right_events = right.events.clone();
 
-    fn always_false(_: &cucumber::parser::Result<cucumber::Event<cucumber::event::Cucumber<TestWorld>>>, _: &cli::Compose<MockCli, MockCli>) -> bool {
+    fn always_false(
+        _: &cucumber::parser::Result<
+            cucumber::Event<cucumber::event::Cucumber<TestWorld>>,
+        >,
+        _: &cli::Compose<MockCli, MockCli>,
+    ) -> bool {
         false
     }
 
     let mut or_writer = Or::new(left, right, always_false);
-    let cli = cli::Compose { left: MockCli::default(), right: MockCli::default() };
-    
+    let cli =
+        cli::Compose { left: MockCli::default(), right: MockCli::default() };
+
     or_writer.handle_event(Ok(create_started_event()), &cli).await;
 
     let left_result = left_events.lock().unwrap().clone();
     let right_result = right_events.lock().unwrap().clone();
-    
+
     assert!(left_result.is_empty());
     assert!(!right_result.is_empty());
     assert_eq!(right_result[0], "Right: Started");
@@ -148,20 +181,21 @@ async fn test_tee_writer_event_handling() {
     let events2 = writer2.events.clone();
 
     let mut tee_writer = Tee::new(writer1, writer2);
-    let cli = cli::Compose { left: MockCli::default(), right: MockCli::default() };
+    let cli =
+        cli::Compose { left: MockCli::default(), right: MockCli::default() };
 
     tee_writer.handle_event(Ok(create_started_event()), &cli).await;
 
     let events1_result = events1.lock().unwrap().clone();
     let events2_result = events2.lock().unwrap().clone();
-    
+
     assert_eq!(events1_result, vec!["Writer1: Started"]);
     assert_eq!(events2_result, vec!["Writer2: Started"]);
 }
 
 #[tokio::test]
 async fn test_tee_writer_arbitrary() {
-    use cucumber::writer::{Tee, Arbitrary};
+    use cucumber::writer::{Arbitrary, Tee};
 
     let writer1 = MockWriter::new("Writer1");
     let writer2 = MockWriter::new("Writer2");
@@ -174,7 +208,7 @@ async fn test_tee_writer_arbitrary() {
 
     let events1_result = events1.lock().unwrap().clone();
     let events2_result = events2.lock().unwrap().clone();
-    
+
     assert_eq!(events1_result, vec!["Writer1: Write: test message"]);
     assert_eq!(events2_result, vec!["Writer2: Write: test message"]);
 }
@@ -186,8 +220,12 @@ async fn test_repeat_writer_with_filter() {
 
     let inner = MockWriter::new("Inner");
     let events = inner.events.clone();
-    
-    fn capture_started(event: &cucumber::parser::Result<cucumber::Event<cucumber::event::Cucumber<TestWorld>>>) -> bool {
+
+    fn capture_started(
+        event: &cucumber::parser::Result<
+            cucumber::Event<cucumber::event::Cucumber<TestWorld>>,
+        >,
+    ) -> bool {
         match event {
             Ok(event) => matches!(**event, cucumber::event::Cucumber::Started),
             _ => false,
@@ -196,8 +234,12 @@ async fn test_repeat_writer_with_filter() {
 
     let mut repeat_writer = Repeat::new(inner, capture_started);
 
-    repeat_writer.handle_event(Ok(create_started_event()), &MockCli::default()).await;
-    repeat_writer.handle_event(Ok(create_finished_event()), &MockCli::default()).await;
+    repeat_writer
+        .handle_event(Ok(create_started_event()), &MockCli::default())
+        .await;
+    repeat_writer
+        .handle_event(Ok(create_finished_event()), &MockCli::default())
+        .await;
 
     let result = events.lock().unwrap().clone();
     assert_eq!(result.len(), 3);
@@ -208,15 +250,19 @@ async fn test_repeat_writer_with_filter() {
 
 #[tokio::test]
 async fn test_repeat_writer_arbitrary() {
-    use cucumber::writer::{Repeat, Arbitrary};
+    use cucumber::writer::{Arbitrary, Repeat};
 
     let inner = MockWriter::new("Inner");
     let events = inner.events.clone();
-    
-    fn never_match(_: &cucumber::parser::Result<cucumber::Event<cucumber::event::Cucumber<TestWorld>>>) -> bool {
+
+    fn never_match(
+        _: &cucumber::parser::Result<
+            cucumber::Event<cucumber::event::Cucumber<TestWorld>>,
+        >,
+    ) -> bool {
         false
     }
-    
+
     let mut repeat_writer = Repeat::new(inner, never_match);
 
     Arbitrary::write(&mut repeat_writer, "test message").await;
@@ -228,7 +274,7 @@ async fn test_repeat_writer_arbitrary() {
 // Stats delegation tests
 #[test]
 fn test_tee_writer_stats_delegation() {
-    use cucumber::writer::{Tee, Stats};
+    use cucumber::writer::{Stats, Tee};
 
     let writer1 = MockWriter::new("Writer1");
     let writer2 = MockWriter::new("Writer2");
@@ -244,11 +290,15 @@ fn test_repeat_writer_stats_delegation() {
     use cucumber::writer::{Repeat, Stats};
 
     let inner = MockWriter::new("Inner");
-    
-    fn never_match(_: &cucumber::parser::Result<cucumber::Event<cucumber::event::Cucumber<TestWorld>>>) -> bool {
+
+    fn never_match(
+        _: &cucumber::parser::Result<
+            cucumber::Event<cucumber::event::Cucumber<TestWorld>>,
+        >,
+    ) -> bool {
         false
     }
-    
+
     let repeat_writer = Repeat::new(inner, never_match);
 
     assert_eq!(Stats::passed_steps(&repeat_writer), 3);
@@ -264,26 +314,34 @@ fn test_writer_accessors() {
     let writer1 = MockWriter::new("Writer1");
     let writer2 = MockWriter::new("Writer2");
     let inner = MockWriter::new("Inner");
-    
-    fn dummy_predicate(_: &cucumber::parser::Result<cucumber::Event<cucumber::event::Cucumber<TestWorld>>>, _: &cli::Compose<MockCli, MockCli>) -> bool {
+
+    fn dummy_predicate(
+        _: &cucumber::parser::Result<
+            cucumber::Event<cucumber::event::Cucumber<TestWorld>>,
+        >,
+        _: &cli::Compose<MockCli, MockCli>,
+    ) -> bool {
         true
     }
-    
+
     // Test Or writer accessors
     let or_writer = Or::new(writer1.clone(), writer2.clone(), dummy_predicate);
     assert_eq!(or_writer.left_writer().id, "Writer1");
     assert_eq!(or_writer.right_writer().id, "Writer2");
-    
+
     // Test Tee writer accessors
     let tee_writer = Tee::new(writer1.clone(), writer2.clone());
     assert_eq!(tee_writer.left_writer().id, "Writer1");
     assert_eq!(tee_writer.right_writer().id, "Writer2");
-    
+
     // Test Repeat writer constructors (inner_writer only available for default filter)
-    let _repeat_failed: writer::Repeat<TestWorld, MockWriter> = writer::Repeat::failed(inner.clone());
-    let _repeat_skipped: writer::Repeat<TestWorld, MockWriter> = writer::Repeat::skipped(inner.clone());
-    
+    let _repeat_failed: writer::Repeat<TestWorld, MockWriter> =
+        writer::Repeat::failed(inner.clone());
+    let _repeat_skipped: writer::Repeat<TestWorld, MockWriter> =
+        writer::Repeat::skipped(inner.clone());
+
     // Test that the accessor works for default constructors
-    let repeat_failed: writer::Repeat<TestWorld, MockWriter> = writer::Repeat::failed(inner);
+    let repeat_failed: writer::Repeat<TestWorld, MockWriter> =
+        writer::Repeat::failed(inner);
     assert_eq!(repeat_failed.inner_writer().id, "Inner");
 }
