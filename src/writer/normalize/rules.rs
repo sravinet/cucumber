@@ -15,10 +15,7 @@ use crate::{
     event::{self, Retries, Source},
 };
 
-use super::{
-    queue::Queue,
-    emitter::Emitter,
-};
+use super::{emitter::Emitter, queue::Queue};
 
 // Forward declaration to avoid circular dependency
 use super::scenarios::ScenariosQueue;
@@ -91,11 +88,16 @@ impl<'me, World> Emitter<World> for &'me mut RulesQueue<World> {
 #[cfg(test)]
 #[allow(dead_code)]
 mod tests {
-    use super::*;
-    use crate::{Event, event::{Cucumber, Metadata, RetryableScenario}, Writer, parser, event::Source};
-    use std::{sync::Arc, future::Future};
     use super::super::FinishedState;
+    use super::*;
     use crate::test_utils::common::{EmptyCli, TestWorld};
+    use crate::{
+        Event, Writer,
+        event::Source,
+        event::{Cucumber, Metadata, RetryableScenario},
+        parser,
+    };
+    use std::{future::Future, sync::Arc};
 
     // Using common TestWorld from test_utils
 
@@ -106,9 +108,7 @@ mod tests {
 
     impl MockWriter {
         fn new() -> Self {
-            Self {
-                events: Vec::new(),
-            }
+            Self { events: Vec::new() }
         }
     }
 
@@ -185,7 +185,7 @@ mod tests {
     #[test]
     fn test_rules_queue_new() {
         let queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
-        
+
         assert!(queue.initial.is_some());
         assert_eq!(queue.fifo.len(), 0);
         assert!(matches!(queue.state, FinishedState::NotFinished));
@@ -193,20 +193,22 @@ mod tests {
 
     #[test]
     fn test_rules_queue_current_item_empty() {
-        let mut queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
-        
+        let mut queue: RulesQueue<TestWorld> =
+            RulesQueue::new(Metadata::new(()));
+
         let current = (&mut queue).current_item();
         assert!(current.is_none());
     }
 
     #[test]
     fn test_rules_queue_current_item_with_scenario() {
-        let mut queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
+        let mut queue: RulesQueue<TestWorld> =
+            RulesQueue::new(Metadata::new(()));
         let scenario = create_test_scenario();
         let scenarios_queue = ScenariosQueue::new();
-        
+
         queue.fifo.insert((scenario.clone(), None), scenarios_queue);
-        
+
         let current = (&mut queue).current_item();
         assert!(current.is_some());
         if let Some((sc, _)) = current {
@@ -216,14 +218,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_rules_queue_emit_with_initial() {
-        let mut queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
+        let mut queue: RulesQueue<TestWorld> =
+            RulesQueue::new(Metadata::new(()));
         let mut writer = MockWriter::new();
         let feature = create_test_feature();
         let rule = create_test_rule();
-        
+
         // Emit should start by emitting the rule started event
-        let result = (&mut queue).emit((feature, rule), &mut writer, &EmptyCli).await;
-        
+        let result =
+            (&mut queue).emit((feature, rule), &mut writer, &EmptyCli).await;
+
         // Should emit rule started event
         assert!(writer.events.contains(&"RuleStarted".to_string()));
         // Should not return the rule since it's not finished
@@ -234,17 +238,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_rules_queue_emit_finished() {
-        let mut queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
+        let mut queue: RulesQueue<TestWorld> =
+            RulesQueue::new(Metadata::new(()));
         let mut writer = MockWriter::new();
         let feature = create_test_feature();
         let rule = create_test_rule();
-        
+
         // Mark the queue as finished
         queue.finished(Metadata::new(()));
-        
+
         // Emit should emit the rule finished event and return the rule
-        let result = (&mut queue).emit((feature, rule.clone()), &mut writer, &EmptyCli).await;
-        
+        let result = (&mut queue)
+            .emit((feature, rule.clone()), &mut writer, &EmptyCli)
+            .await;
+
         // Should emit rule started and finished events
         assert!(writer.events.contains(&"RuleStarted".to_string()));
         assert!(writer.events.contains(&"RuleFinished".to_string()));
@@ -254,27 +261,28 @@ mod tests {
 
     #[tokio::test]
     async fn test_rules_queue_emit_with_scenarios() {
-        let mut queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
+        let mut queue: RulesQueue<TestWorld> =
+            RulesQueue::new(Metadata::new(()));
         let mut writer = MockWriter::new();
         let feature = create_test_feature();
         let rule = create_test_rule();
         let scenario = create_test_scenario();
-        
+
         // Add a scenario that will finish immediately
         let mut scenarios_queue = ScenariosQueue::new();
-        scenarios_queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Finished,
-                retries: None,
-            }
-        ));
+        scenarios_queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Finished,
+            retries: None,
+        }));
         queue.fifo.insert((scenario.clone(), None), scenarios_queue);
-        
+
         // Mark the queue as finished so it will emit
         queue.finished(Metadata::new(()));
-        
-        let result = (&mut queue).emit((feature, rule.clone()), &mut writer, &EmptyCli).await;
-        
+
+        let result = (&mut queue)
+            .emit((feature, rule.clone()), &mut writer, &EmptyCli)
+            .await;
+
         // Should process scenarios and finish
         assert_eq!(result, Some(rule));
         // Scenario should be removed from the queue
@@ -283,31 +291,34 @@ mod tests {
 
     #[test]
     fn test_rules_queue_finished() {
-        let mut queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
-        
+        let mut queue: RulesQueue<TestWorld> =
+            RulesQueue::new(Metadata::new(()));
+
         let meta = Metadata::new(());
         queue.finished(meta);
-        
+
         assert!(matches!(queue.state, FinishedState::FinishedButNotEmitted(_)));
     }
 
     #[test]
     fn test_rules_queue_remove() {
-        let mut queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
+        let mut queue: RulesQueue<TestWorld> =
+            RulesQueue::new(Metadata::new(()));
         let scenario = create_test_scenario();
         let scenarios_queue = ScenariosQueue::new();
-        
+
         queue.fifo.insert((scenario.clone(), None), scenarios_queue);
         assert_eq!(queue.fifo.len(), 1);
-        
+
         queue.remove(&(scenario, None));
         assert_eq!(queue.fifo.len(), 0);
     }
 
     #[test]
     fn test_emitter_trait_implementation() {
-        let mut queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
-        
+        let mut queue: RulesQueue<TestWorld> =
+            RulesQueue::new(Metadata::new(()));
+
         // Should implement Emitter trait
         fn requires_emitter<T: Emitter<TestWorld>>(_: T) {}
         requires_emitter(&mut queue);
@@ -317,8 +328,11 @@ mod tests {
     fn test_rules_queue_type_definitions() {
         // Test that the type aliases work correctly
         let queue: RulesQueue<TestWorld> = RulesQueue::new(Metadata::new(()));
-        
+
         // Should be a Queue with correct key and value types
-        let _: &Queue<(Source<gherkin::Scenario>, Option<Retries>), ScenariosQueue<TestWorld>> = &queue;
+        let _: &Queue<
+            (Source<gherkin::Scenario>, Option<Retries>),
+            ScenariosQueue<TestWorld>,
+        > = &queue;
     }
 }

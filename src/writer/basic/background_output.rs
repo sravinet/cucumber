@@ -12,7 +12,9 @@ use crate::{
 
 use super::{
     basic_struct::Basic,
-    formatting::{format_captures, format_str_with_indent, format_table, trim_path},
+    formatting::{
+        format_captures, format_str_with_indent, format_table, trim_path,
+    },
 };
 
 impl<Out: io::Write> Basic<Out> {
@@ -294,4 +296,3 @@ impl<Out: io::Write> Basic<Out> {
             .write_line(format!("{step_keyword}{step_value}{diagnostics}"))
     }
 }
-
