@@ -6,16 +6,16 @@
 // Import the modular implementation
 pub mod core;
 pub mod formatting;
-pub mod stats;
 pub mod state;
+pub mod stats;
 pub mod tracking;
 
 // Re-export all public types for backward compatibility
 pub use self::{
     core::{SkipFn, Summarizable, Summarize},
     formatting::SummaryFormatter,
-    stats::Stats,
     state::State,
+    stats::Stats,
     tracking::{HandledScenarios, Indicator},
 };
 

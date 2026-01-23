@@ -146,16 +146,34 @@ mod tests {
 
         #[test]
         fn report_time_from_str_plain() {
-            assert!(matches!(ReportTime::from_str("plain"), Ok(ReportTime::Plain)));
-            assert!(matches!(ReportTime::from_str("PLAIN"), Ok(ReportTime::Plain)));
-            assert!(matches!(ReportTime::from_str("Plain"), Ok(ReportTime::Plain)));
+            assert!(matches!(
+                ReportTime::from_str("plain"),
+                Ok(ReportTime::Plain)
+            ));
+            assert!(matches!(
+                ReportTime::from_str("PLAIN"),
+                Ok(ReportTime::Plain)
+            ));
+            assert!(matches!(
+                ReportTime::from_str("Plain"),
+                Ok(ReportTime::Plain)
+            ));
         }
 
         #[test]
         fn report_time_from_str_colored() {
-            assert!(matches!(ReportTime::from_str("colored"), Ok(ReportTime::Colored)));
-            assert!(matches!(ReportTime::from_str("COLORED"), Ok(ReportTime::Colored)));
-            assert!(matches!(ReportTime::from_str("Colored"), Ok(ReportTime::Colored)));
+            assert!(matches!(
+                ReportTime::from_str("colored"),
+                Ok(ReportTime::Colored)
+            ));
+            assert!(matches!(
+                ReportTime::from_str("COLORED"),
+                Ok(ReportTime::Colored)
+            ));
+            assert!(matches!(
+                ReportTime::from_str("Colored"),
+                Ok(ReportTime::Colored)
+            ));
         }
 
         #[test]
@@ -205,7 +223,7 @@ mod tests {
                 nightly: Some("unstable".to_string()),
             };
             let cli2 = cli1.clone();
-            
+
             assert!(matches!(cli2.format, Some(Format::Json)));
             assert!(cli2.show_output);
             assert!(matches!(cli2.report_time, Some(ReportTime::Colored)));

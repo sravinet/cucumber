@@ -11,4 +11,3 @@ impl<Out: io::Write> crate::writer::common::OutputFormatter for Basic<Out> {
         &mut self.output
     }
 }
-

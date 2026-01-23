@@ -68,7 +68,8 @@ impl<W: World + Debug, Out: io::Write> Writer<W> for Json<Out> {
                 Cucumber::Feature(f, event::Feature::Scenario(sc, ev)),
                 meta,
             )) => {
-                self.handler.handle_scenario_event(&f, None, &sc, ev.event, meta);
+                self.handler
+                    .handle_scenario_event(&f, None, &sc, ev.event, meta);
             }
             Ok((
                 Cucumber::Feature(
@@ -77,7 +78,13 @@ impl<W: World + Debug, Out: io::Write> Writer<W> for Json<Out> {
                 ),
                 meta,
             )) => {
-                self.handler.handle_scenario_event(&f, Some(&r), &sc, ev.event, meta);
+                self.handler.handle_scenario_event(
+                    &f,
+                    Some(&r),
+                    &sc,
+                    ev.event,
+                    meta,
+                );
             }
             Ok((Cucumber::Finished, _)) => {
                 self.write_output();
@@ -125,10 +132,7 @@ impl<Out: io::Write> Json<Out> {
     /// [2]: crate::event::Cucumber
     #[must_use]
     pub fn raw(output: Out) -> Self {
-        Self { 
-            output, 
-            handler: EventHandler::new(),
-        }
+        Self { output, handler: EventHandler::new() }
     }
 
     /// Writes the final JSON output to the configured output stream.
@@ -140,7 +144,7 @@ impl<Out: io::Write> Json<Out> {
                 return;
             }
         };
-        
+
         if let Err(e) = self.output.write_all(json.as_bytes()) {
             eprintln!("Warning: Failed to write JSON: {e}");
         }
@@ -196,7 +200,7 @@ mod tests {
     fn json_writer_new() {
         let output = Cursor::new(Vec::new());
         let writer = Json::raw(output);
-        
+
         assert_eq!(writer.feature_count(), 0);
         assert!(!writer.has_pending_logs());
     }
@@ -206,7 +210,7 @@ mod tests {
         fn test_creation() -> Json<Cursor<Vec<u8>>> {
             Json::raw(Cursor::new(Vec::new()))
         }
-        
+
         let writer = test_creation();
         assert_eq!(writer.feature_count(), 0);
     }
@@ -216,11 +220,14 @@ mod tests {
         let mut writer = create_test_json_writer();
         let error = parser::Error::Parsing(gherkin::ParseFileError::Reading {
             path: std::path::PathBuf::from("test.feature"),
-            source: std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "File not found",
+            ),
         });
-        
+
         writer.handle_event(Err(error), &cli::Empty).await;
-        
+
         assert_eq!(writer.feature_count(), 1);
         let features = writer.features();
         assert_eq!(features[0].uri, Some("test.feature".to_string()));
@@ -235,11 +242,11 @@ mod tests {
             crate::feature::ExpandExamplesError {
                 path: Some(std::path::PathBuf::from("examples.feature")),
                 pos: gherkin::LineCol { line: 10, col: 5 },
-            }
+            },
         );
-        
+
         writer.handle_event(Err(error), &cli::Empty).await;
-        
+
         assert_eq!(writer.feature_count(), 1);
         let features = writer.features();
         assert_eq!(features[0].uri, Some("examples.feature".to_string()));
@@ -247,12 +254,12 @@ mod tests {
         assert_eq!(features[0].elements[0].steps[0].line, 10);
     }
 
-    #[tokio::test] 
+    #[tokio::test]
     async fn handle_scenario_log_event() {
         let mut writer = create_test_json_writer();
         let feature = create_test_gherkin_feature();
         let scenario = create_test_gherkin_scenario();
-        
+
         let event = Event::new(
             Cucumber::Feature(
                 feature,
@@ -266,23 +273,21 @@ mod tests {
             ),
             Metadata { at: SystemTime::now() },
         );
-        
+
         writer.handle_event(Ok(event), &cli::Empty).await;
-        
+
         assert!(writer.has_pending_logs());
     }
 
     #[tokio::test]
     async fn handle_finished_event_writes_output() {
         let mut writer = create_test_json_writer();
-        
-        let event = Event::new(
-            Cucumber::Finished,
-            Metadata { at: SystemTime::now() },
-        );
-        
+
+        let event =
+            Event::new(Cucumber::Finished, Metadata { at: SystemTime::now() });
+
         writer.handle_event(Ok(event), &cli::Empty).await;
-        
+
         // Check that output was written (even if empty)
         let output = writer.output.into_inner();
         assert_eq!(output, b"[]");
@@ -292,7 +297,7 @@ mod tests {
     fn writer_stats() {
         let writer = create_test_json_writer();
         let stats = writer.stats();
-        
+
         // New writer should have zero stats
         assert_eq!(stats.passed_steps(), 0);
         assert_eq!(stats.failed_steps(), 0);
@@ -303,7 +308,7 @@ mod tests {
     fn writer_clear_pending_logs() {
         let mut writer = create_test_json_writer();
         writer.handler.logs.push("test".to_string());
-        
+
         assert!(writer.has_pending_logs());
         writer.clear_pending_logs();
         assert!(!writer.has_pending_logs());
@@ -313,7 +318,7 @@ mod tests {
     fn writer_features_accessor() {
         let writer = create_test_json_writer();
         let features = writer.features();
-        
+
         assert!(features.is_empty());
     }
 

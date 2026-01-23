@@ -29,8 +29,10 @@ pub mod writer;
 
 // Re-export all public types for backward compatibility
 pub use cli::{Cli, Format, ReportTime};
-pub use json_events::{LibTestJsonEvent, SuiteEvent, SuiteResults, TestEvent, TestEventInner};
-pub use utils::{IsBackground, LibtestUtils, TimingUtils, BackgroundUtils};
+pub use json_events::{
+    LibTestJsonEvent, SuiteEvent, SuiteResults, TestEvent, TestEventInner,
+};
+pub use utils::{BackgroundUtils, IsBackground, LibtestUtils, TimingUtils};
 pub use writer::{Libtest, Or, OrBasic};
 
 #[cfg(test)]
@@ -51,9 +53,9 @@ mod integration_tests {
         // Test basic event handling
         let meta = event::Metadata::new(SystemTime::now());
         let started_event = Ok(meta.insert(event::Cucumber::Started));
-        
+
         writer.handle_event(started_event, &cli).await;
-        
+
         // Before parsing finished, no output should be generated
         assert!(writer.output.is_empty());
         assert_eq!(writer.events.len(), 1);
@@ -62,7 +64,7 @@ mod integration_tests {
     #[test]
     fn libtest_writer_stats_integration() {
         let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
-        
+
         // Simulate some test execution
         writer.passed = 5;
         writer.failed = 2;
@@ -70,7 +72,7 @@ mod integration_tests {
         writer.retried = 1;
         writer.parsing_errors = 1;
         writer.hook_errors = 0;
-        
+
         // Test stats trait implementation
         use crate::writer::Stats;
         assert_eq!(writer.passed_steps(), 5);
@@ -89,7 +91,7 @@ mod integration_tests {
             report_time: Some(ReportTime::Colored),
             nightly: None,
         };
-        
+
         // Test that CLI options work as expected
         assert!(matches!(cli.format, Some(Format::Json)));
         assert!(cli.show_output);
@@ -101,10 +103,10 @@ mod integration_tests {
         // Test event creation and serialization
         let suite_event = SuiteEvent::Started { test_count: 10 };
         let json_event: LibTestJsonEvent = suite_event.into();
-        
+
         let serialized = serde_json::to_string(&json_event)
             .expect("Should serialize successfully");
-        
+
         assert!(serialized.contains("\"type\":\"suite\""));
         assert!(serialized.contains("\"event\":\"started\""));
         assert!(serialized.contains("\"test_count\":10"));
@@ -113,7 +115,7 @@ mod integration_tests {
     #[test]
     fn utils_integration() {
         use std::path::PathBuf;
-        
+
         // Test utility functions work together
         let feature = gherkin::Feature {
             keyword: "Feature".to_string(),
@@ -128,14 +130,12 @@ mod integration_tests {
             position: gherkin::Position::new(1, 1),
             path: Some(PathBuf::from("test.feature")),
         };
-        
+
         let formatted_path = LibtestUtils::format_feature_path(&feature);
         assert_eq!(formatted_path, "test.feature");
-        
-        let cli = Cli {
-            report_time: Some(ReportTime::Plain),
-            ..Default::default()
-        };
+
+        let cli =
+            Cli { report_time: Some(ReportTime::Plain), ..Default::default() };
         assert!(TimingUtils::should_report_time(&cli));
     }
 
@@ -153,18 +153,20 @@ mod integration_tests {
     #[test]
     fn module_organization_test() {
         // Test that all modules are properly organized and accessible
-        
+
         // CLI module
         let _cli_item = cli::Cli::default();
-        
+
         // JSON events module
         let _json_item = json_events::TestEvent::started("test".to_string());
-        
+
         // Utils module
-        let _background_keyword = utils::BackgroundUtils::get_background_keyword;
-        
+        let _background_keyword =
+            utils::BackgroundUtils::get_background_keyword;
+
         // Writer module
-        let _writer_item = writer::Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
+        let _writer_item =
+            writer::Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
     }
 
     #[tokio::test]
@@ -178,28 +180,29 @@ mod integration_tests {
         };
 
         // Simulate a complete workflow
-        
+
         // 1. Start cucumber
         let meta = event::Metadata::new(SystemTime::now());
         let started_event = Ok(meta.insert(event::Cucumber::Started));
         writer.handle_event(started_event, &cli).await;
-        
+
         // 2. Parsing finished
-        let parsing_finished = Ok(meta.insert(event::Cucumber::ParsingFinished {
-            steps: 5,
-            parser_errors: 0,
-            features: 1,
-        }));
+        let parsing_finished =
+            Ok(meta.insert(event::Cucumber::ParsingFinished {
+                steps: 5,
+                parser_errors: 0,
+                features: 1,
+            }));
         writer.handle_event(parsing_finished, &cli).await;
-        
+
         // 3. Finish cucumber
         let finished_event = Ok(meta.insert(event::Cucumber::Finished));
         writer.handle_event(finished_event, &cli).await;
-        
+
         // Should have generated JSON output
         assert!(!writer.output.is_empty());
         let output_str = String::from_utf8_lossy(&writer.output);
-        
+
         // Should contain suite events
         assert!(output_str.contains("\"type\":\"suite\""));
         assert!(output_str.contains("\"event\":\"started\""));

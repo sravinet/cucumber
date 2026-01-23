@@ -10,7 +10,10 @@
 
 //! Utility functions for the libtest writer.
 
-use std::{io, time::{Duration, SystemTime}};
+use std::{
+    io,
+    time::{Duration, SystemTime},
+};
 
 use either::Either;
 use itertools::Itertools as _;
@@ -176,7 +179,10 @@ impl LibtestUtils {
     }
 
     /// Checks if a step should be considered a retry.
-    pub fn is_retry_step(retries: Option<Retries>, error: &event::StepError) -> bool {
+    pub fn is_retry_step(
+        retries: Option<Retries>,
+        error: &event::StepError,
+    ) -> bool {
         retries.is_some_and(|r| {
             r.left > 0 && !matches!(error, event::StepError::NotFound)
         })
@@ -193,8 +199,7 @@ impl TimingUtils {
         started_at: Option<SystemTime>,
         current_time: SystemTime,
     ) -> Option<Duration> {
-        started_at
-            .and_then(|started| current_time.duration_since(started).ok())
+        started_at.and_then(|started| current_time.duration_since(started).ok())
     }
 
     /// Converts duration to seconds as f64 for JSON serialization.
@@ -237,12 +242,7 @@ impl BackgroundUtils {
 
     /// Formats a regular step name.
     pub fn format_regular_step_name(step: &gherkin::Step) -> String {
-        format!(
-            "{}: {} {}",
-            step.position.line,
-            step.keyword,
-            step.value,
-        )
+        format!("{}: {} {}", step.position.line, step.keyword, step.value,)
     }
 }
 
@@ -365,7 +365,8 @@ mod tests {
         #[test]
         fn test_case_name_background_step() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
-            let mut feature = mock_feature("Test Feature", Some("test.feature"));
+            let mut feature =
+                mock_feature("Test Feature", Some("test.feature"));
             feature.background = Some(gherkin::Background {
                 keyword: "Background".to_string(),
                 description: None,
@@ -438,10 +439,7 @@ mod tests {
         #[test]
         fn step_started_at_without_timing() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
-            let cli = Cli {
-                report_time: None,
-                ..Default::default()
-            };
+            let cli = Cli { report_time: None, ..Default::default() };
             let meta = Metadata::new(SystemTime::now());
 
             LibtestUtils::step_started_at(&mut writer, meta, &cli);
@@ -456,14 +454,15 @@ mod tests {
                 report_time: Some(super::super::cli::ReportTime::Plain),
                 ..Default::default()
             };
-            
+
             let start_time = SystemTime::now();
             writer.step_started_at = Some(start_time);
-            
+
             let end_time = start_time + Duration::from_millis(500);
             let meta = Metadata::new(end_time);
 
-            let exec_time = LibtestUtils::step_exec_time(&mut writer, meta, &cli);
+            let exec_time =
+                LibtestUtils::step_exec_time(&mut writer, meta, &cli);
 
             assert!(exec_time.is_some());
             let duration = exec_time.unwrap();
@@ -474,9 +473,12 @@ mod tests {
 
         #[test]
         fn format_feature_path_with_path() {
-            let feature = mock_feature("Test Feature", Some("/long/path/to/test.feature"));
+            let feature = mock_feature(
+                "Test Feature",
+                Some("/long/path/to/test.feature"),
+            );
             let formatted = LibtestUtils::format_feature_path(&feature);
-            
+
             // Should use trimmed path
             assert_eq!(formatted, "test.feature");
         }
@@ -485,7 +487,7 @@ mod tests {
         fn format_feature_path_without_path() {
             let feature = mock_feature("Test Feature", None);
             let formatted = LibtestUtils::format_feature_path(&feature);
-            
+
             // Should fall back to feature name
             assert_eq!(formatted, "Test Feature");
         }
@@ -494,7 +496,7 @@ mod tests {
         fn format_retry_info_with_retries() {
             let retries = Retries { current: 1, left: 2 };
             let formatted = LibtestUtils::format_retry_info(Some(retries));
-            
+
             assert_eq!(formatted, " | Retry attempt 1/3");
         }
 
@@ -502,7 +504,7 @@ mod tests {
         fn format_retry_info_first_attempt() {
             let retries = Retries { current: 0, left: 2 };
             let formatted = LibtestUtils::format_retry_info(Some(retries));
-            
+
             // Should be empty for first attempt (current = 0)
             assert_eq!(formatted, "");
         }
@@ -517,28 +519,28 @@ mod tests {
         fn is_retry_step_conditions() {
             let retries_with_left = Retries { current: 1, left: 1 };
             let retries_no_left = Retries { current: 1, left: 0 };
-            
+
             // Should retry with retries left and non-NotFound error
             assert!(LibtestUtils::is_retry_step(
-                Some(retries_with_left), 
+                Some(retries_with_left),
                 &event::StepError::Panic(std::sync::Arc::new("test"))
             ));
-            
+
             // Should not retry with no retries left
             assert!(!LibtestUtils::is_retry_step(
-                Some(retries_no_left), 
+                Some(retries_no_left),
                 &event::StepError::Panic(std::sync::Arc::new("test"))
             ));
-            
+
             // Should not retry NotFound error even with retries
             assert!(!LibtestUtils::is_retry_step(
-                Some(retries_with_left), 
+                Some(retries_with_left),
                 &event::StepError::NotFound
             ));
-            
+
             // Should not retry with no retries
             assert!(!LibtestUtils::is_retry_step(
-                None, 
+                None,
                 &event::StepError::Panic(std::sync::Arc::new("test"))
             ));
         }
@@ -551,9 +553,9 @@ mod tests {
         fn calculate_exec_time_success() {
             let start = SystemTime::now();
             let end = start + Duration::from_millis(100);
-            
+
             let exec_time = TimingUtils::calculate_exec_time(Some(start), end);
-            
+
             assert!(exec_time.is_some());
             let duration = exec_time.unwrap();
             assert!(duration >= Duration::from_millis(99)); // Allow small variance
@@ -580,11 +582,9 @@ mod tests {
                 report_time: Some(super::super::cli::ReportTime::Plain),
                 ..Default::default()
             };
-            let cli_without_timing = Cli {
-                report_time: None,
-                ..Default::default()
-            };
-            
+            let cli_without_timing =
+                Cli { report_time: None, ..Default::default() };
+
             assert!(TimingUtils::should_report_time(&cli_with_timing));
             assert!(!TimingUtils::should_report_time(&cli_without_timing));
         }
@@ -603,7 +603,7 @@ mod tests {
                 span: gherkin::Span { start: 0, end: 0 },
                 position: gherkin::Position::new(1, 1),
             });
-            
+
             let keyword = BackgroundUtils::get_background_keyword(&feature);
             assert_eq!(keyword, "Предистория");
         }
@@ -619,8 +619,9 @@ mod tests {
         fn format_background_step_name() {
             let feature = mock_feature("Test", None);
             let step = mock_step("Given", "some precondition", 5);
-            
-            let formatted = BackgroundUtils::format_background_step_name(&feature, &step);
+
+            let formatted =
+                BackgroundUtils::format_background_step_name(&feature, &step);
             assert_eq!(formatted, "5: Background Given some precondition");
         }
 

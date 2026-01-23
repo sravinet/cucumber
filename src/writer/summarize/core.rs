@@ -13,8 +13,8 @@ use crate::{
 };
 
 use super::{
-    stats::Stats,
     state::State,
+    stats::Stats,
     tracking::{HandledScenarios, Indicator, ScenarioTracker},
 };
 
@@ -302,7 +302,8 @@ impl<Writer> Summarize<Writer> {
             Step::Failed { error, .. } => {
                 if retries
                     .filter(|r| {
-                        r.left > 0 && !matches!(error, event::StepError::NotFound)
+                        r.left > 0
+                            && !matches!(error, event::StepError::NotFound)
                     })
                     .is_some()
                 {
@@ -393,7 +394,8 @@ impl<Writer> Summarize<Writer> {
                     .get(&path)
                     .is_some_and(|ind| matches!(ind, Indicator::Retried));
 
-                if !is_retried && self.handled_scenarios.remove(&path).is_none() {
+                if !is_retried && self.handled_scenarios.remove(&path).is_none()
+                {
                     self.scenarios.increment_passed();
                 }
             }
@@ -476,7 +478,7 @@ pub type SkipFn =
 mod tests {
     use super::*;
     use crate::test_utils::common::{EmptyCli, TestWorld};
-    use crate::{Writer, parser, Event};
+    use crate::{Event, Writer, parser};
 
     #[derive(Debug, Clone)]
     struct MockWriter;
@@ -503,7 +505,7 @@ mod tests {
     fn summarize_new() {
         let writer = MockWriter;
         let summarize = Summarize::new(writer);
-        
+
         assert_eq!(summarize.features_count(), 0);
         assert_eq!(summarize.rules_count(), 0);
         assert_eq!(summarize.scenarios_stats().total(), 0);
@@ -517,7 +519,7 @@ mod tests {
     fn summarize_from() {
         let writer = MockWriter;
         let summarize = Summarize::from(writer);
-        
+
         assert_eq!(summarize.features_count(), 0);
         assert_eq!(summarize.scenarios_stats(), &Stats::new());
         assert_eq!(summarize.steps_stats(), &Stats::new());
@@ -527,17 +529,17 @@ mod tests {
     fn summarize_getters() {
         let writer = MockWriter;
         let mut summarize = Summarize::new(writer);
-        
+
         // Test initial values
         assert_eq!(summarize.scenarios_stats().total(), 0);
         assert_eq!(summarize.steps_stats().total(), 0);
-        
+
         // Manually set some values to test getters
         summarize.features = 5;
         summarize.rules = 3;
         summarize.parsing_errors = 2;
         summarize.failed_hooks = 1;
-        
+
         assert_eq!(summarize.features_count(), 5);
         assert_eq!(summarize.rules_count(), 3);
         assert_eq!(summarize.parsing_errors_count(), 2);
@@ -548,7 +550,7 @@ mod tests {
     fn stats_trait_implementation() {
         let writer = MockWriter;
         let mut summarize = Summarize::new(writer);
-        
+
         // Set some step statistics
         summarize.steps.passed = 10;
         summarize.steps.skipped = 3;
@@ -556,7 +558,7 @@ mod tests {
         summarize.steps.retried = 5;
         summarize.parsing_errors = 1;
         summarize.failed_hooks = 2;
-        
+
         // Test public getter methods
         assert_eq!(summarize.steps_stats().passed, 10);
         assert_eq!(summarize.steps_stats().skipped, 3);
@@ -577,14 +579,14 @@ mod tests {
     fn state_transitions() {
         let writer = MockWriter;
         let mut summarize = Summarize::new(writer);
-        
+
         // Initial state
         assert_eq!(summarize.current_state(), State::InProgress);
-        
+
         // Set state to finished but not output
         summarize.state = State::FinishedButNotOutput;
         assert_eq!(summarize.current_state(), State::FinishedButNotOutput);
-        
+
         // Set state to finished and output
         summarize.state = State::FinishedAndOutput;
         assert_eq!(summarize.current_state(), State::FinishedAndOutput);
@@ -594,22 +596,25 @@ mod tests {
     fn inner_writer_access() {
         let writer = MockWriter;
         let summarize = Summarize::new(writer.clone());
-        
+
         // Test that we can access the inner writer
-        assert_eq!(format!("{:?}", summarize.inner_writer()), format!("{:?}", &writer));
+        assert_eq!(
+            format!("{:?}", summarize.inner_writer()),
+            format!("{:?}", &writer)
+        );
     }
 
     #[test]
     fn basic_step_counting() {
         let writer = MockWriter;
         let mut summarize = Summarize::new(writer);
-        
+
         // Directly increment stats to test basic functionality
         summarize.steps.increment_passed();
         summarize.steps.increment_skipped();
         summarize.steps.increment_failed();
         summarize.steps.increment_retried();
-        
+
         assert_eq!(summarize.steps_stats().passed, 1);
         assert_eq!(summarize.steps_stats().skipped, 1);
         assert_eq!(summarize.steps_stats().failed, 1);

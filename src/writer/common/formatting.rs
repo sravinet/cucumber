@@ -12,7 +12,7 @@
 
 use std::io::{self, Write};
 
-use crate::error::{WriterResult, WriterError};
+use crate::error::{WriterError, WriterResult};
 
 /// Utility trait for common output formatting operations.
 pub trait OutputFormatter {
@@ -68,17 +68,11 @@ mod tests {
 
     impl MockWriter {
         fn new() -> Self {
-            Self {
-                buffer: Vec::new(),
-                should_fail: false,
-            }
+            Self { buffer: Vec::new(), should_fail: false }
         }
 
         fn with_failure() -> Self {
-            Self {
-                buffer: Vec::new(),
-                should_fail: true,
-            }
+            Self { buffer: Vec::new(), should_fail: true }
         }
 
         fn written_content(&self) -> String {
@@ -116,21 +110,21 @@ mod tests {
     #[test]
     fn output_formatter_write_line_success() {
         let mut writer = MockWriter::new();
-        
+
         writer.write_line("test line").expect("should write successfully");
-        
+
         assert_eq!(writer.written_content(), "test line\n");
     }
 
     #[test]
     fn output_formatter_write_line_failure() {
         let mut writer = MockWriter::with_failure();
-        
+
         let result = writer.write_line("test line");
-        
+
         assert!(result.is_err());
         match result.unwrap_err() {
-            WriterError::Io(_) => {}, // Expected
+            WriterError::Io(_) => {} // Expected
             _ => panic!("Expected IO error"),
         }
     }
@@ -138,56 +132,65 @@ mod tests {
     #[test]
     fn output_formatter_write_bytes_success() {
         let mut writer = MockWriter::new();
-        
+
         writer.write_bytes(b"test bytes").expect("should write successfully");
-        
+
         assert_eq!(writer.written_content(), "test bytes");
     }
 
     #[test]
     fn output_formatter_write_bytes_failure() {
         let mut writer = MockWriter::with_failure();
-        
+
         let result = writer.write_bytes(b"test bytes");
-        
+
         assert!(result.is_err());
     }
 
     #[test]
     fn output_formatter_write_fmt_success() {
         let mut writer = MockWriter::new();
-        
-        <MockWriter as OutputFormatter>::write_fmt(&mut writer, format_args!("test {} {}", "formatted", 123))
-            .expect("should write successfully");
-        
+
+        <MockWriter as OutputFormatter>::write_fmt(
+            &mut writer,
+            format_args!("test {} {}", "formatted", 123),
+        )
+        .expect("should write successfully");
+
         assert_eq!(writer.written_content(), "test formatted 123");
     }
 
     #[test]
     fn output_formatter_flush_success() {
         let mut writer = MockWriter::new();
-        
-        <MockWriter as OutputFormatter>::flush(&mut writer).expect("should flush successfully");
+
+        <MockWriter as OutputFormatter>::flush(&mut writer)
+            .expect("should flush successfully");
     }
 
     #[test]
     fn output_formatter_flush_failure() {
         let mut writer = MockWriter::with_failure();
-        
+
         let result = <MockWriter as OutputFormatter>::flush(&mut writer);
-        
+
         assert!(result.is_err());
     }
 
     #[test]
     fn output_formatter_multiple_operations() {
         let mut writer = MockWriter::new();
-        
+
         writer.write_line("Line 1").expect("should write successfully");
         writer.write_bytes(b"Raw bytes").expect("should write successfully");
-        <MockWriter as OutputFormatter>::write_fmt(&mut writer, format_args!("Formatted: {}", 42)).expect("should write successfully");
-        <MockWriter as OutputFormatter>::flush(&mut writer).expect("should flush successfully");
-        
+        <MockWriter as OutputFormatter>::write_fmt(
+            &mut writer,
+            format_args!("Formatted: {}", 42),
+        )
+        .expect("should write successfully");
+        <MockWriter as OutputFormatter>::flush(&mut writer)
+            .expect("should flush successfully");
+
         let content = writer.written_content();
         assert!(content.contains("Line 1\n"));
         assert!(content.contains("Raw bytes"));
@@ -197,39 +200,48 @@ mod tests {
     #[test]
     fn output_formatter_empty_line() {
         let mut writer = MockWriter::new();
-        
+
         writer.write_line("").expect("should write successfully");
-        
+
         assert_eq!(writer.written_content(), "\n");
     }
 
     #[test]
     fn output_formatter_empty_bytes() {
         let mut writer = MockWriter::new();
-        
+
         writer.write_bytes(&[]).expect("should write successfully");
-        
+
         assert_eq!(writer.written_content(), "");
     }
 
     #[test]
     fn output_formatter_write_fmt_empty() {
         let mut writer = MockWriter::new();
-        
-        <MockWriter as OutputFormatter>::write_fmt(&mut writer, format_args!(""))
-            .expect("should write successfully");
-        
+
+        <MockWriter as OutputFormatter>::write_fmt(
+            &mut writer,
+            format_args!(""),
+        )
+        .expect("should write successfully");
+
         assert_eq!(writer.written_content(), "");
     }
 
     #[test]
     fn output_formatter_error_propagation() {
         let mut writer = MockWriter::with_failure();
-        
+
         // All operations should fail and propagate errors
         assert!(writer.write_line("test").is_err());
         assert!(writer.write_bytes(b"test").is_err());
-        assert!(<MockWriter as OutputFormatter>::write_fmt(&mut writer, format_args!("test")).is_err());
+        assert!(
+            <MockWriter as OutputFormatter>::write_fmt(
+                &mut writer,
+                format_args!("test")
+            )
+            .is_err()
+        );
         assert!(<MockWriter as OutputFormatter>::flush(&mut writer).is_err());
     }
 }

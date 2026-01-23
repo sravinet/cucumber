@@ -62,14 +62,20 @@ impl SummaryFormatter for Styles {
         let steps = self.maybe_plural("step", summary.steps_stats().total());
         let steps_stats = self.format_stats(*summary.steps_stats());
 
-        let parsing_errors = if summary.parsing_errors_count() > 0 {
-            self.err(self.maybe_plural("parsing error", summary.parsing_errors_count()))
-        } else {
-            "".into()
-        };
+        let parsing_errors =
+            if summary.parsing_errors_count() > 0 {
+                self.err(self.maybe_plural(
+                    "parsing error",
+                    summary.parsing_errors_count(),
+                ))
+            } else {
+                "".into()
+            };
 
         let hook_errors = if summary.failed_hooks_count() > 0 {
-            self.err(self.maybe_plural("hook error", summary.failed_hooks_count()))
+            self.err(
+                self.maybe_plural("hook error", summary.failed_hooks_count()),
+            )
         } else {
             "".into()
         };
@@ -155,15 +161,15 @@ impl SummaryUtils {
     /// testing or when styling is not desired.
     #[must_use]
     pub fn format_count(singular: &str, count: usize) -> String {
-        format!(
-            "{count} {singular}{}",
-            if count == 1 { "" } else { "s" }
-        )
+        format!("{count} {singular}{}", if count == 1 { "" } else { "s" })
     }
 
     /// Calculates the total error count from parsing and hook errors.
     #[must_use]
-    pub const fn total_errors(parsing_errors: usize, hook_errors: usize) -> usize {
+    pub const fn total_errors(
+        parsing_errors: usize,
+        hook_errors: usize,
+    ) -> usize {
         parsing_errors + hook_errors
     }
 
@@ -211,11 +217,17 @@ impl SummaryUtils {
         ));
 
         if summary.parsing_errors_count() > 0 {
-            parts.push(Self::format_count("parsing error", summary.parsing_errors_count()));
+            parts.push(Self::format_count(
+                "parsing error",
+                summary.parsing_errors_count(),
+            ));
         }
 
         if summary.failed_hooks_count() > 0 {
-            parts.push(Self::format_count("hook error", summary.failed_hooks_count()));
+            parts.push(Self::format_count(
+                "hook error",
+                summary.failed_hooks_count(),
+            ));
         }
 
         parts.join(", ")
@@ -225,17 +237,12 @@ impl SummaryUtils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::writer::Coloring;
     use crate::test_utils::common::{EmptyCli, TestWorld};
-    use crate::{Writer, parser, Event};
+    use crate::writer::Coloring;
+    use crate::{Event, Writer, parser};
 
     fn create_test_stats() -> Stats {
-        Stats {
-            passed: 5,
-            skipped: 2,
-            failed: 1,
-            retried: 3,
-        }
+        Stats { passed: 5, skipped: 2, failed: 1, retried: 3 }
     }
 
     #[test]
@@ -260,22 +267,20 @@ mod tests {
 
     #[test]
     fn summary_utils_has_any_failures() {
-        let stats_with_failures = Stats {
-            passed: 5, skipped: 2, failed: 1, retried: 0
-        };
-        let stats_without_failures = Stats {
-            passed: 5, skipped: 2, failed: 0, retried: 0
-        };
+        let stats_with_failures =
+            Stats { passed: 5, skipped: 2, failed: 1, retried: 0 };
+        let stats_without_failures =
+            Stats { passed: 5, skipped: 2, failed: 0, retried: 0 };
 
         // Test with failed stats
         assert!(SummaryUtils::has_any_failures(&stats_with_failures, 0, 0));
-        
+
         // Test with parsing errors
         assert!(SummaryUtils::has_any_failures(&stats_without_failures, 1, 0));
-        
+
         // Test with hook errors
         assert!(SummaryUtils::has_any_failures(&stats_without_failures, 0, 1));
-        
+
         // Test with no failures
         assert!(!SummaryUtils::has_any_failures(&stats_without_failures, 0, 0));
     }
@@ -291,10 +296,10 @@ mod tests {
     #[test]
     fn styles_maybe_plural_plural() {
         let styles = Styles::new();
-        
+
         let result_zero = styles.maybe_plural("test", 0);
         assert!(result_zero.contains("0 tests"));
-        
+
         let result_many = styles.maybe_plural("test", 5);
         assert!(result_many.contains("5 tests"));
     }
@@ -311,14 +316,9 @@ mod tests {
     fn styles_format_stats_with_values() {
         let mut styles = Styles::new();
         styles.apply_coloring(Coloring::Never); // Disable coloring for predictable output
-        
-        let stats = Stats {
-            passed: 5,
-            skipped: 2,
-            failed: 1,
-            retried: 0,
-        };
-        
+
+        let stats = Stats { passed: 5, skipped: 2, failed: 1, retried: 0 };
+
         let result = styles.format_stats(stats);
         assert!(result.contains("5 passed"));
         assert!(result.contains("2 skipped"));
@@ -330,14 +330,9 @@ mod tests {
     fn styles_format_stats_with_retries() {
         let mut styles = Styles::new();
         styles.apply_coloring(Coloring::Never);
-        
-        let stats = Stats {
-            passed: 3,
-            skipped: 0,
-            failed: 0,
-            retried: 1,
-        };
-        
+
+        let stats = Stats { passed: 3, skipped: 0, failed: 0, retried: 1 };
+
         let result = styles.format_stats(stats);
         assert!(result.contains("3 passed"));
         assert!(result.contains("1 retry"));
@@ -347,14 +342,9 @@ mod tests {
     fn styles_format_stats_multiple_retries() {
         let mut styles = Styles::new();
         styles.apply_coloring(Coloring::Never);
-        
-        let stats = Stats {
-            passed: 3,
-            skipped: 0,
-            failed: 0,
-            retried: 5,
-        };
-        
+
+        let stats = Stats { passed: 3, skipped: 0, failed: 0, retried: 5 };
+
         let result = styles.format_stats(stats);
         assert!(result.contains("3 passed"));
         assert!(result.contains("5 retries"));
@@ -384,20 +374,21 @@ mod tests {
     #[test]
     fn summary_utils_plain_text_summary() {
         use super::super::core::Summarize;
-        
+
         let writer = MockWriter;
         let mut summary = Summarize::new(writer);
-        
+
         // Set some test values
         summary.features = 2;
         summary.rules = 1;
-        summary.scenarios = Stats { passed: 8, skipped: 2, failed: 1, retried: 3 };
+        summary.scenarios =
+            Stats { passed: 8, skipped: 2, failed: 1, retried: 3 };
         summary.steps = Stats { passed: 15, skipped: 3, failed: 2, retried: 5 };
         summary.parsing_errors = 1;
         summary.failed_hooks = 0;
-        
+
         let result = SummaryUtils::plain_text_summary(&summary);
-        
+
         assert!(result.contains("2 features"));
         assert!(result.contains("1 rule"));
         assert!(result.contains("11 scenarios")); // 8+2+1
@@ -413,12 +404,12 @@ mod tests {
     #[test]
     fn summary_utils_plain_text_summary_no_rules() {
         use super::super::core::Summarize;
-        
+
         let writer = MockWriter;
         let summary = Summarize::new(writer);
-        
+
         let result = SummaryUtils::plain_text_summary(&summary);
-        
+
         assert!(result.contains("0 features"));
         assert!(!result.contains("rule"));
         assert!(result.contains("0 scenarios"));

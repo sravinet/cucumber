@@ -217,22 +217,43 @@ mod tests {
     fn embedding_from_log() {
         let msg = "Test log message";
         let embedding = Embedding::from_log(msg);
-        
+
         assert_eq!(embedding.data.decode(), msg.as_bytes());
-        assert_eq!(embedding.mime_type.to_string(), "text/x.cucumber.log+plain");
+        assert_eq!(
+            embedding.mime_type.to_string(),
+            "text/x.cucumber.log+plain"
+        );
         assert!(embedding.name.is_none());
     }
 
     #[test]
     fn status_serialization() {
         use serde_json;
-        
-        assert_eq!(serde_json::to_string(&Status::Passed).unwrap(), "\"passed\"");
-        assert_eq!(serde_json::to_string(&Status::Failed).unwrap(), "\"failed\"");
-        assert_eq!(serde_json::to_string(&Status::Skipped).unwrap(), "\"skipped\"");
-        assert_eq!(serde_json::to_string(&Status::Ambiguous).unwrap(), "\"ambiguous\"");
-        assert_eq!(serde_json::to_string(&Status::Undefined).unwrap(), "\"undefined\"");
-        assert_eq!(serde_json::to_string(&Status::Pending).unwrap(), "\"pending\"");
+
+        assert_eq!(
+            serde_json::to_string(&Status::Passed).unwrap(),
+            "\"passed\""
+        );
+        assert_eq!(
+            serde_json::to_string(&Status::Failed).unwrap(),
+            "\"failed\""
+        );
+        assert_eq!(
+            serde_json::to_string(&Status::Skipped).unwrap(),
+            "\"skipped\""
+        );
+        assert_eq!(
+            serde_json::to_string(&Status::Ambiguous).unwrap(),
+            "\"ambiguous\""
+        );
+        assert_eq!(
+            serde_json::to_string(&Status::Undefined).unwrap(),
+            "\"undefined\""
+        );
+        assert_eq!(
+            serde_json::to_string(&Status::Pending).unwrap(),
+            "\"pending\""
+        );
     }
 
     #[test]
@@ -242,7 +263,7 @@ mod tests {
             duration: 12345,
             error_message: None,
         };
-        
+
         let json = serde_json::to_value(&result).unwrap();
         assert_eq!(json["status"], "passed");
         assert_eq!(json["duration"], 12345);
@@ -256,7 +277,7 @@ mod tests {
             duration: 54321,
             error_message: Some("Something went wrong".to_string()),
         };
-        
+
         let json = serde_json::to_value(&result).unwrap();
         assert_eq!(json["status"], "failed");
         assert_eq!(json["duration"], 54321);
@@ -277,7 +298,7 @@ mod tests {
             },
             embeddings: vec![],
         };
-        
+
         let json = serde_json::to_value(&step).unwrap();
         // hidden field should be omitted when false
         assert!(!json.as_object().unwrap().contains_key("hidden"));
@@ -285,11 +306,8 @@ mod tests {
 
     #[test]
     fn tag_creation() {
-        let tag = Tag {
-            name: "@smoke".to_string(),
-            line: 5,
-        };
-        
+        let tag = Tag { name: "@smoke".to_string(), line: 5 };
+
         assert_eq!(tag.name, "@smoke");
         assert_eq!(tag.line, 5);
     }

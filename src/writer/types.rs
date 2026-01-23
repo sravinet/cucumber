@@ -14,7 +14,6 @@
 //! traits like [`NonTransforming`] that help organize and constrain writer
 //! behavior in the pipeline.
 
-
 /// Marker indicating that a [`Writer`] doesn't transform or rearrange events.
 ///
 /// It's used to ensure that a [`Writer`]s pipeline is built in the right order,
@@ -183,21 +182,24 @@ mod tests {
         assert_eq!(Verbosity::default() as u8, 0);
         assert_eq!(u8::from(Verbosity::ShowWorld), 1);
         assert_eq!(u8::from(Verbosity::ShowWorldAndDocString), 2);
-        
+
         assert!(matches!(Verbosity::from(0), Verbosity::Default));
         assert!(matches!(Verbosity::from(1), Verbosity::ShowWorld));
         assert!(matches!(Verbosity::from(2), Verbosity::ShowWorldAndDocString));
-        assert!(matches!(Verbosity::from(255), Verbosity::ShowWorldAndDocString));
+        assert!(matches!(
+            Verbosity::from(255),
+            Verbosity::ShowWorldAndDocString
+        ));
     }
 
     #[test]
     fn test_verbosity_flags() {
         assert!(!Verbosity::Default.shows_world());
         assert!(!Verbosity::Default.shows_docstring());
-        
+
         assert!(Verbosity::ShowWorld.shows_world());
         assert!(!Verbosity::ShowWorld.shows_docstring());
-        
+
         assert!(Verbosity::ShowWorldAndDocString.shows_world());
         assert!(Verbosity::ShowWorldAndDocString.shows_docstring());
     }
@@ -214,7 +216,7 @@ mod tests {
         let v1 = Verbosity::ShowWorld;
         let v2 = v1; // Copy
         let v3 = v1.clone(); // Clone
-        
+
         assert!(matches!(v1, Verbosity::ShowWorld));
         assert!(matches!(v2, Verbosity::ShowWorld));
         assert!(matches!(v3, Verbosity::ShowWorld));
@@ -222,7 +224,7 @@ mod tests {
 
     // Test that NonTransforming is a marker trait
     struct TestWriter;
-    
+
     impl NonTransforming for TestWriter {}
 
     #[test]

@@ -59,4 +59,3 @@ where
 }
 
 impl<O: io::Write> writer::NonTransforming for Basic<O> {}
-

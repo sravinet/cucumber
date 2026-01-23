@@ -39,12 +39,7 @@ impl Stats {
     /// Creates a new [`Stats`] instance with all counts set to zero.
     #[must_use]
     pub const fn new() -> Self {
-        Self {
-            passed: 0,
-            skipped: 0,
-            failed: 0,
-            retried: 0,
-        }
+        Self { passed: 0, skipped: 0, failed: 0, retried: 0 }
     }
 
     /// Returns total number of [`Step`]s (or [`Scenario`]s), these [`Stats`]
@@ -92,7 +87,10 @@ impl Stats {
     /// Returns `true` if all counts are zero.
     #[must_use]
     pub const fn is_empty(&self) -> bool {
-        self.passed == 0 && self.skipped == 0 && self.failed == 0 && self.retried == 0
+        self.passed == 0
+            && self.skipped == 0
+            && self.failed == 0
+            && self.retried == 0
     }
 
     /// Returns `true` if there are any failed items.
@@ -128,24 +126,19 @@ mod tests {
 
     #[test]
     fn total_excludes_retried() {
-        let stats = Stats {
-            passed: 5,
-            skipped: 2,
-            failed: 1,
-            retried: 3,
-        };
+        let stats = Stats { passed: 5, skipped: 2, failed: 1, retried: 3 };
         assert_eq!(stats.total(), 8); // 5 + 2 + 1, excluding retried
     }
 
     #[test]
     fn increment_operations() {
         let mut stats = Stats::new();
-        
+
         stats.increment_passed();
         stats.increment_skipped();
         stats.increment_failed();
         stats.increment_retried();
-        
+
         assert_eq!(stats.passed, 1);
         assert_eq!(stats.skipped, 1);
         assert_eq!(stats.failed, 1);
@@ -179,9 +172,11 @@ mod tests {
 
     #[test]
     fn has_failures_detects_failures() {
-        let stats_with_failure = Stats { passed: 0, skipped: 0, failed: 1, retried: 0 };
-        let stats_without_failure = Stats { passed: 1, skipped: 1, failed: 0, retried: 1 };
-        
+        let stats_with_failure =
+            Stats { passed: 0, skipped: 0, failed: 1, retried: 0 };
+        let stats_without_failure =
+            Stats { passed: 1, skipped: 1, failed: 0, retried: 1 };
+
         assert!(stats_with_failure.has_failures());
         assert!(!stats_without_failure.has_failures());
     }
@@ -191,7 +186,7 @@ mod tests {
         let stats1 = Stats { passed: 1, skipped: 2, failed: 3, retried: 4 };
         let stats2 = Stats { passed: 1, skipped: 2, failed: 3, retried: 4 };
         let stats3 = Stats { passed: 1, skipped: 2, failed: 3, retried: 5 };
-        
+
         assert_eq!(stats1, stats2);
         assert_ne!(stats1, stats3);
     }

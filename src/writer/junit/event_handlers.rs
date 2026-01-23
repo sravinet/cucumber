@@ -10,7 +10,9 @@ use crate::{
     writer::basic::trim_path,
 };
 
-use super::{error_handler::ErrorHandler, test_case_builder::JUnitTestCaseBuilder};
+use super::{
+    error_handler::ErrorHandler, test_case_builder::JUnitTestCaseBuilder,
+};
 
 /// Advice phrase to use in panic messages of incorrect [events][1] ordering.
 ///
@@ -28,10 +30,7 @@ impl<W: World + Debug, Out: io::Write> EventHandler<W, Out> {
     /// Creates a new [`EventHandler`] with the specified test case builder.
     #[must_use]
     pub const fn new(test_case_builder: JUnitTestCaseBuilder<W>) -> Self {
-        Self {
-            test_case_builder,
-            _phantom: std::marker::PhantomData,
-        }
+        Self { test_case_builder, _phantom: std::marker::PhantomData }
     }
 
     /// Handles a feature started event by creating a new test suite.
@@ -83,7 +82,9 @@ impl<W: World + Debug, Out: io::Write> EventHandler<W, Out> {
                     )
                 });
 
-                let duration = JUnitTestCaseBuilder::<W>::calculate_duration(started_at, meta.at, sc);
+                let duration = JUnitTestCaseBuilder::<W>::calculate_duration(
+                    started_at, meta.at, sc,
+                );
                 let scenario_events = mem::take(events);
                 let test_case = self.test_case_builder.build_test_case(
                     feat,
@@ -191,10 +192,7 @@ mod tests {
     }
 
     fn create_test_event() -> Event<()> {
-        Event {
-            value: (),
-            at: SystemTime::UNIX_EPOCH,
-        }
+        Event { value: (), at: SystemTime::UNIX_EPOCH }
     }
 
     #[test]
@@ -202,7 +200,9 @@ mod tests {
         let feature = create_test_feature();
         let meta = create_test_event();
 
-        let suite = EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(&feature, meta);
+        let suite = EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(
+            &feature, meta,
+        );
 
         assert_eq!(suite.name(), "Feature: Test Feature: example.feature");
         assert_eq!(suite.testcases().len(), 0);
@@ -214,14 +214,18 @@ mod tests {
         feature.path = None;
         let meta = create_test_event();
 
-        let suite = EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(&feature, meta);
+        let suite = EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(
+            &feature, meta,
+        );
 
         assert_eq!(suite.name(), "Feature: Test Feature");
     }
 
     #[test]
     fn handles_scenario_started_sets_timestamp() {
-        let handler = EventHandler::new(JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default));
+        let handler = EventHandler::new(
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
+        );
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let meta = create_test_event();
@@ -232,9 +236,10 @@ mod tests {
 
         let mut scenario_started_at = None;
         let mut events = vec![];
-        let mut suite = Some(
-            EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(&feature, meta)
-        );
+        let mut suite =
+            Some(EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(
+                &feature, meta,
+            ));
 
         handler.handle_scenario_event(
             &feature,
@@ -253,7 +258,9 @@ mod tests {
 
     #[test]
     fn handles_scenario_step_adds_to_events() {
-        let handler = EventHandler::new(JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default));
+        let handler = EventHandler::new(
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
+        );
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let meta = create_test_event();
@@ -268,7 +275,9 @@ mod tests {
                     position: LineCol { line: 6, col: 5 },
                 },
                 Step::Passed {
-                    captures: regex::Regex::new("").unwrap().capture_locations(),
+                    captures: regex::Regex::new("")
+                        .unwrap()
+                        .capture_locations(),
                     location: None,
                 },
             ),
@@ -277,9 +286,10 @@ mod tests {
 
         let mut scenario_started_at = Some(SystemTime::UNIX_EPOCH);
         let mut events = vec![];
-        let mut suite = Some(
-            EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(&feature, meta)
-        );
+        let mut suite =
+            Some(EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(
+                &feature, meta,
+            ));
 
         handler.handle_scenario_event(
             &feature,
@@ -298,7 +308,9 @@ mod tests {
 
     #[test]
     fn handles_scenario_finished_creates_test_case() {
-        let handler = EventHandler::new(JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default));
+        let handler = EventHandler::new(
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
+        );
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let meta = Event {
@@ -311,15 +323,15 @@ mod tests {
         };
 
         let mut scenario_started_at = Some(SystemTime::UNIX_EPOCH);
-        let mut events = vec![
-            event::RetryableScenario {
-                event: event::Scenario::Started,
-                retries: None,
-            },
-        ];
-        let mut suite = Some(
-            EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(&feature, create_test_event())
-        );
+        let mut events = vec![event::RetryableScenario {
+            event: event::Scenario::Started,
+            retries: None,
+        }];
+        let mut suite =
+            Some(EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(
+                &feature,
+                create_test_event(),
+            ));
 
         handler.handle_scenario_event(
             &feature,
@@ -340,11 +352,16 @@ mod tests {
     #[test]
     fn handles_feature_finished_returns_suite() {
         let feature = create_test_feature();
-        let suite = Some(
-            EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(&feature, create_test_event())
-        );
+        let suite =
+            Some(EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(
+                &feature,
+                create_test_event(),
+            ));
 
-        let result = EventHandler::<TestWorld, Vec<u8>>::handle_feature_finished(&feature, suite);
+        let result =
+            EventHandler::<TestWorld, Vec<u8>>::handle_feature_finished(
+                &feature, suite,
+            );
 
         assert_eq!(result.name(), "Feature: Test Feature: example.feature");
     }
@@ -353,7 +370,10 @@ mod tests {
     fn handles_feature_finished_with_missing_suite() {
         let feature = create_test_feature();
 
-        let result = EventHandler::<TestWorld, Vec<u8>>::handle_feature_finished(&feature, None);
+        let result =
+            EventHandler::<TestWorld, Vec<u8>>::handle_feature_finished(
+                &feature, None,
+            );
 
         assert_eq!(result.name(), "Feature: Test Feature");
         assert_eq!(result.testcases().len(), 0);
@@ -364,7 +384,10 @@ mod tests {
         let mut report = Report::new();
         let mut output = Vec::new();
 
-        EventHandler::<TestWorld, Vec<u8>>::handle_cucumber_finished(&mut report, &mut output);
+        EventHandler::<TestWorld, Vec<u8>>::handle_cucumber_finished(
+            &mut report,
+            &mut output,
+        );
 
         assert!(!output.is_empty());
         let xml_str = String::from_utf8(output).unwrap();
@@ -377,11 +400,17 @@ mod tests {
         let mut report = Report::new();
         let parse_error = gherkin::ParseFileError::Reading {
             path: PathBuf::from("/test/broken.feature"),
-            source: std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "File not found",
+            ),
         };
         let parser_error = parser::Error::Parsing(Box::new(parse_error));
 
-        EventHandler::<TestWorld, Vec<u8>>::handle_parser_error(&mut report, &parser_error);
+        EventHandler::<TestWorld, Vec<u8>>::handle_parser_error(
+            &mut report,
+            &parser_error,
+        );
 
         assert_eq!(report.testsuites().len(), 1);
         assert_eq!(report.testsuites()[0].name(), "Errors");
@@ -391,7 +420,9 @@ mod tests {
     #[test]
     #[should_panic(expected = "no `Started` event for `Scenario`")]
     fn panics_on_finished_without_started() {
-        let handler = EventHandler::new(JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default));
+        let handler = EventHandler::new(
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
+        );
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let meta = create_test_event();
@@ -402,9 +433,10 @@ mod tests {
 
         let mut scenario_started_at = None;
         let mut events = vec![];
-        let mut suite = Some(
-            EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(&feature, meta)
-        );
+        let mut suite =
+            Some(EventHandler::<TestWorld, Vec<u8>>::handle_feature_started(
+                &feature, meta,
+            ));
 
         handler.handle_scenario_event(
             &feature,
@@ -421,7 +453,9 @@ mod tests {
     #[test]
     #[should_panic(expected = "no `TestSuit` for `Scenario`")]
     fn panics_on_scenario_without_suite() {
-        let handler = EventHandler::new(JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default));
+        let handler = EventHandler::new(
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
+        );
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let meta = create_test_event();

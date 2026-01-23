@@ -152,9 +152,7 @@ impl StateManager {
     /// Creates a new state manager with initial state.
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            state: State::default(),
-        }
+        Self { state: State::default() }
     }
 
     /// Gets the current state.
@@ -221,7 +219,7 @@ mod tests {
     fn state_transition_to_finished() {
         let mut state = State::InProgress;
         let new_state = state.mark_finished();
-        
+
         assert_eq!(state, State::FinishedButNotOutput);
         assert_eq!(new_state, State::FinishedButNotOutput);
         assert!(!state.is_in_progress());
@@ -234,7 +232,7 @@ mod tests {
     fn state_transition_to_output_complete() {
         let mut state = State::FinishedButNotOutput;
         let new_state = state.mark_output_complete();
-        
+
         assert_eq!(state, State::FinishedAndOutput);
         assert_eq!(new_state, State::FinishedAndOutput);
         assert!(!state.is_in_progress());
@@ -247,7 +245,7 @@ mod tests {
     fn state_reset() {
         let mut state = State::FinishedAndOutput;
         let new_state = state.reset();
-        
+
         assert_eq!(state, State::InProgress);
         assert_eq!(new_state, State::InProgress);
         assert!(state.is_in_progress());
@@ -256,7 +254,10 @@ mod tests {
     #[test]
     fn state_as_str() {
         assert_eq!(State::InProgress.as_str(), "in_progress");
-        assert_eq!(State::FinishedButNotOutput.as_str(), "finished_but_not_output");
+        assert_eq!(
+            State::FinishedButNotOutput.as_str(),
+            "finished_but_not_output"
+        );
         assert_eq!(State::FinishedAndOutput.as_str(), "finished_and_output");
     }
 
@@ -290,9 +291,9 @@ mod tests {
     #[test]
     fn state_manager_finished_event() {
         let mut manager = StateManager::new();
-        
+
         manager.handle_finished_event();
-        
+
         assert_eq!(manager.current_state(), State::FinishedButNotOutput);
         assert!(!manager.should_collect_stats());
         assert!(manager.should_output_summary());
@@ -302,9 +303,9 @@ mod tests {
     fn state_manager_output_complete() {
         let mut manager = StateManager::new();
         manager.handle_finished_event();
-        
+
         manager.mark_summary_output_complete();
-        
+
         assert_eq!(manager.current_state(), State::FinishedAndOutput);
         assert!(!manager.should_collect_stats());
         assert!(!manager.should_output_summary());
@@ -315,9 +316,9 @@ mod tests {
         let mut manager = StateManager::new();
         manager.handle_finished_event();
         manager.mark_summary_output_complete();
-        
+
         manager.reset();
-        
+
         assert_eq!(manager.current_state(), State::InProgress);
         assert!(manager.should_collect_stats());
         assert!(!manager.should_output_summary());
@@ -326,16 +327,16 @@ mod tests {
     #[test]
     fn state_manager_full_workflow() {
         let mut manager = StateManager::new();
-        
+
         // Initial state
         assert!(manager.should_collect_stats());
         assert!(!manager.should_output_summary());
-        
+
         // Test finished
         manager.handle_finished_event();
         assert!(!manager.should_collect_stats());
         assert!(manager.should_output_summary());
-        
+
         // Summary output complete
         manager.mark_summary_output_complete();
         assert!(!manager.should_collect_stats());

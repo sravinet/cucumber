@@ -139,9 +139,12 @@ impl<World, Writer> Normalized for super::wrapper::Normalize<World, Writer> {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Event, event::{Cucumber, Metadata}};
     use crate::test_utils::common::{EmptyCli, TestWorld};
     use crate::writer::Stats;
+    use crate::{
+        Event,
+        event::{Cucumber, Metadata},
+    };
 
     // Mock writer for testing
     #[derive(Debug, Clone)]
@@ -151,9 +154,7 @@ mod tests {
 
     impl MockWriter {
         fn new() -> Self {
-            Self {
-                events_count: std::cell::RefCell::new(0),
-            }
+            Self { events_count: std::cell::RefCell::new(0) }
         }
 
         fn get_events_count(&self) -> usize {
@@ -174,12 +175,24 @@ mod tests {
     }
 
     impl<W: crate::World> writer::Stats<W> for MockWriter {
-        fn passed_steps(&self) -> usize { 5 }
-        fn skipped_steps(&self) -> usize { 2 }
-        fn failed_steps(&self) -> usize { 1 }
-        fn retried_steps(&self) -> usize { 0 }
-        fn parsing_errors(&self) -> usize { 0 }
-        fn hook_errors(&self) -> usize { 0 }
+        fn passed_steps(&self) -> usize {
+            5
+        }
+        fn skipped_steps(&self) -> usize {
+            2
+        }
+        fn failed_steps(&self) -> usize {
+            1
+        }
+        fn retried_steps(&self) -> usize {
+            0
+        }
+        fn parsing_errors(&self) -> usize {
+            0
+        }
+        fn hook_errors(&self) -> usize {
+            0
+        }
     }
 
     impl<W: crate::World, V> writer::Arbitrary<W, V> for MockWriter {
@@ -196,7 +209,7 @@ mod tests {
     fn test_assert_normalized_new() {
         let mock_writer = MockWriter::new();
         let assert_normalized = AssertNormalized::new(mock_writer);
-        
+
         assert_eq!(assert_normalized.get_events_count(), 0);
     }
 
@@ -204,7 +217,7 @@ mod tests {
     fn test_assert_normalized_deref() {
         let mock_writer = MockWriter::new();
         let assert_normalized = AssertNormalized::new(mock_writer);
-        
+
         // Should be able to access inner writer methods through Deref
         assert_eq!(assert_normalized.get_events_count(), 0);
     }
@@ -213,11 +226,11 @@ mod tests {
     async fn test_assert_normalized_handle_event() {
         let mock_writer = MockWriter::new();
         let mut assert_normalized = AssertNormalized::new(mock_writer);
-        
+
         let event = Ok(Event::new(Cucumber::<TestWorld>::Started));
-        
+
         assert_normalized.handle_event(event, &EmptyCli).await;
-        
+
         // Event should be passed through to inner writer
         assert_eq!(assert_normalized.get_events_count(), 1);
     }
@@ -225,8 +238,9 @@ mod tests {
     #[test]
     fn test_assert_normalized_stats() {
         let mock_writer = MockWriter::new();
-        let assert_normalized: AssertNormalized<MockWriter> = AssertNormalized::new(mock_writer);
-        
+        let assert_normalized: AssertNormalized<MockWriter> =
+            AssertNormalized::new(mock_writer);
+
         // Stats should be delegated to inner writer
         assert_eq!(<AssertNormalized<MockWriter> as crate::writer::Stats<TestWorld>>::passed_steps(&assert_normalized), 5);
         assert_eq!(<AssertNormalized<MockWriter> as crate::writer::Stats<TestWorld>>::skipped_steps(&assert_normalized), 2);
@@ -234,16 +248,22 @@ mod tests {
         assert_eq!(<AssertNormalized<MockWriter> as crate::writer::Stats<TestWorld>>::retried_steps(&assert_normalized), 0);
         assert_eq!(<AssertNormalized<MockWriter> as crate::writer::Stats<TestWorld>>::parsing_errors(&assert_normalized), 0);
         assert_eq!(<AssertNormalized<MockWriter> as crate::writer::Stats<TestWorld>>::hook_errors(&assert_normalized), 0);
-        assert!(<AssertNormalized<MockWriter> as crate::writer::Stats<TestWorld>>::execution_has_failed(&assert_normalized));
+        assert!(<AssertNormalized<MockWriter> as crate::writer::Stats<
+            TestWorld,
+        >>::execution_has_failed(&assert_normalized));
     }
 
     #[tokio::test]
     async fn test_assert_normalized_arbitrary() {
         let mock_writer = MockWriter::new();
         let mut assert_normalized = AssertNormalized::new(mock_writer);
-        
+
         // Should delegate arbitrary writes to inner writer
-        writer::Arbitrary::<TestWorld, String>::write(&mut assert_normalized, "test".to_string()).await;
+        writer::Arbitrary::<TestWorld, String>::write(
+            &mut assert_normalized,
+            "test".to_string(),
+        )
+        .await;
         // This is a no-op in our mock, so we just verify it compiles and runs
     }
 
@@ -251,7 +271,7 @@ mod tests {
     fn test_normalized_trait_implementation() {
         let mock_writer = MockWriter::new();
         let assert_normalized = AssertNormalized::new(mock_writer);
-        
+
         // Should implement Normalized trait
         fn requires_normalized<T: Normalized>(_: T) {}
         requires_normalized(assert_normalized);
@@ -261,7 +281,7 @@ mod tests {
     fn test_non_transforming_trait() {
         let mock_writer = MockWriter::new();
         let assert_normalized = AssertNormalized::new(mock_writer);
-        
+
         // Should implement NonTransforming trait
         fn requires_non_transforming<T: writer::NonTransforming>(_: T) {}
         requires_non_transforming(assert_normalized);

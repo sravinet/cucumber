@@ -75,7 +75,10 @@ mod tests {
         let path = PathBuf::from("/test/feature.feature");
         let parse_error = gherkin::ParseFileError::Reading {
             path: path.clone(),
-            source: std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "File not found",
+            ),
         };
         let parser_error = parser::Error::Parsing(Box::new(parse_error));
 
@@ -88,7 +91,10 @@ mod tests {
 
         let testcase = &suite.testcases()[0];
         assert!(testcase.name().contains("Feature: feature.feature"));
-        assert_eq!(testcase.result().as_failure().unwrap().type_(), "Parser Error");
+        assert_eq!(
+            testcase.result().as_failure().unwrap().type_(),
+            "Parser Error"
+        );
     }
 
     #[test]
@@ -97,7 +103,10 @@ mod tests {
         let path = PathBuf::from("/very/long/path/to/test/feature");
         let parse_error = gherkin::ParseFileError::Reading {
             path: path.clone(),
-            source: std::io::Error::new(std::io::ErrorKind::PermissionDenied, "Access denied"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "Access denied",
+            ),
         };
         let parser_error = parser::Error::Parsing(Box::new(parse_error));
 
@@ -115,7 +124,8 @@ mod tests {
         let expansion_error = gherkin::ExampleExpansionError {
             path: Some(PathBuf::from("/test/examples.feature")),
             pos: gherkin::LineCol { line: 10, col: 5 },
-            source: gherkin::ExampleExpansionErrorSource::OutlineWithoutExamples,
+            source:
+                gherkin::ExampleExpansionErrorSource::OutlineWithoutExamples,
         };
         let parser_error = parser::Error::ExampleExpansion(expansion_error);
 
@@ -128,7 +138,10 @@ mod tests {
 
         let testcase = &suite.testcases()[0];
         assert_eq!(testcase.name(), "Feature: examples.feature:10:5");
-        assert_eq!(testcase.result().as_failure().unwrap().type_(), "Example Expansion Error");
+        assert_eq!(
+            testcase.result().as_failure().unwrap().type_(),
+            "Example Expansion Error"
+        );
     }
 
     #[test]
@@ -137,7 +150,8 @@ mod tests {
         let expansion_error = gherkin::ExampleExpansionError {
             path: None,
             pos: gherkin::LineCol { line: 5, col: 1 },
-            source: gherkin::ExampleExpansionErrorSource::OutlineWithoutExamples,
+            source:
+                gherkin::ExampleExpansionErrorSource::OutlineWithoutExamples,
         };
         let parser_error = parser::Error::ExampleExpansion(expansion_error);
 
@@ -159,7 +173,8 @@ mod tests {
         };
         let parser_error = parser::Error::Parsing(Box::new(parse_error));
 
-        let (name, error_type) = ErrorHandler::extract_error_info(&parser_error);
+        let (name, error_type) =
+            ErrorHandler::extract_error_info(&parser_error);
 
         assert_eq!(name, "Feature: scenario.feature");
         assert_eq!(error_type, "Parser Error");
@@ -170,11 +185,13 @@ mod tests {
         let expansion_error = gherkin::ExampleExpansionError {
             path: Some(PathBuf::from("/test/outline.feature")),
             pos: gherkin::LineCol { line: 15, col: 10 },
-            source: gherkin::ExampleExpansionErrorSource::OutlineWithoutExamples,
+            source:
+                gherkin::ExampleExpansionErrorSource::OutlineWithoutExamples,
         };
         let parser_error = parser::Error::ExampleExpansion(expansion_error);
 
-        let (name, error_type) = ErrorHandler::extract_error_info(&parser_error);
+        let (name, error_type) =
+            ErrorHandler::extract_error_info(&parser_error);
 
         assert_eq!(name, "Feature: outline.feature:15:10");
         assert_eq!(error_type, "Example Expansion Error");

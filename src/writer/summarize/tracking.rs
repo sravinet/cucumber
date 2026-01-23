@@ -209,7 +209,7 @@ mod tests {
     fn scenario_tracker_default() {
         let scenarios1 = ScenarioTracker::new();
         let scenarios2 = ScenarioTracker::new();
-        
+
         // Both should create empty maps
         assert!(scenarios1.is_empty());
         assert!(scenarios2.is_empty());
@@ -220,7 +220,7 @@ mod tests {
         assert_eq!(Indicator::Failed, Indicator::Failed);
         assert_eq!(Indicator::Skipped, Indicator::Skipped);
         assert_eq!(Indicator::Retried, Indicator::Retried);
-        
+
         assert_ne!(Indicator::Failed, Indicator::Skipped);
         assert_ne!(Indicator::Failed, Indicator::Retried);
         assert_ne!(Indicator::Skipped, Indicator::Retried);
@@ -231,7 +231,7 @@ mod tests {
         let failed = Indicator::Failed;
         let failed_copy = failed; // Should work because it implements Copy
         let failed_clone = failed.clone(); // Should work because it implements Clone
-        
+
         assert_eq!(failed, failed_copy);
         assert_eq!(failed, failed_clone);
         assert_eq!(failed_copy, failed_clone);

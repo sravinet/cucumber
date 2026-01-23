@@ -73,11 +73,17 @@ impl EventHandler {
                 self.handle_hook_event(feature, rule, scenario, ty, ev, meta);
             }
             Scenario::Background(st, ev) => {
-                let context = StepContext::new(feature, rule, scenario, &st, &ev);
-                self.handle_step_event_with_context(&context, "background", meta);
+                let context =
+                    StepContext::new(feature, rule, scenario, &st, &ev);
+                self.handle_step_event_with_context(
+                    &context,
+                    "background",
+                    meta,
+                );
             }
             Scenario::Step(st, ev) => {
-                let context = StepContext::new(feature, rule, scenario, &st, &ev);
+                let context =
+                    StepContext::new(feature, rule, scenario, &st, &ev);
                 self.handle_step_event_with_context(&context, "scenario", meta);
             }
             Scenario::Log(msg) => {
@@ -105,7 +111,9 @@ impl EventHandler {
             let started = match self.started.take() {
                 Some(started) => started,
                 None => {
-                    eprintln!("Warning: no `Started` event for `{hook_ty} Hook`");
+                    eprintln!(
+                        "Warning: no `Started` event for `{hook_ty} Hook`"
+                    );
                     return 0;
                 }
             };
@@ -151,7 +159,8 @@ impl EventHandler {
             },
         };
 
-        let el = self.mut_or_insert_element(feature, rule, scenario, "scenario");
+        let el =
+            self.mut_or_insert_element(feature, rule, scenario, "scenario");
         match hook_ty {
             HookType::Before => el.before.push(res),
             HookType::After => el.after.push(res),
@@ -174,7 +183,10 @@ impl EventHandler {
             let started = match self.started.take() {
                 Some(started) => started,
                 None => {
-                    eprintln!("Warning: no `Started` event for `Step` '{}'", step.value);
+                    eprintln!(
+                        "Warning: no `Started` event for `Step` '{}'",
+                        step.value
+                    );
                     return 0;
                 }
             };
@@ -217,11 +229,12 @@ impl EventHandler {
                     duration: duration(),
                     error_message: Some(format!(
                         "{}{error}",
-                        location.map(|l| format!(
-                            "Matched: {}:{}:{}\n",
-                            l.path, l.line, l.column,
-                        ))
-                        .unwrap_or_default(),
+                        location
+                            .map(|l| format!(
+                                "Matched: {}:{}:{}\n",
+                                l.path, l.line, l.column,
+                            ))
+                            .unwrap_or_default(),
                     )),
                 }
             }
@@ -259,18 +272,14 @@ impl EventHandler {
         scenario: &gherkin::Scenario,
         ty: &'static str,
     ) -> &mut Element {
-        let f_pos = self
-            .features
-            .iter()
-            .position(|f| f == feature)
-            .unwrap_or_else(|| {
-                self.features.push(Feature::new(feature));
-                self.features.len() - 1
-            });
-        let f = self
-            .features
-            .get_mut(f_pos)
-            .unwrap_or_else(|| unreachable!());
+        let f_pos =
+            self.features.iter().position(|f| f == feature).unwrap_or_else(
+                || {
+                    self.features.push(Feature::new(feature));
+                    self.features.len() - 1
+                },
+            );
+        let f = self.features.get_mut(f_pos).unwrap_or_else(|| unreachable!());
 
         let el_pos = f
             .elements
@@ -280,9 +289,7 @@ impl EventHandler {
                 f.elements.push(Element::new(feature, rule, scenario, ty));
                 f.elements.len() - 1
             });
-        f.elements
-            .get_mut(el_pos)
-            .unwrap_or_else(|| unreachable!())
+        f.elements.get_mut(el_pos).unwrap_or_else(|| unreachable!())
     }
 
     /// Returns a reference to the features.
@@ -316,7 +323,9 @@ impl Default for EventHandler {
 mod tests {
     use super::*;
     use crate::event::{Hook, HookType, Step};
-    use gherkin::{Feature as GherkinFeature, LineCol, Scenario as GherkinScenario};
+    use gherkin::{
+        Feature as GherkinFeature, LineCol, Scenario as GherkinScenario,
+    };
     use std::{path::PathBuf, time::SystemTime};
 
     fn create_test_feature() -> GherkinFeature {
@@ -358,7 +367,7 @@ mod tests {
     #[test]
     fn event_handler_new() {
         let handler = EventHandler::new();
-        
+
         assert!(handler.features.is_empty());
         assert!(handler.started.is_none());
         assert!(handler.logs.is_empty());
@@ -376,7 +385,7 @@ mod tests {
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let meta = Metadata { at: SystemTime::now() };
-        
+
         handler.handle_scenario_event(
             &feature,
             None,
@@ -384,7 +393,7 @@ mod tests {
             Scenario::Log("Test log message".to_string()),
             meta,
         );
-        
+
         assert_eq!(handler.logs.len(), 1);
         assert_eq!(handler.logs[0], "Test log message");
         assert!(handler.has_logs());
@@ -396,9 +405,9 @@ mod tests {
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let meta = Metadata { at: SystemTime::now() };
-        
+
         handler.logs.push("Test log".to_string());
-        
+
         handler.handle_scenario_event(
             &feature,
             None,
@@ -406,7 +415,7 @@ mod tests {
             Scenario::Finished,
             meta,
         );
-        
+
         assert!(handler.logs.is_empty());
         assert!(!handler.has_logs());
     }
@@ -417,7 +426,7 @@ mod tests {
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let meta = Metadata { at: SystemTime::now() };
-        
+
         handler.handle_hook_event(
             &feature,
             None,
@@ -426,7 +435,7 @@ mod tests {
             Hook::Started,
             meta,
         );
-        
+
         assert!(handler.started.is_some());
         assert_eq!(handler.started.unwrap(), meta.at);
     }
@@ -438,10 +447,10 @@ mod tests {
         let scenario = create_test_scenario();
         let start_time = SystemTime::now();
         let end_time = start_time + std::time::Duration::from_millis(100);
-        
+
         handler.started = Some(start_time);
         handler.logs.push("Hook log".to_string());
-        
+
         handler.handle_hook_event(
             &feature,
             None,
@@ -450,11 +459,11 @@ mod tests {
             Hook::Passed,
             Metadata { at: end_time },
         );
-        
+
         assert_eq!(handler.features.len(), 1);
         assert_eq!(handler.features[0].elements.len(), 1);
         assert_eq!(handler.features[0].elements[0].before.len(), 1);
-        
+
         let hook_result = &handler.features[0].elements[0].before[0];
         assert_eq!(hook_result.result.status, Status::Passed);
         assert!(hook_result.result.duration > 0);
@@ -467,11 +476,12 @@ mod tests {
         let mut handler = EventHandler::new();
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        
-        let element = handler.mut_or_insert_element(&feature, None, &scenario, "scenario");
+
+        let element = handler
+            .mut_or_insert_element(&feature, None, &scenario, "scenario");
         assert_eq!(element.name, "Test Scenario");
         assert_eq!(element.r#type, "scenario");
-        
+
         assert_eq!(handler.features.len(), 1);
         assert_eq!(handler.features[0].elements.len(), 1);
     }
@@ -481,15 +491,17 @@ mod tests {
         let mut handler = EventHandler::new();
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        
+
         // First call creates the element
-        let element1 = handler.mut_or_insert_element(&feature, None, &scenario, "scenario");
+        let element1 = handler
+            .mut_or_insert_element(&feature, None, &scenario, "scenario");
         element1.name = "Modified".to_string();
-        
+
         // Second call should return the same element
-        let element2 = handler.mut_or_insert_element(&feature, None, &scenario, "scenario");
+        let element2 = handler
+            .mut_or_insert_element(&feature, None, &scenario, "scenario");
         assert_eq!(element2.name, "Modified");
-        
+
         assert_eq!(handler.features.len(), 1);
         assert_eq!(handler.features[0].elements.len(), 1);
     }
@@ -498,9 +510,9 @@ mod tests {
     fn clear_logs() {
         let mut handler = EventHandler::new();
         handler.logs.push("test".to_string());
-        
+
         handler.clear_logs();
-        
+
         assert!(handler.logs.is_empty());
         assert!(!handler.has_logs());
     }
@@ -510,17 +522,17 @@ mod tests {
         let mut handler = EventHandler::new();
         let feature = create_test_feature();
         handler.features.push(Feature::new(&feature));
-        
+
         let features = handler.features();
         assert_eq!(features.len(), 1);
         assert_eq!(features[0].name, "Test Feature");
     }
 
-    #[test] 
+    #[test]
     fn stats_accessor() {
         let mut handler = EventHandler::new();
         handler.stats.record_passed_step();
-        
+
         let stats = handler.stats();
         assert_eq!(stats.passed_steps(), 1);
     }

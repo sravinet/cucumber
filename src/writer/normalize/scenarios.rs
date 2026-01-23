@@ -22,7 +22,9 @@ use super::emitter::Emitter;
 /// [`Scenario`]: gherkin::Scenario
 /// [`Queue`]: super::queue::Queue
 #[derive(Debug)]
-pub struct ScenariosQueue<World>(pub Vec<Event<event::RetryableScenario<World>>>);
+pub struct ScenariosQueue<World>(
+    pub Vec<Event<event::RetryableScenario<World>>>,
+);
 
 // Implemented manually to omit redundant `World: Clone` trait bound, imposed by
 // `#[derive(Clone)]`.
@@ -83,9 +85,14 @@ impl<World> Emitter<World> for &mut ScenariosQueue<World> {
 #[allow(dead_code)]
 mod tests {
     use super::*;
-    use crate::{Event, event::{Cucumber, Metadata, RetryableScenario, Retries}, Writer, parser, event::Source};
-    use std::{sync::Arc, future::Future};
     use crate::test_utils::common::{EmptyCli, TestWorld};
+    use crate::{
+        Event, Writer,
+        event::Source,
+        event::{Cucumber, Metadata, Retries, RetryableScenario},
+        parser,
+    };
+    use std::{future::Future, sync::Arc};
 
     // Using common TestWorld from test_utils
 
@@ -96,9 +103,7 @@ mod tests {
 
     impl MockWriter {
         fn new() -> Self {
-            Self {
-                events: Vec::new(),
-            }
+            Self { events: Vec::new() }
         }
     }
 
@@ -116,20 +121,29 @@ mod tests {
                         match feature_event {
                             event::Feature::Scenario(_, scenario_event) => {
                                 match scenario_event.event {
-                                    event::Scenario::Started => "ScenarioStarted",
-                                    event::Scenario::Finished => "ScenarioFinished",
+                                    event::Scenario::Started => {
+                                        "ScenarioStarted"
+                                    }
+                                    event::Scenario::Finished => {
+                                        "ScenarioFinished"
+                                    }
                                     _ => "Scenario",
                                 }
                             }
                             event::Feature::Rule(_, rule_event) => {
                                 match rule_event {
-                                    event::Rule::Scenario(_, scenario_event) => {
-                                        match scenario_event.event {
-                                            event::Scenario::Started => "ScenarioStarted",
-                                            event::Scenario::Finished => "ScenarioFinished",
-                                            _ => "Scenario",
+                                    event::Rule::Scenario(
+                                        _,
+                                        scenario_event,
+                                    ) => match scenario_event.event {
+                                        event::Scenario::Started => {
+                                            "ScenarioStarted"
                                         }
-                                    }
+                                        event::Scenario::Finished => {
+                                            "ScenarioFinished"
+                                        }
+                                        _ => "Scenario",
+                                    },
                                     _ => "Rule",
                                 }
                             }
@@ -187,20 +201,18 @@ mod tests {
     #[test]
     fn test_scenarios_queue_new() {
         let queue: ScenariosQueue<TestWorld> = ScenariosQueue::new();
-        
+
         assert_eq!(queue.0.len(), 0);
     }
 
     #[test]
     fn test_scenarios_queue_clone() {
         let mut queue: ScenariosQueue<TestWorld> = ScenariosQueue::new();
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Started,
-                retries: None,
-            }
-        ));
-        
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Started,
+            retries: None,
+        }));
+
         let cloned = queue.clone();
         assert_eq!(cloned.0.len(), 1);
         assert_eq!(queue.0.len(), 1);
@@ -209,7 +221,7 @@ mod tests {
     #[test]
     fn test_scenarios_queue_current_item_empty() {
         let mut queue: ScenariosQueue<TestWorld> = ScenariosQueue::new();
-        
+
         let current = (&mut queue).current_item();
         assert!(current.is_none());
     }
@@ -217,20 +229,18 @@ mod tests {
     #[test]
     fn test_scenarios_queue_current_item_with_event() {
         let mut queue: ScenariosQueue<TestWorld> = ScenariosQueue::new();
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Started,
-                retries: None,
-            }
-        ));
-        
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Started,
+            retries: None,
+        }));
+
         let current = (&mut queue).current_item();
         assert!(current.is_some());
-        
+
         if let Some(event) = current {
             assert!(matches!(event.value.event, event::Scenario::Started));
         }
-        
+
         // After calling current_item, the event should be removed
         assert_eq!(queue.0.len(), 0);
     }
@@ -241,16 +251,16 @@ mod tests {
         let mut writer = MockWriter::new();
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Started,
-                retries: None,
-            }
-        ));
-        
-        let result = (&mut queue).emit((feature, None, scenario), &mut writer, &EmptyCli).await;
-        
+
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Started,
+            retries: None,
+        }));
+
+        let result = (&mut queue)
+            .emit((feature, None, scenario), &mut writer, &EmptyCli)
+            .await;
+
         // Should emit the scenario started event
         assert!(writer.events.contains(&"ScenarioStarted".to_string()));
         // Should not return the scenario since it's not finished
@@ -263,16 +273,16 @@ mod tests {
         let mut writer = MockWriter::new();
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Finished,
-                retries: None,
-            }
-        ));
-        
-        let result = (&mut queue).emit((feature, None, scenario.clone()), &mut writer, &EmptyCli).await;
-        
+
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Finished,
+            retries: None,
+        }));
+
+        let result = (&mut queue)
+            .emit((feature, None, scenario.clone()), &mut writer, &EmptyCli)
+            .await;
+
         // Should emit the scenario finished event
         assert!(writer.events.contains(&"ScenarioFinished".to_string()));
         // Should return the scenario since it's finished
@@ -286,16 +296,16 @@ mod tests {
         let feature = create_test_feature();
         let rule = create_test_rule();
         let scenario = create_test_scenario();
-        
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Started,
-                retries: None,
-            }
-        ));
-        
-        let result = (&mut queue).emit((feature, Some(rule), scenario), &mut writer, &EmptyCli).await;
-        
+
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Started,
+            retries: None,
+        }));
+
+        let result = (&mut queue)
+            .emit((feature, Some(rule), scenario), &mut writer, &EmptyCli)
+            .await;
+
         // Should emit the scenario event within a rule context
         assert!(writer.events.contains(&"ScenarioStarted".to_string()));
         assert!(result.is_none());
@@ -308,16 +318,16 @@ mod tests {
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let retries = Some(Retries { current: 1, left: 3 });
-        
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Finished,
-                retries,
-            }
-        ));
-        
-        let result = (&mut queue).emit((feature, None, scenario.clone()), &mut writer, &EmptyCli).await;
-        
+
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Finished,
+            retries,
+        }));
+
+        let result = (&mut queue)
+            .emit((feature, None, scenario.clone()), &mut writer, &EmptyCli)
+            .await;
+
         // Should return the scenario with retries
         assert_eq!(result, Some((scenario, retries)));
     }
@@ -328,23 +338,21 @@ mod tests {
         let mut writer = MockWriter::new();
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        
+
         // Add multiple events
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Started,
-                retries: None,
-            }
-        ));
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Finished,
-                retries: None,
-            }
-        ));
-        
-        let result = (&mut queue).emit((feature, None, scenario.clone()), &mut writer, &EmptyCli).await;
-        
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Started,
+            retries: None,
+        }));
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Finished,
+            retries: None,
+        }));
+
+        let result = (&mut queue)
+            .emit((feature, None, scenario.clone()), &mut writer, &EmptyCli)
+            .await;
+
         // Should emit both events
         assert!(writer.events.contains(&"ScenarioStarted".to_string()));
         assert!(writer.events.contains(&"ScenarioFinished".to_string()));
@@ -357,7 +365,7 @@ mod tests {
     #[test]
     fn test_emitter_trait_implementation() {
         let mut queue: ScenariosQueue<TestWorld> = ScenariosQueue::new();
-        
+
         // Should implement Emitter trait
         fn requires_emitter<T: Emitter<TestWorld>>(_: T) {}
         requires_emitter(&mut queue);
@@ -367,42 +375,38 @@ mod tests {
     fn test_scenarios_queue_type_definitions() {
         // Test that the type definitions work correctly
         let queue: ScenariosQueue<TestWorld> = ScenariosQueue::new();
-        
+
         // Should be a vector of RetryableScenario events
         let _: &Vec<Event<event::RetryableScenario<TestWorld>>> = &queue.0;
     }
 
-    #[test] 
+    #[test]
     fn test_scenarios_queue_fifo_behavior() {
         let mut queue: ScenariosQueue<TestWorld> = ScenariosQueue::new();
-        
+
         // Add events in order
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Started,
-                retries: None,
-            }
-        ));
-        queue.0.push(Event::new(
-            RetryableScenario {
-                event: event::Scenario::Finished,
-                retries: None,
-            }
-        ));
-        
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Started,
+            retries: None,
+        }));
+        queue.0.push(Event::new(RetryableScenario {
+            event: event::Scenario::Finished,
+            retries: None,
+        }));
+
         // Should get events in FIFO order
         let first = (&mut queue).current_item();
         assert!(first.is_some());
         if let Some(event) = first {
             assert!(matches!(event.value.event, event::Scenario::Started));
         }
-        
+
         let second = (&mut queue).current_item();
         assert!(second.is_some());
         if let Some(event) = second {
             assert!(matches!(event.value.event, event::Scenario::Finished));
         }
-        
+
         // Should be empty now
         assert!((&mut queue).current_item().is_none());
     }

@@ -5,7 +5,7 @@ use std::{fmt::Debug, io, mem, time::SystemTime};
 use junit_report::{Duration, TestCase, TestCaseBuilder};
 
 use crate::{
-    Event, World, 
+    Event, World,
     event::{self, Hook, HookType, Scenario, Step},
     writer::{
         Verbosity,
@@ -30,10 +30,7 @@ impl<W: World + Debug> JUnitTestCaseBuilder<W> {
     /// Creates a new [`JUnitTestCaseBuilder`] with the specified verbosity.
     #[must_use]
     pub const fn new(verbosity: Verbosity) -> Self {
-        Self {
-            verbosity,
-            _phantom: std::marker::PhantomData,
-        }
+        Self { verbosity, _phantom: std::marker::PhantomData }
     }
 
     /// Forms a [`TestCase`] from scenario events and metadata.
@@ -251,7 +248,8 @@ mod tests {
 
     #[test]
     fn builds_successful_test_case() {
-        let builder = JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
+        let builder =
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let events = vec![
@@ -270,7 +268,9 @@ mod tests {
                         position: LineCol { line: 6, col: 5 },
                     },
                     Step::Passed {
-                        captures: regex::Regex::new("").unwrap().capture_locations(),
+                        captures: regex::Regex::new("")
+                            .unwrap()
+                            .capture_locations(),
                         location: None,
                     },
                 ),
@@ -286,36 +286,38 @@ mod tests {
             Duration::milliseconds(100),
         );
 
-        assert_eq!(test_case.name(), "Scenario: Test Scenario: example.feature:5:3");
+        assert_eq!(
+            test_case.name(),
+            "Scenario: Test Scenario: example.feature:5:3"
+        );
         assert!(test_case.result().is_success());
     }
 
     #[test]
     fn builds_failed_test_case_with_step_error() {
-        let builder = JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
+        let builder =
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        let events = vec![
-            event::RetryableScenario {
-                event: event::Scenario::Step(
-                    gherkin::Step {
-                        keyword: "When".to_string(),
-                        ty: gherkin::StepType::When,
-                        value: "I fail".to_string(),
-                        docstring: None,
-                        table: None,
-                        position: LineCol { line: 7, col: 5 },
-                    },
-                    Step::Failed {
-                        captures: None,
-                        location: None,
-                        world: None,
-                        error: StepError::NotFound,
-                    },
-                ),
-                retries: None,
-            },
-        ];
+        let events = vec![event::RetryableScenario {
+            event: event::Scenario::Step(
+                gherkin::Step {
+                    keyword: "When".to_string(),
+                    ty: gherkin::StepType::When,
+                    value: "I fail".to_string(),
+                    docstring: None,
+                    table: None,
+                    position: LineCol { line: 7, col: 5 },
+                },
+                Step::Failed {
+                    captures: None,
+                    location: None,
+                    world: None,
+                    error: StepError::NotFound,
+                },
+            ),
+            retries: None,
+        }];
 
         let test_case = builder.build_test_case(
             &feature,
@@ -332,25 +334,24 @@ mod tests {
 
     #[test]
     fn builds_skipped_test_case() {
-        let builder = JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
+        let builder =
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        let events = vec![
-            event::RetryableScenario {
-                event: event::Scenario::Step(
-                    gherkin::Step {
-                        keyword: "Then".to_string(),
-                        ty: gherkin::StepType::Then,
-                        value: "I am skipped".to_string(),
-                        docstring: None,
-                        table: None,
-                        position: LineCol { line: 8, col: 5 },
-                    },
-                    Step::Skipped,
-                ),
-                retries: None,
-            },
-        ];
+        let events = vec![event::RetryableScenario {
+            event: event::Scenario::Step(
+                gherkin::Step {
+                    keyword: "Then".to_string(),
+                    ty: gherkin::StepType::Then,
+                    value: "I am skipped".to_string(),
+                    docstring: None,
+                    table: None,
+                    position: LineCol { line: 8, col: 5 },
+                },
+                Step::Skipped,
+            ),
+            retries: None,
+        }];
 
         let test_case = builder.build_test_case(
             &feature,
@@ -365,7 +366,8 @@ mod tests {
 
     #[test]
     fn builds_test_case_with_rule() {
-        let builder = JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
+        let builder =
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let rule = gherkin::Rule {
@@ -376,12 +378,10 @@ mod tests {
             tags: vec![],
             position: LineCol { line: 3, col: 1 },
         };
-        let events = vec![
-            event::RetryableScenario {
-                event: event::Scenario::Started,
-                retries: None,
-            },
-        ];
+        let events = vec![event::RetryableScenario {
+            event: event::Scenario::Started,
+            retries: None,
+        }];
 
         let test_case = builder.build_test_case(
             &feature,
@@ -391,7 +391,11 @@ mod tests {
             Duration::milliseconds(50),
         );
 
-        assert!(test_case.name().starts_with("Rule: Test Rule: Scenario: Test Scenario"));
+        assert!(
+            test_case
+                .name()
+                .starts_with("Rule: Test Rule: Scenario: Test Scenario")
+        );
     }
 
     #[test]
@@ -400,7 +404,9 @@ mod tests {
         let end = start + std::time::Duration::from_millis(500);
         let scenario = create_test_scenario();
 
-        let duration = JUnitTestCaseBuilder::<TestWorld>::calculate_duration(start, end, &scenario);
+        let duration = JUnitTestCaseBuilder::<TestWorld>::calculate_duration(
+            start, end, &scenario,
+        );
 
         assert_eq!(duration, Duration::milliseconds(500));
     }
@@ -408,12 +414,19 @@ mod tests {
     #[test]
     #[should_panic(expected = "no events for `Scenario`")]
     fn panics_on_empty_events() {
-        let builder = JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
+        let builder =
+            JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let events = vec![];
 
-        builder.build_test_case(&feature, None, &scenario, &events, Duration::ZERO);
+        builder.build_test_case(
+            &feature,
+            None,
+            &scenario,
+            &events,
+            Duration::ZERO,
+        );
     }
 
     use std::sync::Arc;

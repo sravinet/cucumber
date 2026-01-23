@@ -40,8 +40,11 @@ pub use self::{
 mod integration_tests {
     use super::*;
     use crate::{
-        event::{Cucumber, Feature as FeatureEvent, Hook, HookType, Metadata, Scenario, Step as StepEvent},
         Event, World, Writer, cli,
+        event::{
+            Cucumber, Feature as FeatureEvent, Hook, HookType, Metadata,
+            Scenario, Step as StepEvent,
+        },
         parser::Result as ParserResult,
     };
     use std::{io::Cursor, time::SystemTime};
@@ -119,10 +122,7 @@ mod integration_tests {
                 FeatureEvent::Scenario(
                     scenario.clone(),
                     crate::event::RetryableScenario {
-                        event: Scenario::Step(
-                            step.clone(),
-                            StepEvent::Started,
-                        ),
+                        event: Scenario::Step(step.clone(), StepEvent::Started),
                         retries: 0,
                     },
                 ),
@@ -162,7 +162,9 @@ mod integration_tests {
                     },
                 ),
             ),
-            Metadata { at: SystemTime::now() + std::time::Duration::from_millis(100) },
+            Metadata {
+                at: SystemTime::now() + std::time::Duration::from_millis(100),
+            },
         );
         writer.handle_event(Ok(event), &cli::Empty).await;
 
@@ -173,10 +175,7 @@ mod integration_tests {
                 FeatureEvent::Scenario(
                     scenario.clone(),
                     crate::event::RetryableScenario {
-                        event: Scenario::Hook(
-                            HookType::Before,
-                            Hook::Started,
-                        ),
+                        event: Scenario::Hook(HookType::Before, Hook::Started),
                         retries: 0,
                     },
                 ),
@@ -191,15 +190,14 @@ mod integration_tests {
                 FeatureEvent::Scenario(
                     scenario.clone(),
                     crate::event::RetryableScenario {
-                        event: Scenario::Hook(
-                            HookType::Before,
-                            Hook::Passed,
-                        ),
+                        event: Scenario::Hook(HookType::Before, Hook::Passed),
                         retries: 0,
                     },
                 ),
             ),
-            Metadata { at: SystemTime::now() + std::time::Duration::from_millis(50) },
+            Metadata {
+                at: SystemTime::now() + std::time::Duration::from_millis(50),
+            },
         );
         writer.handle_event(Ok(event), &cli::Empty).await;
 
@@ -220,49 +218,47 @@ mod integration_tests {
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // 7. Finish and output JSON
-        let event = Event::new(
-            Cucumber::Finished,
-            Metadata { at: SystemTime::now() },
-        );
+        let event =
+            Event::new(Cucumber::Finished, Metadata { at: SystemTime::now() });
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // Verify the JSON was written
         let output = writer.output.into_inner();
         let json_str = String::from_utf8(output).unwrap();
-        
+
         assert!(!json_str.is_empty());
-        
+
         // Parse and verify the JSON structure
         let json: serde_json::Value = serde_json::from_str(&json_str).unwrap();
         let features = json.as_array().unwrap();
-        
+
         assert_eq!(features.len(), 1);
-        
+
         let feature_json = &features[0];
         assert_eq!(feature_json["name"], "Integration Test Feature");
         assert_eq!(feature_json["keyword"], "Feature");
         assert_eq!(feature_json["uri"], "integration.feature");
-        
+
         let elements = feature_json["elements"].as_array().unwrap();
         assert_eq!(elements.len(), 1);
-        
+
         let element = &elements[0];
         assert_eq!(element["name"], "Integration Test Scenario");
         assert_eq!(element["type"], "scenario");
-        
+
         let steps = element["steps"].as_array().unwrap();
         assert_eq!(steps.len(), 1);
-        
+
         let step_json = &steps[0];
         assert_eq!(step_json["name"], "integration test step");
         assert_eq!(step_json["keyword"], "Given");
         assert_eq!(step_json["result"]["status"], "passed");
-        
+
         // Check for embeddings from the log
         let embeddings = step_json["embeddings"].as_array().unwrap();
         assert_eq!(embeddings.len(), 1);
         assert_eq!(embeddings[0]["mime_type"], "text/x.cucumber.log+plain");
-        
+
         // Check hooks
         let before_hooks = element["before"].as_array().unwrap();
         assert_eq!(before_hooks.len(), 1);
@@ -278,10 +274,7 @@ mod integration_tests {
         let embedding = Embedding::from_log("test log");
         assert!(serde_json::to_string(&embedding).is_ok());
 
-        let tag = Tag {
-            name: "@test".to_string(),
-            line: 1,
-        };
+        let tag = Tag { name: "@test".to_string(), line: 1 };
         assert!(serde_json::to_string(&tag).is_ok());
 
         let status = Status::Passed;
@@ -304,10 +297,7 @@ mod integration_tests {
         };
         assert!(serde_json::to_string(&step).is_ok());
 
-        let hook_result = HookResult {
-            result: run_result,
-            embeddings: vec![],
-        };
+        let hook_result = HookResult { result: run_result, embeddings: vec![] };
         assert!(serde_json::to_string(&hook_result).is_ok());
     }
 
@@ -318,7 +308,7 @@ mod integration_tests {
         let scenario = create_test_scenario();
         let element = Element::new(&feature, None, &scenario, "scenario");
         let json_feature = Feature::new(&feature);
-        
+
         // Test required fields are present
         let element_json = serde_json::to_value(&element).unwrap();
         assert!(element_json.as_object().unwrap().contains_key("keyword"));
@@ -328,7 +318,7 @@ mod integration_tests {
         assert!(element_json.as_object().unwrap().contains_key("name"));
         assert!(element_json.as_object().unwrap().contains_key("tags"));
         assert!(element_json.as_object().unwrap().contains_key("steps"));
-        
+
         let feature_json = serde_json::to_value(&json_feature).unwrap();
         assert!(feature_json.as_object().unwrap().contains_key("keyword"));
         assert!(feature_json.as_object().unwrap().contains_key("name"));

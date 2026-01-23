@@ -74,7 +74,6 @@ impl<K: Eq + Hash, V> Queue<K, V> {
     }
 }
 
-
 /// Finishing state of a [`Queue`].
 #[derive(Clone, Copy, Debug)]
 pub enum FinishedState {
@@ -121,7 +120,7 @@ mod tests {
     fn test_queue_new() {
         let meta = Metadata::new(());
         let queue: Queue<String, i32> = Queue::new(meta);
-        
+
         assert!(queue.initial.is_some());
         assert!(matches!(queue.state, FinishedState::NotFinished));
         assert_eq!(queue.fifo.len(), 0);
@@ -131,10 +130,10 @@ mod tests {
     fn test_queue_finished() {
         let meta = Metadata::new(());
         let mut queue: Queue<String, i32> = Queue::new(meta);
-        
+
         let finish_meta = Metadata::new(());
         queue.finished(finish_meta);
-        
+
         assert!(matches!(queue.state, FinishedState::FinishedButNotEmitted(_)));
         assert!(!queue.is_finished_and_emitted());
     }
@@ -143,9 +142,9 @@ mod tests {
     fn test_queue_is_finished_and_emitted() {
         let meta = Metadata::new(());
         let mut queue: Queue<String, i32> = Queue::new(meta);
-        
+
         assert!(!queue.is_finished_and_emitted());
-        
+
         queue.state = FinishedState::FinishedAndEmitted;
         assert!(queue.is_finished_and_emitted());
     }
@@ -154,11 +153,11 @@ mod tests {
     fn test_queue_remove() {
         let meta = Metadata::new(());
         let mut queue: Queue<String, i32> = Queue::new(meta);
-        
+
         queue.fifo.insert("key1".to_string(), 42);
         queue.fifo.insert("key2".to_string(), 84);
         assert_eq!(queue.fifo.len(), 2);
-        
+
         queue.remove(&"key1".to_string());
         assert_eq!(queue.fifo.len(), 1);
         assert!(queue.fifo.contains_key("key2"));
@@ -188,11 +187,11 @@ mod tests {
     fn test_finished_state_take_to_emit() {
         let meta = Metadata::new(());
         let mut state = FinishedState::FinishedButNotEmitted(meta);
-        
+
         let result = state.take_to_emit();
         assert!(result.is_some());
         assert!(matches!(state, FinishedState::FinishedAndEmitted));
-        
+
         // Should return None if called again
         let result2 = state.take_to_emit();
         assert!(result2.is_none());
@@ -202,7 +201,7 @@ mod tests {
     #[test]
     fn test_finished_state_take_to_emit_not_finished() {
         let mut state = FinishedState::NotFinished;
-        
+
         let result = state.take_to_emit();
         assert!(result.is_none());
         assert!(matches!(state, FinishedState::NotFinished));
@@ -211,7 +210,7 @@ mod tests {
     #[test]
     fn test_finished_state_take_to_emit_already_emitted() {
         let mut state = FinishedState::FinishedAndEmitted;
-        
+
         let result = state.take_to_emit();
         assert!(result.is_none());
         assert!(matches!(state, FinishedState::FinishedAndEmitted));
@@ -221,12 +220,12 @@ mod tests {
     fn test_queue_fifo_ordering() {
         let meta = Metadata::new(());
         let mut queue: Queue<String, i32> = Queue::new(meta);
-        
+
         // Insert items in order
         queue.fifo.insert("first".to_string(), 1);
         queue.fifo.insert("second".to_string(), 2);
         queue.fifo.insert("third".to_string(), 3);
-        
+
         // Should maintain insertion order
         let keys: Vec<String> = queue.fifo.keys().cloned().collect();
         assert_eq!(keys, vec!["first", "second", "third"]);
@@ -236,9 +235,9 @@ mod tests {
     fn test_queue_initial_metadata() {
         let meta = Metadata::new(());
         let mut queue: Queue<String, i32> = Queue::new(meta);
-        
+
         assert!(queue.initial.is_some());
-        
+
         // Take the initial metadata
         let taken = queue.initial.take();
         assert!(taken.is_some());

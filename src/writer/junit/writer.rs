@@ -10,8 +10,7 @@ use crate::{
 };
 
 use super::{
-    cli::Cli,
-    event_handlers::EventHandler,
+    cli::Cli, event_handlers::EventHandler,
     test_case_builder::JUnitTestCaseBuilder,
 };
 
@@ -61,7 +60,9 @@ pub struct JUnit<W, Out: io::Write> {
 
 // Implemented manually to omit redundant `World: Clone` trait bound, imposed by
 // `#[derive(Clone)]`.
-impl<World: std::fmt::Debug + crate::World, Out: Clone + io::Write> Clone for JUnit<World, Out> {
+impl<World: std::fmt::Debug + crate::World, Out: Clone + io::Write> Clone
+    for JUnit<World, Out>
+{
     fn clone(&self) -> Self {
         Self {
             output: self.output.clone(),
@@ -70,7 +71,7 @@ impl<World: std::fmt::Debug + crate::World, Out: Clone + io::Write> Clone for JU
             scenario_started_at: self.scenario_started_at,
             events: self.events.clone(),
             event_handler: EventHandler::<World, Out>::new(
-                JUnitTestCaseBuilder::new(self.verbosity)
+                JUnitTestCaseBuilder::new(self.verbosity),
             ),
             verbosity: self.verbosity,
         }
@@ -95,12 +96,18 @@ where
 
         match event.map(Event::split) {
             Err(err) => {
-                EventHandler::<W, Out>::handle_parser_error(&mut self.report, &err);
+                EventHandler::<W, Out>::handle_parser_error(
+                    &mut self.report,
+                    &err,
+                );
             }
             Ok((Cucumber::Started | Cucumber::ParsingFinished { .. }, _)) => {}
             Ok((Cucumber::Feature(feat, ev), meta)) => match ev {
                 Feature::Started => {
-                    self.suit = Some(EventHandler::<W, Out>::handle_feature_started(&feat, meta));
+                    self.suit =
+                        Some(EventHandler::<W, Out>::handle_feature_started(
+                            &feat, meta,
+                        ));
                 }
                 Feature::Rule(_, Rule::Started | Rule::Finished) => {}
                 Feature::Rule(r, Rule::Scenario(sc, ev)) => {
@@ -128,12 +135,18 @@ where
                     );
                 }
                 Feature::Finished => {
-                    let suite = EventHandler::<W, Out>::handle_feature_finished(&feat, self.suit.take());
+                    let suite = EventHandler::<W, Out>::handle_feature_finished(
+                        &feat,
+                        self.suit.take(),
+                    );
                     self.report.add_testsuite(suite);
                 }
             },
             Ok((Cucumber::Finished, _)) => {
-                EventHandler::<W, Out>::handle_cucumber_finished(&mut self.report, &mut self.output);
+                EventHandler::<W, Out>::handle_cucumber_finished(
+                    &mut self.report,
+                    &mut self.output,
+                );
             }
         }
     }
@@ -190,7 +203,9 @@ impl<W: Debug + World, Out: io::Write> JUnit<W, Out> {
             suit: None,
             scenario_started_at: None,
             events: vec![],
-            event_handler: EventHandler::<W, Out>::new(JUnitTestCaseBuilder::new(verbosity)),
+            event_handler: EventHandler::<W, Out>::new(
+                JUnitTestCaseBuilder::new(verbosity),
+            ),
             verbosity,
         }
     }
@@ -200,7 +215,9 @@ impl<W: Debug + World, Out: io::Write> JUnit<W, Out> {
         if let Some(verbosity) = cli.to_verbosity() {
             self.verbosity = verbosity;
             // Update the event handler with new verbosity
-            self.event_handler = EventHandler::<W, Out>::new(JUnitTestCaseBuilder::new(self.verbosity));
+            self.event_handler = EventHandler::<W, Out>::new(
+                JUnitTestCaseBuilder::new(self.verbosity),
+            );
         }
     }
 }
@@ -314,10 +331,8 @@ mod tests {
     async fn handles_cucumber_finished_event() {
         let output = Vec::new();
         let mut writer = JUnit::<TestWorld, _>::raw(output, Verbosity::Default);
-        let event = Ok(Event {
-            value: Cucumber::Finished,
-            at: SystemTime::UNIX_EPOCH,
-        });
+        let event =
+            Ok(Event { value: Cucumber::Finished, at: SystemTime::UNIX_EPOCH });
         let cli = Cli::default();
 
         writer.handle_event(event, &cli).await;
@@ -332,7 +347,10 @@ mod tests {
         let mut writer = JUnit::<TestWorld, _>::raw(output, Verbosity::Default);
         let parse_error = gherkin::ParseFileError::Reading {
             path: PathBuf::from("/test/broken.feature"),
-            source: std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "File not found",
+            ),
         };
         let error = Err(parser::Error::Parsing(Box::new(parse_error)));
         let cli = Cli::default();
@@ -364,14 +382,16 @@ mod tests {
     #[test]
     fn creates_tee_writer() {
         let output = Vec::new();
-        let _writer = JUnit::<TestWorld, _>::for_tee(output, Verbosity::Default);
+        let _writer =
+            JUnit::<TestWorld, _>::for_tee(output, Verbosity::Default);
         // This test just ensures the method compiles and creates a tee-compatible writer
     }
 
     #[test]
     fn cli_none_does_not_change_verbosity() {
         let output = Vec::new();
-        let mut writer = JUnit::<TestWorld, _>::raw(output, Verbosity::ShowWorld);
+        let mut writer =
+            JUnit::<TestWorld, _>::raw(output, Verbosity::ShowWorld);
         let cli = Cli::default(); // verbose: None
 
         writer.apply_cli(cli);

@@ -4,8 +4,9 @@ use std::{fmt::Display, io};
 
 use derive_more::with_trait::{Deref, DerefMut};
 
-use crate::{
-    writer::{self, Verbosity, out::{Styles, WriteStrExt as _}, Ext as _},
+use crate::writer::{
+    self, Ext as _, Verbosity,
+    out::{Styles, WriteStrExt as _},
 };
 
 use super::cli::{Cli, Coloring};
@@ -113,7 +114,9 @@ impl<Out: io::Write> Basic<Out> {
     }
 
     /// Clears last `n` lines if [`Coloring`] is enabled.
-    pub(super) fn clear_last_lines_if_term_present(&mut self) -> io::Result<()> {
+    pub(super) fn clear_last_lines_if_term_present(
+        &mut self,
+    ) -> io::Result<()> {
         if self.styles.is_present && self.lines_to_clear > 0 {
             self.output.clear_last_lines(self.lines_to_clear)?;
             self.output.write_str(&self.re_output_after_clear)?;
@@ -134,4 +137,3 @@ impl<Out: io::Write> Basic<Out> {
             .write_line(self.styles.err(format!("Failed to parse: {error}")))
     }
 }
-

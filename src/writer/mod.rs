@@ -15,7 +15,7 @@
 //! and provide shared functionality across different writer implementations.
 //!
 //! # Writer Consolidation
-//! 
+//!
 //! The [`common`] module provides:
 //! - [`StepContext`] and [`ScenarioContext`] to consolidate commonly-passed parameters
 //! - [`WriterStats`] for standardized statistics tracking
@@ -64,8 +64,8 @@ pub mod tee;
 // Re-export core traits and types for backward compatibility
 #[doc(inline)]
 pub use self::{
-    traits::{Arbitrary, Stats, Writer},
     ext::Ext,
+    traits::{Arbitrary, Stats, Writer},
     types::{NonTransforming, Verbosity},
 };
 
@@ -85,8 +85,8 @@ pub use self::libtest::Libtest;
 pub use self::{
     basic::{Basic, Coloring},
     common::{
-        StepContext, ScenarioContext, WriterStats, OutputFormatter,
-        WorldFormatter, ErrorFormatter, WriterExt as CommonWriterExt,
+        ErrorFormatter, OutputFormatter, ScenarioContext, StepContext,
+        WorldFormatter, WriterExt as CommonWriterExt, WriterStats,
     },
     fail_on_skipped::FailOnSkipped,
     normalize::{AssertNormalized, Normalize, Normalized},
@@ -103,16 +103,20 @@ mod tests {
     #[test]
     fn test_module_reexports_exist() {
         // Test that core traits are available
-        use self::{Arbitrary, Stats, Writer, Ext, NonTransforming, Verbosity};
-        
+        use self::{Arbitrary, Ext, NonTransforming, Stats, Verbosity, Writer};
+
         // Test that writer implementations are available
-        use self::{Basic, Coloring, FailOnSkipped, AssertNormalized, Normalize, 
-                  Normalized, Or, Repeat, Summarize, Tee};
-        
+        use self::{
+            AssertNormalized, Basic, Coloring, FailOnSkipped, Normalize,
+            Normalized, Or, Repeat, Summarize, Tee,
+        };
+
         // Test that common utilities are available
-        use self::{StepContext, ScenarioContext, WriterStats, OutputFormatter,
-                  WorldFormatter, ErrorFormatter, CommonWriterExt};
-        
+        use self::{
+            CommonWriterExt, ErrorFormatter, OutputFormatter, ScenarioContext,
+            StepContext, WorldFormatter, WriterStats,
+        };
+
         // Verify types work as expected
         let _verbosity = Verbosity::Default;
         assert_eq!(_verbosity as u8, 0);
@@ -143,17 +147,19 @@ mod tests {
     fn test_backward_compatibility_imports() {
         // Verify all the public items from the original mod.rs are still available
         // This ensures we don't break existing code that depends on these exports
-        
+
         // Writer utilities - just check they're importable
-        use self::{Basic, FailOnSkipped, Normalize, Or, Repeat, Summarize, Tee};
-        
+        use self::{
+            Basic, FailOnSkipped, Normalize, Or, Repeat, Summarize, Tee,
+        };
+
         // Common types
-        use self::{Verbosity, NonTransforming};
-        
+        use self::{NonTransforming, Verbosity};
+
         // Test verbosity enum works
         let verbosity = Verbosity::Default;
         assert!(!verbosity.shows_world());
-        
+
         // This test mainly serves as a compile-time check
     }
 }
