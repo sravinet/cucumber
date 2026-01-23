@@ -105,11 +105,13 @@ impl Step {
 
         let world = parse_world_from_args(&self.func.sig)?;
         let step_type = self.step_type();
-        
+
         // Check for DataTable parameter
         let table_param = crate::attribute_ext::detect_table_param(&self.func);
-        let (func_args, addon_parsing) =
-            self.fn_arguments_and_additional_parsing_with_table(table_param.as_ref())?;
+        let (func_args, addon_parsing) = self
+            .fn_arguments_and_additional_parsing_with_table(
+                table_param.as_ref(),
+            )?;
 
         let regex = self.gen_regex()?;
 
@@ -176,7 +178,7 @@ impl Step {
         // Just use the regular parsing - DataTable is handled in arg_ident_and_parse_code
         self.fn_arguments_and_additional_parsing()
     }
-    
+
     /// Generates code that prepares function's arguments basing on
     /// [`AttributeArgument`] and additional parsing if it's an
     /// [`AttributeArgument::Regex`].
@@ -288,12 +290,14 @@ impl Step {
             ))
         } else {
             // Check if there's a DataTable parameter even for literal strings
-            let table_param = crate::attribute_ext::detect_table_param(&self.func);
+            let table_param =
+                crate::attribute_ext::detect_table_param(&self.func);
             if let Some(param) = table_param {
-                let table_injection = crate::attribute_ext::generate_table_injection(
-                    &param,
-                    &self.func.sig.ident,
-                );
+                let table_injection =
+                    crate::attribute_ext::generate_table_injection(
+                        &param,
+                        &self.func.sig.ident,
+                    );
                 let table_ident = &param.ident;
                 Ok((quote! { #table_ident, }, Some(table_injection)))
             } else {
@@ -321,10 +325,12 @@ impl Step {
     ) -> syn::Result<(&'a syn::Ident, TokenStream)> {
         let (ident, ty) = parse_fn_arg(arg)?;
 
-        let is_ctx_arg = self.arg_name_of_step_context.as_ref().is_some_and(|i| i == ident);
-        
+        let is_ctx_arg =
+            self.arg_name_of_step_context.as_ref().is_some_and(|i| i == ident);
+
         // Check if this is a DataTable parameter
-        let is_data_table = crate::attribute_ext::is_data_table_type_from_arg(arg);
+        let is_data_table =
+            crate::attribute_ext::is_data_table_type_from_arg(arg);
 
         let decl = if is_ctx_arg {
             quote! {
@@ -339,7 +345,7 @@ impl Step {
             } else {
                 false
             };
-            
+
             if is_optional {
                 // Optional DataTable
                 quote! {
@@ -439,7 +445,7 @@ impl Step {
                 });
             }
         }
-        
+
         // Check if this is a DataTable argument
         if crate::attribute_ext::is_data_table_type_from_arg(arg) {
             let (ident, _) = parse_fn_arg(arg)?;

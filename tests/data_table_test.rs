@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cucumber::{given, then, when, DataTable, World, gherkin::Step};
+use cucumber::{DataTable, World, gherkin::Step, given, then, when};
 
 #[derive(Debug, Default, World)]
 pub struct TableWorld {
@@ -20,16 +20,13 @@ struct Item {
 async fn given_items(world: &mut TableWorld, step: &Step) {
     if let Some(table) = step.table.as_ref() {
         let data_table = DataTable::from(table);
-        
+
         for item in data_table.hashes() {
             let name = item.get("name").unwrap().clone();
             let price = item.get("price").unwrap().parse().unwrap();
             let quantity = item.get("quantity").unwrap().parse().unwrap();
-            
-            world.items.insert(
-                name.clone(),
-                Item { name, price, quantity }
-            );
+
+            world.items.insert(name.clone(), Item { name, price, quantity });
         }
     }
 }
@@ -38,7 +35,7 @@ async fn given_items(world: &mut TableWorld, step: &Step) {
 #[when("I calculate the total value")]
 async fn calculate_total(world: &mut TableWorld, step: &Step) {
     use cucumber::step::table::extract_table;
-    
+
     if let Some(table) = extract_table(step) {
         // Process with rich DataTable API
         for row in table.hashes() {
@@ -50,7 +47,9 @@ async fn calculate_total(world: &mut TableWorld, step: &Step) {
         }
     } else {
         // Calculate all items if no table
-        world.total = world.items.values()
+        world.total = world
+            .items
+            .values()
             .map(|item| item.price * item.quantity as f64)
             .sum();
     }
@@ -61,7 +60,7 @@ async fn calculate_total(world: &mut TableWorld, step: &Step) {
 async fn given_config(world: &mut TableWorld, step: &Step) {
     if let Some(table) = step.table.as_ref() {
         let data_table = DataTable::from(table);
-        
+
         if let Some(config) = data_table.rows_hash() {
             // Process configuration key-value pairs
             if let Some(tax_rate) = config.get("tax_rate") {
@@ -78,7 +77,7 @@ async fn process_transposed(world: &mut TableWorld, step: &Step) {
     if let Some(table) = step.table.as_ref() {
         let data_table = DataTable::from(table);
         let transposed = data_table.transpose();
-        
+
         // First row now contains what were column headers
         for row in transposed.rows() {
             // Process transposed data
@@ -92,14 +91,15 @@ async fn process_transposed(world: &mut TableWorld, step: &Step) {
 async fn check_filtered(world: &mut TableWorld, step: &Step) {
     if let Some(table) = step.table.as_ref() {
         let data_table = DataTable::from(table);
-        
+
         // Select only name and quantity columns
         let subset = data_table.columns(&["name", "quantity"]);
-        
+
         for item in subset.hashes() {
             let name = item.get("name").unwrap();
-            let expected_qty: u32 = item.get("quantity").unwrap().parse().unwrap();
-            
+            let expected_qty: u32 =
+                item.get("quantity").unwrap().parse().unwrap();
+
             assert_eq!(
                 world.items.get(name).map(|i| i.quantity),
                 Some(expected_qty)
@@ -116,22 +116,22 @@ async fn test_data_table_api() {
         vec!["apple", "1.50", "10"],
         vec!["banana", "0.75", "20"],
     ]);
-    
+
     // Test raw
     assert_eq!(table.raw().len(), 3);
-    
+
     // Test rows
     assert_eq!(table.rows().len(), 2);
-    
+
     // Test hashes
     let hashes = table.hashes();
     assert_eq!(hashes[0].get("name"), Some(&"apple".to_string()));
     assert_eq!(hashes[1].get("price"), Some(&"0.75".to_string()));
-    
+
     // Test transpose
     let transposed = table.transpose();
     assert_eq!(transposed.raw()[0], vec!["name", "apple", "banana"]);
-    
+
     // Test columns
     let subset = table.columns(&["name", "quantity"]);
     assert_eq!(subset.width(), 2);
@@ -144,7 +144,7 @@ async fn test_rows_hash() {
         vec!["timeout", "30"],
         vec!["retries", "3"],
     ]);
-    
+
     let hash = table.rows_hash().unwrap();
     assert_eq!(hash.get("timeout"), Some(&"30".to_string()));
     assert_eq!(hash.get("retries"), Some(&"3".to_string()));

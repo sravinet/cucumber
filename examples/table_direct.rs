@@ -1,4 +1,4 @@
-use cucumber::{given, DataTable, World};
+use cucumber::{DataTable, World, given};
 
 #[derive(Debug, Default, World)]
 pub struct SimpleTableWorld {
@@ -12,9 +12,12 @@ async fn given_items(world: &mut SimpleTableWorld, table: DataTable) {
     world.items_count = table.rows().len();
 }
 
-// Test optional DataTable  
+// Test optional DataTable
 #[given("optional items")]
-async fn given_optional_items(world: &mut SimpleTableWorld, table: Option<DataTable>) {
+async fn given_optional_items(
+    world: &mut SimpleTableWorld,
+    table: Option<DataTable>,
+) {
     let count = table.as_ref().map(|t| t.rows().len()).unwrap_or(0);
     println!("Received optional table with {} rows", count);
     world.items_count = count;
