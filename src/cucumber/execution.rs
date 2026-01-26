@@ -2,12 +2,9 @@
 
 use std::mem;
 
-use futures::{StreamExt as _};
+use futures::StreamExt as _;
 
-use crate::{
-    Parser, Runner, World, Writer, cli, writer,
-    tag::Ext as _,
-};
+use crate::{Parser, Runner, World, Writer, cli, tag::Ext as _, writer};
 
 use super::core::Cucumber;
 

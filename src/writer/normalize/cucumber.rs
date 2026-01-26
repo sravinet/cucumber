@@ -17,10 +17,7 @@ use crate::{
     event::{self, Retries, Source},
 };
 
-use super::{
-    queue::Queue,
-    emitter::Emitter,
-};
+use super::{emitter::Emitter, queue::Queue};
 
 // Forward declarations for circular dependencies
 use super::rules::RulesQueue;
@@ -174,7 +171,8 @@ pub type NextRuleOrScenario<'events, World> = Either<
 /// [`Queue`] of all events of a single [`Feature`].
 ///
 /// [`Feature`]: gherkin::Feature
-pub type FeatureQueue<World> = Queue<RuleOrScenario, RuleOrScenarioQueue<World>>;
+pub type FeatureQueue<World> =
+    Queue<RuleOrScenario, RuleOrScenarioQueue<World>>;
 
 impl<World> FeatureQueue<World> {
     /// Inserts a new [`Rule`].
@@ -278,11 +276,16 @@ impl<'me, World> Emitter<World> for &'me mut FeatureQueue<World> {
 #[cfg(test)]
 #[allow(dead_code)]
 mod tests {
-    use super::*;
-    use crate::{Event, event::{Cucumber, Metadata, RetryableScenario}, Writer, parser, event::Source};
-    use std::{sync::Arc, future::Future};
     use super::super::FinishedState;
+    use super::*;
     use crate::test_utils::common::{EmptyCli, TestWorld};
+    use crate::{
+        Event, Writer,
+        event::Source,
+        event::{Cucumber, Metadata, RetryableScenario},
+        parser,
+    };
+    use std::{future::Future, sync::Arc};
 
     // Using common TestWorld from test_utils
 
@@ -293,9 +296,7 @@ mod tests {
 
     impl MockWriter {
         fn new() -> Self {
-            Self {
-                events: Vec::new(),
-            }
+            Self { events: Vec::new() }
         }
     }
 
@@ -368,12 +369,13 @@ mod tests {
 
     #[test]
     fn test_cucumber_queue_new_feature() {
-        let mut queue: CucumberQueue<()> = CucumberQueue::new(Metadata::new(()));
+        let mut queue: CucumberQueue<()> =
+            CucumberQueue::new(Metadata::new(()));
         let feature = create_test_feature();
         let feature_event = Event::new(feature.clone());
-        
+
         queue.new_feature(feature_event);
-        
+
         assert!(queue.fifo.contains_key(&feature));
         assert_eq!(queue.fifo.len(), 1);
     }
@@ -383,17 +385,21 @@ mod tests {
         let mut queue = CucumberQueue::new(Metadata::new(()));
         let feature = create_test_feature();
         let feature_event = Event::new(feature.clone());
-        
+
         // First add the feature
         queue.new_feature(feature_event);
-        
+
         // Then mark it as finished
         let finish_event = Event::new(&feature);
         queue.feature_finished(finish_event);
-        
+
         // Check that the feature queue is marked as finished
-        let feature_queue: &FeatureQueue<TestWorld> = queue.fifo.get(&feature).unwrap();
-        assert!(matches!(feature_queue.state, FinishedState::FinishedButNotEmitted(_)));
+        let feature_queue: &FeatureQueue<TestWorld> =
+            queue.fifo.get(&feature).unwrap();
+        assert!(matches!(
+            feature_queue.state,
+            FinishedState::FinishedButNotEmitted(_)
+        ));
     }
 
     #[test]
@@ -401,14 +407,15 @@ mod tests {
         let mut queue = CucumberQueue::new(Metadata::new(()));
         let feature = create_test_feature();
         let rule = create_test_rule();
-        
+
         // First add the feature
         queue.new_feature(Event::new(feature.clone()));
-        
+
         // Then add a rule to it
         queue.new_rule(&feature, Event::new(rule.clone()));
-        
-        let feature_queue: &FeatureQueue<TestWorld> = queue.fifo.get(&feature).unwrap();
+
+        let feature_queue: &FeatureQueue<TestWorld> =
+            queue.fifo.get(&feature).unwrap();
         assert!(feature_queue.fifo.contains_key(&Either::Left(rule)));
     }
 
@@ -417,18 +424,28 @@ mod tests {
         let mut queue = CucumberQueue::new(Metadata::new(()));
         let feature = create_test_feature();
         let rule = create_test_rule();
-        
+
         // Setup feature and rule
         queue.new_feature(Event::new(feature.clone()));
         queue.new_rule(&feature, Event::new(rule.clone()));
-        
+
         // Mark rule as finished
         queue.rule_finished(&feature, Event::new(rule.clone()));
-        
-        let feature_queue: &FeatureQueue<TestWorld> = queue.fifo.get(&feature).unwrap();
-        let rule_queue: &Either<Queue<(Source<gherkin::Scenario>, Option<event::Retries>), super::ScenariosQueue<TestWorld>>, _> = feature_queue.fifo.get(&Either::Left(rule)).unwrap();
+
+        let feature_queue: &FeatureQueue<TestWorld> =
+            queue.fifo.get(&feature).unwrap();
+        let rule_queue: &Either<
+            Queue<
+                (Source<gherkin::Scenario>, Option<event::Retries>),
+                super::ScenariosQueue<TestWorld>,
+            >,
+            _,
+        > = feature_queue.fifo.get(&Either::Left(rule)).unwrap();
         if let Either::Left(rule_queue) = rule_queue {
-            assert!(matches!(rule_queue.state, FinishedState::FinishedButNotEmitted(_)));
+            assert!(matches!(
+                rule_queue.state,
+                FinishedState::FinishedButNotEmitted(_)
+            ));
         } else {
             panic!("Expected rule queue");
         }
@@ -439,21 +456,26 @@ mod tests {
         let mut queue = CucumberQueue::new(Metadata::new(()));
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        
+
         // Setup feature
         queue.new_feature(Event::new(feature.clone()));
-        
+
         // Add scenario event
-        let scenario_event = Event::new(
-            RetryableScenario {
-                event: event::Scenario::<TestWorld>::Started,
-                retries: None,
-            }
+        let scenario_event = Event::new(RetryableScenario {
+            event: event::Scenario::<TestWorld>::Started,
+            retries: None,
+        });
+        queue.insert_scenario_event(
+            &feature,
+            None,
+            scenario.clone(),
+            scenario_event,
         );
-        queue.insert_scenario_event(&feature, None, scenario.clone(), scenario_event);
-        
+
         let feature_queue = queue.fifo.get(&feature).unwrap();
-        assert!(feature_queue.fifo.contains_key(&Either::Right((scenario, None))));
+        assert!(
+            feature_queue.fifo.contains_key(&Either::Right((scenario, None)))
+        );
     }
 
     #[tokio::test]
@@ -461,14 +483,14 @@ mod tests {
         let mut queue = CucumberQueue::new(Metadata::new(()));
         let mut writer = MockWriter::new();
         let feature = create_test_feature();
-        
+
         // Add and finish a feature
         queue.new_feature(Event::new(feature.clone()));
         queue.feature_finished(Event::new(&feature));
-        
+
         // Emit should handle the feature
         let result = (&mut queue).emit((), &mut writer, &EmptyCli).await;
-        
+
         // Should emit feature started and finished events
         assert!(writer.events.contains(&"FeatureStarted".to_string()));
         assert!(writer.events.contains(&"FeatureFinished".to_string()));
@@ -477,50 +499,65 @@ mod tests {
 
     #[test]
     fn test_feature_queue_new_rule() {
-        let mut feature_queue: FeatureQueue<TestWorld> = FeatureQueue::new(Metadata::new(()));
+        let mut feature_queue: FeatureQueue<TestWorld> =
+            FeatureQueue::new(Metadata::new(()));
         let rule = create_test_rule();
-        
+
         feature_queue.new_rule(Event::new(rule.clone()));
-        
+
         assert!(feature_queue.fifo.contains_key(&Either::Left(rule)));
         assert_eq!(feature_queue.fifo.len(), 1);
     }
 
     #[test]
     fn test_feature_queue_rule_finished() {
-        let mut feature_queue: FeatureQueue<TestWorld> = FeatureQueue::new(Metadata::new(()));
+        let mut feature_queue: FeatureQueue<TestWorld> =
+            FeatureQueue::new(Metadata::new(()));
         let rule = create_test_rule();
-        
+
         // Add rule first
         feature_queue.new_rule(Event::new(rule.clone()));
-        
+
         // Mark as finished
         feature_queue.rule_finished(Event::new(rule.clone()));
-        
-        let rule_queue: &Either<Queue<(Source<gherkin::Scenario>, Option<event::Retries>), super::ScenariosQueue<TestWorld>>, _> = feature_queue.fifo.get(&Either::Left(rule)).unwrap();
+
+        let rule_queue: &Either<
+            Queue<
+                (Source<gherkin::Scenario>, Option<event::Retries>),
+                super::ScenariosQueue<TestWorld>,
+            >,
+            _,
+        > = feature_queue.fifo.get(&Either::Left(rule)).unwrap();
         if let Either::Left(rule_queue) = rule_queue {
-            assert!(matches!(rule_queue.state, FinishedState::FinishedButNotEmitted(_)));
+            assert!(matches!(
+                rule_queue.state,
+                FinishedState::FinishedButNotEmitted(_)
+            ));
         }
     }
 
     #[test]
     fn test_feature_queue_insert_scenario_event_with_rule() {
-        let mut feature_queue: FeatureQueue<TestWorld> = FeatureQueue::new(Metadata::new(()));
+        let mut feature_queue: FeatureQueue<TestWorld> =
+            FeatureQueue::new(Metadata::new(()));
         let rule = create_test_rule();
         let scenario = create_test_scenario();
-        
+
         // Add rule first
         feature_queue.new_rule(Event::new(rule.clone()));
-        
+
         // Add scenario to rule
-        let scenario_event = Event::new(
-            RetryableScenario {
-                event: event::Scenario::<TestWorld>::Started,
-                retries: None,
-            }
+        let scenario_event = Event::new(RetryableScenario {
+            event: event::Scenario::<TestWorld>::Started,
+            retries: None,
+        });
+        feature_queue.insert_scenario_event(
+            Some(rule.clone()),
+            scenario.clone(),
+            None,
+            scenario_event,
         );
-        feature_queue.insert_scenario_event(Some(rule.clone()), scenario.clone(), None, scenario_event);
-        
+
         // Check that scenario was added to the rule
         let rule_queue = feature_queue.fifo.get(&Either::Left(rule)).unwrap();
         if let Either::Left(rule_queue) = rule_queue {
@@ -530,19 +567,25 @@ mod tests {
 
     #[test]
     fn test_feature_queue_insert_scenario_event_without_rule() {
-        let mut feature_queue: FeatureQueue<TestWorld> = FeatureQueue::new(Metadata::new(()));
+        let mut feature_queue: FeatureQueue<TestWorld> =
+            FeatureQueue::new(Metadata::new(()));
         let scenario = create_test_scenario();
-        
+
         // Add scenario directly to feature
-        let scenario_event = Event::new(
-            RetryableScenario {
-                event: event::Scenario::<TestWorld>::Started,
-                retries: None,
-            }
+        let scenario_event = Event::new(RetryableScenario {
+            event: event::Scenario::<TestWorld>::Started,
+            retries: None,
+        });
+        feature_queue.insert_scenario_event(
+            None,
+            scenario.clone(),
+            None,
+            scenario_event,
         );
-        feature_queue.insert_scenario_event(None, scenario.clone(), None, scenario_event);
-        
+
         // Check that scenario was added directly to feature
-        assert!(feature_queue.fifo.contains_key(&Either::Right((scenario, None))));
+        assert!(
+            feature_queue.fifo.contains_key(&Either::Right((scenario, None)))
+        );
     }
 }

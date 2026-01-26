@@ -2,10 +2,7 @@
 
 use std::{fmt::Debug, io};
 
-use crate::{
-    event, 
-    writer::out::WriteStrExt as _,
-};
+use crate::{event, writer::out::WriteStrExt as _};
 
 use super::basic_struct::Basic;
 
@@ -68,4 +65,3 @@ impl<Out: io::Write> Basic<Out> {
         self.output.write_line(self.styles.ok(out))
     }
 }
-

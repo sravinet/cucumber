@@ -10,9 +10,7 @@
 
 //! Statistics tracking for writers.
 
-use crate::{
-    event::{self, Retries},
-};
+use crate::event::{self, Retries};
 
 /// Common statistics tracking for writers.
 #[derive(Debug, Default, Clone, Copy)]
@@ -69,7 +67,11 @@ impl WriterStats {
     }
 
     /// Updates statistics based on a step event.
-    pub fn update_from_step_event<W>(&mut self, event: &event::Step<W>, retries: Option<&Retries>) {
+    pub fn update_from_step_event<W>(
+        &mut self,
+        event: &event::Step<W>,
+        retries: Option<&Retries>,
+    ) {
         if let Some(retries) = retries {
             if retries.left > 0 {
                 self.record_retried_step();
@@ -115,7 +117,7 @@ mod tests {
     #[test]
     fn writer_stats_initializes_empty() {
         let stats = WriterStats::new();
-        
+
         assert_eq!(stats.passed_steps, 0);
         assert_eq!(stats.failed_steps, 0);
         assert_eq!(stats.skipped_steps, 0);
@@ -129,12 +131,12 @@ mod tests {
     #[test]
     fn writer_stats_tracks_steps_correctly() {
         let mut stats = WriterStats::new();
-        
+
         stats.record_passed_step();
         stats.record_failed_step();
         stats.record_skipped_step();
         stats.record_retried_step();
-        
+
         assert_eq!(stats.passed_steps, 1);
         assert_eq!(stats.failed_steps, 1);
         assert_eq!(stats.skipped_steps, 1);
@@ -146,10 +148,10 @@ mod tests {
     #[test]
     fn writer_stats_tracks_errors() {
         let mut stats = WriterStats::new();
-        
+
         stats.record_parsing_error();
         stats.record_hook_error();
-        
+
         assert_eq!(stats.parsing_errors, 1);
         assert_eq!(stats.hook_errors, 1);
         assert!(stats.execution_has_failed());
@@ -158,24 +160,24 @@ mod tests {
     #[test]
     fn writer_stats_execution_failure_conditions() {
         let mut stats = WriterStats::new();
-        
+
         // No failures initially
         assert!(!stats.execution_has_failed());
-        
+
         // Failed step causes failure
         stats.record_failed_step();
         assert!(stats.execution_has_failed());
-        
+
         let mut stats2 = WriterStats::new();
         // Parsing error causes failure
         stats2.record_parsing_error();
         assert!(stats2.execution_has_failed());
-        
+
         let mut stats3 = WriterStats::new();
         // Hook error causes failure
         stats3.record_hook_error();
         assert!(stats3.execution_has_failed());
-        
+
         // Passed and skipped steps don't cause failure
         let mut stats4 = WriterStats::new();
         stats4.record_passed_step();
@@ -190,21 +192,22 @@ mod tests {
 
         // Test passed step - create a simple CaptureLocations
         let captures = regex::Regex::new(r"test").unwrap().capture_locations();
-        let passed_event: event::Step<i32> = event::Step::Passed { captures, location: None };
+        let passed_event: event::Step<i32> =
+            event::Step::Passed { captures, location: None };
         stats.update_from_step_event(&passed_event, Some(&retries));
         assert_eq!(stats.passed_steps, 1);
         assert_eq!(stats.retried_steps, 1); // Should record retry
 
-        // Test failed step  
+        // Test failed step
         let failed_event: event::Step<i32> = event::Step::Failed {
             captures: None,
             location: None,
             world: None,
-            error: crate::event::StepError::NotFound
+            error: crate::event::StepError::NotFound,
         };
         stats.update_from_step_event(&failed_event, None);
         assert_eq!(stats.failed_steps, 1);
-        
+
         // Test skipped step - it's a unit variant
         let skipped_event: event::Step<i32> = event::Step::Skipped;
         stats.update_from_step_event(&skipped_event, None);
@@ -215,11 +218,11 @@ mod tests {
         assert_eq!(stats.total_steps(), 3); // No change
     }
 
-    #[test] 
+    #[test]
     fn writer_stats_is_copy() {
         let stats1 = WriterStats::new();
         let stats2 = stats1; // Should compile due to Copy
-        
+
         assert_eq!(stats1.total_steps(), stats2.total_steps());
     }
 
@@ -228,17 +231,17 @@ mod tests {
         let mut stats = WriterStats::new();
         let retries_with_attempts = Retries { left: 2, current: 1 };
         let retries_no_attempts = Retries { left: 0, current: 5 };
-        
+
         let event = mock_step_event();
-        
+
         // Should record retry when left > 0
         stats.update_from_step_event(&event, Some(&retries_with_attempts));
         assert_eq!(stats.retried_steps, 1);
-        
-        // Should not record retry when left = 0  
+
+        // Should not record retry when left = 0
         stats.update_from_step_event(&event, Some(&retries_no_attempts));
         assert_eq!(stats.retried_steps, 1); // Still 1, no change
-        
+
         // Should not record retry when None
         stats.update_from_step_event(&event, None);
         assert_eq!(stats.retried_steps, 1); // Still 1, no change
@@ -247,7 +250,7 @@ mod tests {
     #[test]
     fn writer_stats_multiple_updates() {
         let mut stats = WriterStats::new();
-        
+
         // Simulate multiple step executions
         for _ in 0..3 {
             stats.record_passed_step();
@@ -258,7 +261,7 @@ mod tests {
         for _ in 0..1 {
             stats.record_skipped_step();
         }
-        
+
         assert_eq!(stats.passed_steps, 3);
         assert_eq!(stats.failed_steps, 2);
         assert_eq!(stats.skipped_steps, 1);
@@ -269,7 +272,7 @@ mod tests {
     #[test]
     fn writer_stats_default_trait() {
         let stats = WriterStats::default();
-        
+
         assert_eq!(stats.passed_steps, 0);
         assert_eq!(stats.failed_steps, 0);
         assert_eq!(stats.skipped_steps, 0);

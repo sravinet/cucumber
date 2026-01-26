@@ -1,15 +1,15 @@
 //! WriterStats edge case and stress tests.
 
-use cucumber::writer::WriterStats;
 use cucumber::event;
 use cucumber::event::Retries;
+use cucumber::writer::WriterStats;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
 #[test]
 fn writer_stats_extreme_values() {
     let mut stats = WriterStats::new();
-    
+
     // Add a lot of each type
     for _ in 0..1000 {
         stats.record_passed_step();
@@ -19,7 +19,7 @@ fn writer_stats_extreme_values() {
         stats.record_parsing_error();
         stats.record_hook_error();
     }
-    
+
     assert_eq!(stats.passed_steps, 1000);
     assert_eq!(stats.failed_steps, 1000);
     assert_eq!(stats.skipped_steps, 1000);
@@ -33,19 +33,19 @@ fn writer_stats_extreme_values() {
 #[test]
 fn writer_stats_overflow_protection() {
     let mut stats = WriterStats::new();
-    
+
     // Set to near max value to test overflow behavior
     stats.passed_steps = usize::MAX / 3;
-    stats.failed_steps = usize::MAX / 3;  
+    stats.failed_steps = usize::MAX / 3;
     stats.skipped_steps = usize::MAX / 3;
-    
+
     // This should not panic and should return a valid total
     let total = stats.total_steps();
-    
+
     // Should be close to MAX but not overflow
     assert!(total > 0);
     assert!(total >= stats.passed_steps);
-    assert!(total >= stats.failed_steps); 
+    assert!(total >= stats.failed_steps);
     assert!(total >= stats.skipped_steps);
 }
 
@@ -53,7 +53,7 @@ fn writer_stats_overflow_protection() {
 fn concurrent_writer_stats_usage() {
     let stats = Arc::new(Mutex::new(WriterStats::new()));
     let mut handles = vec![];
-    
+
     // Spawn multiple threads to modify stats
     for _ in 0..10 {
         let stats_clone = Arc::clone(&stats);
@@ -66,12 +66,12 @@ fn concurrent_writer_stats_usage() {
         });
         handles.push(handle);
     }
-    
+
     // Wait for all threads
     for handle in handles {
         handle.join().unwrap();
     }
-    
+
     let final_stats = stats.lock().unwrap();
     assert_eq!(final_stats.passed_steps, 1000);
     assert_eq!(final_stats.failed_steps, 1000);
@@ -82,19 +82,19 @@ fn concurrent_writer_stats_usage() {
 #[test]
 fn writer_stats_update_from_step_event_edge_cases() {
     let mut stats = WriterStats::new();
-    
+
     // Test with zero retries
     let retries_zero = Retries { left: 0, current: 3 };
     let event = event::Step::<i32>::Started;
-    
+
     stats.update_from_step_event(&event, Some(&retries_zero));
     assert_eq!(stats.retried_steps, 0); // Should not increment
-    
+
     // Test with maximum retries
     let retries_max = Retries { left: usize::MAX, current: 1 };
     stats.update_from_step_event(&event, Some(&retries_max));
     assert_eq!(stats.retried_steps, 1); // Should increment once
-    
+
     // Test repeated calls
     for _ in 0..10 {
         stats.update_from_step_event(&event, Some(&retries_max));
@@ -105,27 +105,27 @@ fn writer_stats_update_from_step_event_edge_cases() {
 #[test]
 fn writer_stats_edge_case_combinations() {
     let mut stats = WriterStats::new();
-    
+
     // Test various combinations of success/failure
     stats.record_passed_step();
     assert!(!stats.execution_has_failed());
-    
-    stats.record_skipped_step(); 
+
+    stats.record_skipped_step();
     assert!(!stats.execution_has_failed()); // Still not failed
-    
+
     stats.record_failed_step();
     assert!(stats.execution_has_failed()); // Now failed
-    
+
     // Add more passed steps - should still be considered failed
     stats.record_passed_step();
     stats.record_passed_step();
     assert!(stats.execution_has_failed());
-    
+
     // Test with just hook errors
     let mut stats2 = WriterStats::new();
     stats2.record_hook_error();
     assert!(stats2.execution_has_failed());
-    
+
     // Test with just parsing errors
     let mut stats3 = WriterStats::new();
     stats3.record_parsing_error();
@@ -135,7 +135,7 @@ fn writer_stats_edge_case_combinations() {
 #[test]
 fn writer_stats_zero_values() {
     let stats = WriterStats::new();
-    
+
     assert_eq!(stats.passed_steps, 0);
     assert_eq!(stats.failed_steps, 0);
     assert_eq!(stats.skipped_steps, 0);
@@ -149,7 +149,7 @@ fn writer_stats_zero_values() {
 #[test]
 fn writer_stats_max_values() {
     let mut stats = WriterStats::new();
-    
+
     // Set to large but safe values to avoid overflow in debug mode
     stats.passed_steps = usize::MAX / 4;
     stats.failed_steps = usize::MAX / 4;
@@ -157,10 +157,10 @@ fn writer_stats_max_values() {
     stats.retried_steps = usize::MAX / 4;
     stats.parsing_errors = usize::MAX / 4;
     stats.hook_errors = usize::MAX / 4;
-    
+
     // Should indicate failure
     assert!(stats.execution_has_failed());
-    
+
     // Total should work without overflow
     let total = stats.total_steps();
     assert!(total > 0);
@@ -172,15 +172,15 @@ fn writer_stats_single_failure_types() {
     let mut stats1 = WriterStats::new();
     stats1.record_failed_step();
     assert!(stats1.execution_has_failed());
-    
+
     let mut stats2 = WriterStats::new();
     stats2.record_parsing_error();
     assert!(stats2.execution_has_failed());
-    
+
     let mut stats3 = WriterStats::new();
     stats3.record_hook_error();
     assert!(stats3.execution_has_failed());
-    
+
     // Non-failure types should not indicate failure
     let mut stats4 = WriterStats::new();
     stats4.record_passed_step();
@@ -192,7 +192,7 @@ fn writer_stats_single_failure_types() {
 #[test]
 fn writer_stats_batch_operations() {
     let mut stats = WriterStats::new();
-    
+
     // Test batch recording
     for _ in 0..100 {
         stats.record_passed_step();
@@ -203,7 +203,7 @@ fn writer_stats_batch_operations() {
     for _ in 0..25 {
         stats.record_failed_step();
     }
-    
+
     assert_eq!(stats.passed_steps, 100);
     assert_eq!(stats.skipped_steps, 50);
     assert_eq!(stats.failed_steps, 25);

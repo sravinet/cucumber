@@ -65,9 +65,7 @@ impl DataTable {
     /// Creates a [`DataTable`] from a Gherkin table.
     #[must_use]
     pub fn from_gherkin(table: &gherkin::Table) -> Self {
-        Self {
-            rows: table.rows.clone(),
-        }
+        Self { rows: table.rows.clone() }
     }
 
     /// Returns the raw table data as a 2D vector.
@@ -112,11 +110,7 @@ impl DataTable {
     /// ```
     #[must_use]
     pub fn rows(&self) -> Vec<Vec<String>> {
-        if self.rows.is_empty() {
-            Vec::new()
-        } else {
-            self.rows[1..].to_vec()
-        }
+        if self.rows.is_empty() { Vec::new() } else { self.rows[1..].to_vec() }
     }
 
     /// Converts the table to an array of hashmaps.
@@ -183,14 +177,14 @@ impl DataTable {
     #[must_use]
     pub fn rows_hash(&self) -> Option<HashMap<String, String>> {
         let mut result = HashMap::new();
-        
+
         for row in &self.rows {
             if row.len() != 2 {
                 return None;
             }
             result.insert(row[0].clone(), row[1].clone());
         }
-        
+
         Some(result)
     }
 
@@ -258,18 +252,14 @@ impl DataTable {
         let headers = &self.rows[0];
         let indices: Vec<usize> = column_names
             .iter()
-            .filter_map(|name| {
-                headers.iter().position(|h| h == name)
-            })
+            .filter_map(|name| headers.iter().position(|h| h == name))
             .collect();
 
-        let new_rows = self.rows
+        let new_rows = self
+            .rows
             .iter()
             .map(|row| {
-                indices
-                    .iter()
-                    .filter_map(|&i| row.get(i).cloned())
-                    .collect()
+                indices.iter().filter_map(|&i| row.get(i).cloned()).collect()
             })
             .collect();
 
@@ -339,7 +329,7 @@ mod tests {
             vec!["Alice", "30"],
             vec!["Bob", "25"],
         ]);
-        
+
         let raw = table.raw();
         assert_eq!(raw.len(), 3);
         assert_eq!(raw[0], vec!["name", "age"]);
@@ -353,7 +343,7 @@ mod tests {
             vec!["Alice", "30"],
             vec!["Bob", "25"],
         ]);
-        
+
         let rows = table.rows();
         assert_eq!(rows.len(), 2);
         assert_eq!(rows[0], vec!["Alice", "30"]);
@@ -367,7 +357,7 @@ mod tests {
             vec!["Alice", "30"],
             vec!["Bob", "25"],
         ]);
-        
+
         let hashes = table.hashes();
         assert_eq!(hashes.len(), 2);
         assert_eq!(hashes[0].get("name"), Some(&"Alice".to_string()));
@@ -382,7 +372,7 @@ mod tests {
             vec!["timeout", "30"],
             vec!["retries", "3"],
         ]);
-        
+
         let hash = table.rows_hash().unwrap();
         assert_eq!(hash.get("timeout"), Some(&"30".to_string()));
         assert_eq!(hash.get("retries"), Some(&"3".to_string()));
@@ -390,11 +380,9 @@ mod tests {
 
     #[test]
     fn test_rows_hash_invalid() {
-        let table = DataTable::from(vec![
-            vec!["a", "b", "c"],
-            vec!["1", "2", "3"],
-        ]);
-        
+        let table =
+            DataTable::from(vec![vec!["a", "b", "c"], vec!["1", "2", "3"]]);
+
         assert!(table.rows_hash().is_none());
     }
 
@@ -404,7 +392,7 @@ mod tests {
             vec!["name", "Alice", "Bob"],
             vec!["age", "30", "25"],
         ]);
-        
+
         let transposed = table.transpose();
         assert_eq!(transposed.raw()[0], vec!["name", "age"]);
         assert_eq!(transposed.raw()[1], vec!["Alice", "30"]);
@@ -418,7 +406,7 @@ mod tests {
             vec!["Alice", "30", "NYC"],
             vec!["Bob", "25", "LA"],
         ]);
-        
+
         let subset = table.columns(&["name", "city"]);
         assert_eq!(subset.raw()[0], vec!["name", "city"]);
         assert_eq!(subset.raw()[1], vec!["Alice", "NYC"]);

@@ -14,14 +14,19 @@
 //! the crate to ensure consistent code quality and style.
 
 /// Macro to apply all clippy lints configuration.
-/// 
+///
 /// This macro centralizes all clippy lint warnings and denials used
 /// throughout the cucumber crate, ensuring consistent code quality
 /// standards across all modules.
 #[macro_export]
 macro_rules! apply_clippy_config {
     () => {
-        #![deny(nonstandard_style, rustdoc::all, trivial_casts, trivial_numeric_casts)]
+        #![deny(
+            nonstandard_style,
+            rustdoc::all,
+            trivial_casts,
+            trivial_numeric_casts
+        )]
         #![forbid(non_ascii_idents, unsafe_code)]
         #![warn(
             clippy::absolute_paths,
@@ -176,7 +181,7 @@ mod tests {
     fn test_clippy_config_macro_exists() {
         // Test that the macro can be invoked without compilation errors
         // This is a compile-time test ensuring the macro syntax is correct
-        
+
         // We can't actually test the application of lints at runtime,
         // but we can ensure the macro is defined and callable
         // The actual test is that this code compiles successfully
@@ -187,7 +192,7 @@ mod tests {
         // Test that specific important lints are included
         // This is more of a documentation test to ensure we don't accidentally
         // remove important lints during refactoring
-        
+
         // stringify! doesn't expand macros, so we can't test the content this way.
         // The macro is tested by successful compilation when used.
         // We'll just verify the macro exists and can be referenced.
@@ -215,7 +220,7 @@ mod tests {
     fn test_macro_produces_valid_attributes() {
         // Test that the macro produces syntactically valid Rust attributes
         // by checking it contains the expected attribute syntax
-        
+
         // stringify! doesn't expand macros, so we can't test the content this way.
         // The macro is tested by successful compilation when used.
         use crate::apply_clippy_config;

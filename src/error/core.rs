@@ -57,10 +57,7 @@ impl CucumberError {
     /// Creates a step panic error.
     #[must_use]
     pub fn step_panic(message: impl Into<String>) -> Self {
-        Self::Step(StepError::Panic {
-            message: message.into(),
-            payload: None,
-        })
+        Self::Step(StepError::Panic { message: message.into(), payload: None })
     }
 
     /// Creates a step panic error with payload.
@@ -78,34 +75,27 @@ impl CucumberError {
     /// Creates a no matching step error.
     #[must_use]
     pub fn no_step_match(step_text: impl Into<String>) -> Self {
-        Self::Step(StepError::NoMatch {
-            step_text: step_text.into(),
-        })
+        Self::Step(StepError::NoMatch { step_text: step_text.into() })
     }
 
     /// Creates an ambiguous step error.
     #[must_use]
     pub fn ambiguous_step(step_text: impl Into<String>, count: usize) -> Self {
-        Self::Step(StepError::Ambiguous {
-            step_text: step_text.into(),
-            count,
-        })
+        Self::Step(StepError::Ambiguous { step_text: step_text.into(), count })
     }
 
     /// Creates a world creation error.
     #[must_use]
-    pub fn world_creation(source: impl std::error::Error + Send + Sync + 'static) -> Self {
-        Self::World(WorldError::Creation {
-            source: Box::new(source),
-        })
+    pub fn world_creation(
+        source: impl std::error::Error + Send + Sync + 'static,
+    ) -> Self {
+        Self::World(WorldError::Creation { source: Box::new(source) })
     }
 
     /// Creates a configuration error for invalid retry settings.
     #[must_use]
     pub fn invalid_retry_config(reason: impl Into<String>) -> Self {
-        Self::Config(ConfigError::InvalidRetry {
-            reason: reason.into(),
-        })
+        Self::Config(ConfigError::InvalidRetry { reason: reason.into() })
     }
 }
 
@@ -163,8 +153,9 @@ mod tests {
         let err = CucumberError::step_panic("test panic message");
         assert!(err.to_string().contains("Step execution failed"));
         assert!(err.to_string().contains("Step panicked: test panic message"));
-        
-        if let CucumberError::Step(StepError::Panic { message, payload }) = err {
+
+        if let CucumberError::Step(StepError::Panic { message, payload }) = err
+        {
             assert_eq!(message, "test panic message");
             assert!(payload.is_none());
         } else {
@@ -174,10 +165,18 @@ mod tests {
 
     #[test]
     fn test_step_panic_with_payload() {
-        let payload: Arc<dyn std::any::Any + Send + 'static> = Arc::new("panic payload".to_string());
-        let err = CucumberError::step_panic_with_payload("test panic", payload.clone());
-        
-        if let CucumberError::Step(StepError::Panic { message, payload: Some(_) }) = err {
+        let payload: Arc<dyn std::any::Any + Send + 'static> =
+            Arc::new("panic payload".to_string());
+        let err = CucumberError::step_panic_with_payload(
+            "test panic",
+            payload.clone(),
+        );
+
+        if let CucumberError::Step(StepError::Panic {
+            message,
+            payload: Some(_),
+        }) = err
+        {
             assert_eq!(message, "test panic");
         } else {
             panic!("Expected step panic error with payload");
@@ -188,19 +187,25 @@ mod tests {
     fn test_no_step_match_error() {
         let err = CucumberError::no_step_match("Given I do something");
         assert!(err.to_string().contains("Step execution failed"));
-        assert!(err.to_string().contains("No matching step found for: Given I do something"));
+        assert!(
+            err.to_string()
+                .contains("No matching step found for: Given I do something")
+        );
     }
 
     #[test]
     fn test_ambiguous_step_error() {
         let err = CucumberError::ambiguous_step("Given I do something", 3);
         assert!(err.to_string().contains("Step execution failed"));
-        assert!(err.to_string().contains("Ambiguous step: Given I do something matches 3 step definitions"));
+        assert!(err.to_string().contains(
+            "Ambiguous step: Given I do something matches 3 step definitions"
+        ));
     }
 
     #[test]
     fn test_world_creation_error() {
-        let source_err = io::Error::new(io::ErrorKind::Other, "world creation failed");
+        let source_err =
+            io::Error::new(io::ErrorKind::Other, "world creation failed");
         let err = CucumberError::world_creation(source_err);
         assert!(err.to_string().contains("World initialization failed"));
         assert!(err.to_string().contains("Failed to create World"));
@@ -210,7 +215,10 @@ mod tests {
     fn test_invalid_retry_config_error() {
         let err = CucumberError::invalid_retry_config("negative retry count");
         assert!(err.to_string().contains("Configuration error"));
-        assert!(err.to_string().contains("Invalid retry configuration: negative retry count"));
+        assert!(
+            err.to_string()
+                .contains("Invalid retry configuration: negative retry count")
+        );
     }
 
     #[test]
@@ -231,7 +239,7 @@ mod tests {
         let cucumber_err = CucumberError::Writer(writer_err);
 
         assert!(cucumber_err.source().is_some());
-        
+
         if let Some(source) = cucumber_err.source() {
             assert!(source.to_string().contains("I/O error"));
             if let Some(root_source) = source.source() {

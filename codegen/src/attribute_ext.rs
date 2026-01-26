@@ -65,8 +65,8 @@ fn is_data_table_type(ty: &syn::Type) -> bool {
     match ty {
         syn::Type::Path(type_path) => {
             if let Some(segment) = type_path.path.segments.last() {
-                return segment.ident == "DataTable" || 
-                       (segment.ident == "Option" && is_option_data_table(ty));
+                return segment.ident == "DataTable"
+                    || (segment.ident == "Option" && is_option_data_table(ty));
             }
             false
         }
@@ -79,10 +79,16 @@ pub(crate) fn is_option_data_table(ty: &syn::Type) -> bool {
     if let syn::Type::Path(type_path) = ty {
         if let Some(segment) = type_path.path.segments.last() {
             if segment.ident == "Option" {
-                if let syn::PathArguments::AngleBracketed(args) = &segment.arguments {
-                    if let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first() {
+                if let syn::PathArguments::AngleBracketed(args) =
+                    &segment.arguments
+                {
+                    if let Some(syn::GenericArgument::Type(inner_ty)) =
+                        args.args.first()
+                    {
                         if let syn::Type::Path(inner_path) = inner_ty {
-                            if let Some(inner_segment) = inner_path.path.segments.last() {
+                            if let Some(inner_segment) =
+                                inner_path.path.segments.last()
+                            {
                                 return inner_segment.ident == "DataTable";
                             }
                         }
@@ -100,7 +106,7 @@ pub(crate) fn generate_table_injection(
     func_name: &syn::Ident,
 ) -> TokenStream {
     let ident = &table_param.ident;
-    
+
     if table_param.is_optional {
         // For Option<DataTable>, always provide Some or None
         quote! {
@@ -113,8 +119,8 @@ pub(crate) fn generate_table_injection(
             let #ident = __cucumber_ctx.step.table.as_ref()
                 .map(::cucumber::DataTable::from)
                 .expect(concat!(
-                    "Step function `", 
-                    stringify!(#func_name), 
+                    "Step function `",
+                    stringify!(#func_name),
                     "` requires a DataTable but none was provided in the feature file"
                 ));
         }
@@ -127,7 +133,7 @@ pub(crate) fn generate_table_injection(
 mod tests {
     use super::*;
     use syn::parse_quote;
-    
+
     #[test]
     fn test_detect_data_table() {
         let func: syn::ItemFn = parse_quote! {
@@ -135,16 +141,16 @@ mod tests {
                 // function body
             }
         };
-        
+
         let param = detect_table_param(&func);
         assert!(param.is_some());
-        
+
         let param = param.unwrap();
         assert_eq!(param.ident, "table");
         assert!(!param.is_optional);
         assert_eq!(param.position, 1);
     }
-    
+
     #[test]
     fn test_detect_optional_data_table() {
         let func: syn::ItemFn = parse_quote! {
@@ -152,15 +158,15 @@ mod tests {
                 // function body
             }
         };
-        
+
         let param = detect_table_param(&func);
         assert!(param.is_some());
-        
+
         let param = param.unwrap();
         assert_eq!(param.ident, "table");
         assert!(param.is_optional);
     }
-    
+
     #[test]
     fn test_no_data_table() {
         let func: syn::ItemFn = parse_quote! {
@@ -168,7 +174,7 @@ mod tests {
                 // function body
             }
         };
-        
+
         let param = detect_table_param(&func);
         assert!(param.is_none());
     }

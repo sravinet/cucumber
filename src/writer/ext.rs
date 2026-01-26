@@ -16,11 +16,11 @@
 
 use sealed::sealed;
 
-use crate::{Event, event, parser};
 use super::{
-    AssertNormalized, FailOnSkipped, Normalize, Repeat, Summarize, Tee,
-    discard, Writer,
+    AssertNormalized, FailOnSkipped, Normalize, Repeat, Summarize, Tee, Writer,
+    discard,
 };
+use crate::{Event, event, parser};
 
 /// Extension of [`Writer`] allowing its normalization and summarization.
 #[sealed]
@@ -205,10 +205,15 @@ mod tests {
     struct MockCli;
 
     impl clap::FromArgMatches for MockCli {
-        fn from_arg_matches(_matches: &clap::ArgMatches) -> clap::error::Result<Self> {
+        fn from_arg_matches(
+            _matches: &clap::ArgMatches,
+        ) -> clap::error::Result<Self> {
             Ok(Self)
         }
-        fn update_from_arg_matches(&mut self, _matches: &clap::ArgMatches) -> clap::error::Result<()> {
+        fn update_from_arg_matches(
+            &mut self,
+            _matches: &clap::ArgMatches,
+        ) -> clap::error::Result<()> {
             Ok(())
         }
     }
@@ -239,46 +244,47 @@ mod tests {
     #[test]
     fn test_ext_trait_methods_exist() {
         let writer = MockWriter;
-        
+
         // Test that all extension methods are available
         let _assert_normalized = writer.assert_normalized();
-        
+
         let writer = MockWriter;
         let _normalized = writer.normalized::<MockWorld>();
-        
+
         let writer = MockWriter;
         let _summarized = writer.summarized();
-        
+
         let writer = MockWriter;
         let _fail_on_skipped = writer.fail_on_skipped();
-        
+
         let writer = MockWriter;
-        let _fail_on_skipped_with = writer.fail_on_skipped_with(|_, _, _| false);
-        
+        let _fail_on_skipped_with =
+            writer.fail_on_skipped_with(|_, _, _| false);
+
         let writer = MockWriter;
         let _repeat_skipped = writer.repeat_skipped::<MockWorld>();
-        
+
         let writer = MockWriter;
         let _repeat_failed = writer.repeat_failed::<MockWorld>();
-        
+
         let writer = MockWriter;
         let _repeat_if = writer.repeat_if::<MockWorld, _>(|_| false);
-        
+
         let writer = MockWriter;
         let other = MockWriter;
         let _tee = writer.tee(other);
-        
+
         let writer = MockWriter;
         let _discard_arbitrary = writer.discard_arbitrary_writes();
-        
+
         let writer = MockWriter;
         let _discard_stats = writer.discard_stats_writes();
     }
 
-    #[test] 
+    #[test]
     fn test_ext_trait_fluent_chaining() {
         let writer = MockWriter;
-        
+
         // Test that methods can be chained together
         let _chained = writer
             .assert_normalized()

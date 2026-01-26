@@ -116,8 +116,7 @@ impl Element {
         self.name
             == format!(
                 "{}{}",
-                rule.map(|r| format!("{} ", r.name))
-                    .unwrap_or_default(),
+                rule.map(|r| format!("{} ", r.name)).unwrap_or_default(),
                 scenario.name,
             )
             && self.line == scenario.position.line
@@ -186,9 +185,9 @@ mod tests {
     fn element_new_scenario_without_rule() {
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        
+
         let element = Element::new(&feature, None, &scenario, "scenario");
-        
+
         assert_eq!(element.keyword, "Scenario");
         assert_eq!(element.r#type, "scenario");
         assert_eq!(element.id, "test-feature/test-scenario");
@@ -207,9 +206,10 @@ mod tests {
         let feature = create_test_feature();
         let rule = create_test_rule();
         let scenario = create_test_scenario();
-        
-        let element = Element::new(&feature, Some(&rule), &scenario, "scenario");
-        
+
+        let element =
+            Element::new(&feature, Some(&rule), &scenario, "scenario");
+
         assert_eq!(element.id, "test-feature/test-rule/test-scenario");
         assert_eq!(element.name, "Test Rule Test Scenario");
     }
@@ -224,9 +224,9 @@ mod tests {
             position: gherkin::LineCol { line: 2, col: 1 },
         });
         let scenario = create_test_scenario();
-        
+
         let element = Element::new(&feature, None, &scenario, "background");
-        
+
         assert_eq!(element.keyword, "Background");
         assert_eq!(element.r#type, "background");
     }
@@ -236,7 +236,7 @@ mod tests {
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let element = Element::new(&feature, None, &scenario, "scenario");
-        
+
         assert!(element.matches_scenario(None, &scenario, "scenario"));
         assert!(!element.matches_scenario(None, &scenario, "background"));
     }
@@ -246,8 +246,9 @@ mod tests {
         let feature = create_test_feature();
         let rule = create_test_rule();
         let scenario = create_test_scenario();
-        let element = Element::new(&feature, Some(&rule), &scenario, "scenario");
-        
+        let element =
+            Element::new(&feature, Some(&rule), &scenario, "scenario");
+
         assert!(element.matches_scenario(Some(&rule), &scenario, "scenario"));
         assert!(!element.matches_scenario(None, &scenario, "scenario"));
     }
@@ -257,10 +258,10 @@ mod tests {
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let mut element = Element::new(&feature, None, &scenario, "scenario");
-        
+
         assert!(!element.has_before_hooks());
         assert!(!element.has_after_hooks());
-        
+
         element.before.push(HookResult {
             result: crate::writer::json::types::RunResult {
                 status: crate::writer::json::types::Status::Passed,
@@ -269,7 +270,7 @@ mod tests {
             },
             embeddings: vec![],
         });
-        
+
         assert!(element.has_before_hooks());
         assert!(!element.has_after_hooks());
     }
@@ -279,9 +280,9 @@ mod tests {
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let mut element = Element::new(&feature, None, &scenario, "scenario");
-        
+
         assert_eq!(element.step_count(), 0);
-        
+
         element.steps.push(crate::writer::json::types::Step {
             keyword: "Given".to_string(),
             line: 6,
@@ -294,7 +295,7 @@ mod tests {
             },
             embeddings: vec![],
         });
-        
+
         assert_eq!(element.step_count(), 1);
     }
 
@@ -303,15 +304,15 @@ mod tests {
         let feature = create_test_feature();
         let scenario = create_test_scenario();
         let element = Element::new(&feature, None, &scenario, "scenario");
-        
+
         let json = serde_json::to_value(&element).unwrap();
-        
+
         assert_eq!(json["keyword"], "Scenario");
         assert_eq!(json["type"], "scenario");
         assert_eq!(json["id"], "test-feature/test-scenario");
         assert_eq!(json["line"], 5);
         assert_eq!(json["name"], "Test Scenario");
-        
+
         // Empty vectors should be omitted
         assert!(!json.as_object().unwrap().contains_key("before"));
         assert!(!json.as_object().unwrap().contains_key("after"));

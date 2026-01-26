@@ -2,10 +2,7 @@
 
 use tracing::Span;
 
-use crate::{
-    event::HookType,
-    runner::basic::ScenarioId,
-};
+use crate::{event::HookType, runner::basic::ScenarioId};
 
 // TODO: Try remove on next Rust version update.
 #[expect(clippy::allow_attributes, reason = "`#[expect]` doesn't work here")]
@@ -69,7 +66,7 @@ mod tests {
     fn test_scenario_span_creation() {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.scenario_span();
-        
+
         assert_eq!(span.metadata().name(), "scenario");
         assert_eq!(span.metadata().level(), &Level::ERROR);
     }
@@ -78,7 +75,7 @@ mod tests {
     fn test_step_span_creation_normal() {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.step_span(false);
-        
+
         assert_eq!(span.metadata().name(), "step");
         assert_eq!(span.metadata().level(), &Level::ERROR);
     }
@@ -87,7 +84,7 @@ mod tests {
     fn test_step_span_creation_background() {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.step_span(true);
-        
+
         assert_eq!(span.metadata().name(), "background step");
         assert_eq!(span.metadata().level(), &Level::ERROR);
     }
@@ -96,7 +93,7 @@ mod tests {
     fn test_hook_span_creation_before() {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.hook_span(HookType::Before);
-        
+
         assert_eq!(span.metadata().name(), "before hook");
         assert_eq!(span.metadata().level(), &Level::ERROR);
     }
@@ -105,7 +102,7 @@ mod tests {
     fn test_hook_span_creation_after() {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.hook_span(HookType::After);
-        
+
         assert_eq!(span.metadata().name(), "after hook");
         assert_eq!(span.metadata().level(), &Level::ERROR);
     }
@@ -114,7 +111,7 @@ mod tests {
     fn test_scenario_id_display_in_span() {
         let scenario_id = ScenarioId(123);
         let span = scenario_id.scenario_span();
-        
+
         // Verify the span contains the scenario ID field
         span.in_scope(|| {
             // The span should be active and contain the field
@@ -125,18 +122,33 @@ mod tests {
     #[test]
     fn test_span_levels_are_error() {
         let scenario_id = ScenarioId(1);
-        
-        assert_eq!(scenario_id.scenario_span().metadata().level(), &Level::ERROR);
-        assert_eq!(scenario_id.step_span(false).metadata().level(), &Level::ERROR);
-        assert_eq!(scenario_id.step_span(true).metadata().level(), &Level::ERROR);
-        assert_eq!(scenario_id.hook_span(HookType::Before).metadata().level(), &Level::ERROR);
-        assert_eq!(scenario_id.hook_span(HookType::After).metadata().level(), &Level::ERROR);
+
+        assert_eq!(
+            scenario_id.scenario_span().metadata().level(),
+            &Level::ERROR
+        );
+        assert_eq!(
+            scenario_id.step_span(false).metadata().level(),
+            &Level::ERROR
+        );
+        assert_eq!(
+            scenario_id.step_span(true).metadata().level(),
+            &Level::ERROR
+        );
+        assert_eq!(
+            scenario_id.hook_span(HookType::Before).metadata().level(),
+            &Level::ERROR
+        );
+        assert_eq!(
+            scenario_id.hook_span(HookType::After).metadata().level(),
+            &Level::ERROR
+        );
     }
 
     #[test]
     fn test_different_span_names() {
         let scenario_id = ScenarioId(1);
-        
+
         let spans = vec![
             (scenario_id.scenario_span(), "scenario"),
             (scenario_id.step_span(false), "step"),
@@ -144,7 +156,7 @@ mod tests {
             (scenario_id.hook_span(HookType::Before), "before hook"),
             (scenario_id.hook_span(HookType::After), "after hook"),
         ];
-        
+
         for (span, expected_name) in spans {
             assert_eq!(span.metadata().name(), expected_name);
         }

@@ -82,16 +82,15 @@ impl<World> Clone for Step<World> {
         match self {
             Self::Started => Self::Started,
             Self::Skipped => Self::Skipped,
-            Self::Passed { captures, location } => Self::Passed {
-                captures: captures.clone(),
-                location: *location,
-            },
+            Self::Passed { captures, location } => {
+                Self::Passed { captures: captures.clone(), location: *location }
+            }
             Self::Failed { captures, location, world, error } => Self::Failed {
                 captures: captures.clone(),
                 location: *location,
                 world: world.clone(),
                 error: error.clone(),
-            }
+            },
         }
     }
 }

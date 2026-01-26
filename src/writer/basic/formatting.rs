@@ -1,10 +1,6 @@
 //! Formatting utilities for Basic writer output.
 
-use std::{
-    borrow::Cow,
-    cmp, env, fmt::Write,
-    sync::LazyLock,
-};
+use std::{borrow::Cow, cmp, env, fmt::Write, sync::LazyLock};
 
 use itertools::Itertools as _;
 use regex::CaptureLocations;
@@ -14,7 +10,7 @@ use crate::event::Info;
 /// Coerces error information into a readable string.
 pub fn coerce_error(err: &Info) -> Cow<'static, str> {
     use std::any::Any;
-    
+
     // First try direct downcast
     if let Some(s) = (**err).downcast_ref::<String>() {
         return s.clone().into();
@@ -22,7 +18,7 @@ pub fn coerce_error(err: &Info) -> Cow<'static, str> {
     if let Some(&s) = (**err).downcast_ref::<&str>() {
         return s.to_owned().into();
     }
-    
+
     // Handle Box<dyn Any> from catch_unwind
     if let Some(boxed) = (**err).downcast_ref::<Box<dyn Any + Send>>() {
         if let Some(s) = boxed.downcast_ref::<String>() {
@@ -32,13 +28,16 @@ pub fn coerce_error(err: &Info) -> Cow<'static, str> {
             return s.to_owned().into();
         }
     }
-    
+
     "(Could not resolve panic payload)".into()
 }
 
 /// Formats the given [`str`] by adding `indent`s to each line to prettify the
 /// output.
-pub(super) fn format_str_with_indent(str: impl AsRef<str>, indent: usize) -> String {
+pub(super) fn format_str_with_indent(
+    str: impl AsRef<str>,
+    indent: usize,
+) -> String {
     let str = str
         .as_ref()
         .lines()
@@ -143,4 +142,3 @@ pub fn trim_path(path: &str) -> &str {
         .trim_start_matches('/')
         .trim_start_matches('\\')
 }
-

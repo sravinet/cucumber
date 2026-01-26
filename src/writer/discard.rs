@@ -191,22 +191,22 @@ mod tests {
     #[test]
     fn test_wrapper_construction() {
         struct MockWriter;
-        
+
         // Test that both wrappers can be constructed
         let _arbitrary = Arbitrary::wrap(MockWriter);
         let _stats = Stats::wrap(MockWriter);
     }
-    
+
     #[test]
     fn test_deref_traits() {
         use std::ops::{Deref, DerefMut};
-        
+
         #[derive(Debug, PartialEq)]
         struct MockWriter(u32);
-        
+
         let arbitrary = Arbitrary::wrap(MockWriter(42));
         assert_eq!(arbitrary.deref().0, 42);
-        
+
         let mut stats = Stats::wrap(MockWriter(24));
         assert_eq!(stats.deref().0, 24);
         stats.deref_mut().0 = 100;

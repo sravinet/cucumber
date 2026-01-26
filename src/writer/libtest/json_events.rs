@@ -219,7 +219,7 @@ mod tests {
         fn suite_event_started_serialization() {
             let event = SuiteEvent::Started { test_count: 42 };
             let json = serde_json::to_string(&event).expect("should serialize");
-            
+
             assert!(json.contains("\"event\":\"started\""));
             assert!(json.contains("\"test_count\":42"));
         }
@@ -236,7 +236,7 @@ mod tests {
             };
             let event = SuiteEvent::Ok { results };
             let json = serde_json::to_string(&event).expect("should serialize");
-            
+
             assert!(json.contains("\"event\":\"ok\""));
             assert!(json.contains("\"passed\":10"));
             assert!(json.contains("\"failed\":0"));
@@ -255,7 +255,7 @@ mod tests {
             };
             let event = SuiteEvent::Failed { results };
             let json = serde_json::to_string(&event).expect("should serialize");
-            
+
             assert!(json.contains("\"event\":\"failed\""));
             assert!(json.contains("\"passed\":8"));
             assert!(json.contains("\"failed\":2"));
@@ -270,7 +270,7 @@ mod tests {
         #[test]
         fn test_event_started_creation() {
             let event = TestEvent::started("test_name".to_string());
-            
+
             if let TestEvent::Started(inner) = event {
                 assert_eq!(inner.name, "test_name");
                 assert!(inner.stdout.is_none());
@@ -284,7 +284,7 @@ mod tests {
         fn test_event_ok_creation() {
             let duration = Duration::from_millis(1500);
             let event = TestEvent::ok("test_name".to_string(), Some(duration));
-            
+
             if let TestEvent::Ok(inner) = event {
                 assert_eq!(inner.name, "test_name");
                 assert_eq!(inner.exec_time, Some(1.5));
@@ -296,7 +296,7 @@ mod tests {
         #[test]
         fn test_event_failed_creation() {
             let event = TestEvent::failed("test_name".to_string(), None);
-            
+
             if let TestEvent::Failed(inner) = event {
                 assert_eq!(inner.name, "test_name");
                 assert!(inner.exec_time.is_none());
@@ -308,8 +308,9 @@ mod tests {
         #[test]
         fn test_event_ignored_creation() {
             let duration = Duration::from_secs(2);
-            let event = TestEvent::ignored("test_name".to_string(), Some(duration));
-            
+            let event =
+                TestEvent::ignored("test_name".to_string(), Some(duration));
+
             if let TestEvent::Ignored(inner) = event {
                 assert_eq!(inner.name, "test_name");
                 assert_eq!(inner.exec_time, Some(2.0));
@@ -321,7 +322,7 @@ mod tests {
         #[test]
         fn test_event_timeout_creation() {
             let event = TestEvent::timeout("test_name".to_string(), None);
-            
+
             if let TestEvent::Timeout(inner) = event {
                 assert_eq!(inner.name, "test_name");
                 assert!(inner.exec_time.is_none());
@@ -334,9 +335,12 @@ mod tests {
         fn test_event_with_stdout() {
             let event = TestEvent::started("test".to_string())
                 .with_stdout("output without newline");
-            
+
             if let TestEvent::Started(inner) = event {
-                assert_eq!(inner.stdout, Some("output without newline\n".to_string()));
+                assert_eq!(
+                    inner.stdout,
+                    Some("output without newline\n".to_string())
+                );
             } else {
                 panic!("Expected TestEvent::Started");
             }
@@ -346,9 +350,12 @@ mod tests {
         fn test_event_with_stdout_already_has_newline() {
             let event = TestEvent::started("test".to_string())
                 .with_stdout("output with newline\n");
-            
+
             if let TestEvent::Started(inner) = event {
-                assert_eq!(inner.stdout, Some("output with newline\n".to_string()));
+                assert_eq!(
+                    inner.stdout,
+                    Some("output with newline\n".to_string())
+                );
             } else {
                 panic!("Expected TestEvent::Started");
             }
@@ -359,7 +366,7 @@ mod tests {
             let event = TestEvent::started("my_test".to_string())
                 .with_stdout("test output");
             let json = serde_json::to_string(&event).expect("should serialize");
-            
+
             assert!(json.contains("\"event\":\"started\""));
             assert!(json.contains("\"name\":\"my_test\""));
             assert!(json.contains("\"stdout\":\"test output\\n\""));
@@ -372,7 +379,7 @@ mod tests {
         #[test]
         fn test_event_inner_new() {
             let inner = TestEventInner::new("test_name".to_string());
-            
+
             assert_eq!(inner.name, "test_name");
             assert!(inner.stdout.is_none());
             assert!(inner.stderr.is_none());
@@ -384,15 +391,15 @@ mod tests {
             let duration = Duration::from_millis(2500);
             let inner = TestEventInner::new("test".to_string())
                 .with_exec_time(Some(duration));
-            
+
             assert_eq!(inner.exec_time, Some(2.5));
         }
 
         #[test]
         fn test_event_inner_with_exec_time_none() {
-            let inner = TestEventInner::new("test".to_string())
-                .with_exec_time(None);
-            
+            let inner =
+                TestEventInner::new("test".to_string()).with_exec_time(None);
+
             assert!(inner.exec_time.is_none());
         }
 
@@ -400,7 +407,7 @@ mod tests {
         fn test_event_inner_with_stdout() {
             let inner = TestEventInner::new("test".to_string())
                 .with_stdout("stdout content".to_string());
-            
+
             assert_eq!(inner.stdout, Some("stdout content".to_string()));
         }
 
@@ -408,7 +415,7 @@ mod tests {
         fn test_event_inner_with_stderr() {
             let inner = TestEventInner::new("test".to_string())
                 .with_stderr("stderr content".to_string());
-            
+
             assert_eq!(inner.stderr, Some("stderr content".to_string()));
         }
 
@@ -419,7 +426,7 @@ mod tests {
                 .with_exec_time(Some(duration))
                 .with_stdout("output".to_string())
                 .with_stderr("error".to_string());
-            
+
             assert_eq!(inner.name, "test");
             assert_eq!(inner.exec_time, Some(1.0));
             assert_eq!(inner.stdout, Some("output".to_string()));
@@ -434,7 +441,7 @@ mod tests {
         fn libtest_json_event_suite_from() {
             let suite_event = SuiteEvent::Started { test_count: 5 };
             let json_event: LibTestJsonEvent = suite_event.into();
-            
+
             if let LibTestJsonEvent::Suite { event } = json_event {
                 if let SuiteEvent::Started { test_count } = event {
                     assert_eq!(test_count, 5);
@@ -450,7 +457,7 @@ mod tests {
         fn libtest_json_event_test_from() {
             let test_event = TestEvent::started("test".to_string());
             let json_event: LibTestJsonEvent = test_event.into();
-            
+
             if let LibTestJsonEvent::Test { event } = json_event {
                 if let TestEvent::Started(inner) = event {
                     assert_eq!(inner.name, "test");
@@ -466,8 +473,9 @@ mod tests {
         fn libtest_json_event_serialization() {
             let suite_event = SuiteEvent::Started { test_count: 3 };
             let json_event: LibTestJsonEvent = suite_event.into();
-            let json = serde_json::to_string(&json_event).expect("should serialize");
-            
+            let json =
+                serde_json::to_string(&json_event).expect("should serialize");
+
             assert!(json.contains("\"type\":\"suite\""));
             assert!(json.contains("\"event\":\"started\""));
             assert!(json.contains("\"test_count\":3"));
@@ -476,13 +484,15 @@ mod tests {
         #[test]
         fn libtest_json_event_clone() {
             let original = LibTestJsonEvent::Suite {
-                event: SuiteEvent::Started { test_count: 10 }
+                event: SuiteEvent::Started { test_count: 10 },
             };
             let cloned = original.clone();
-            
+
             // Both should serialize to the same JSON
-            let original_json = serde_json::to_string(&original).expect("should serialize");
-            let cloned_json = serde_json::to_string(&cloned).expect("should serialize");
+            let original_json =
+                serde_json::to_string(&original).expect("should serialize");
+            let cloned_json =
+                serde_json::to_string(&cloned).expect("should serialize");
             assert_eq!(original_json, cloned_json);
         }
     }
@@ -500,9 +510,10 @@ mod tests {
                 filtered_out: 0,
                 exec_time: None,
             };
-            
-            let json = serde_json::to_string(&results).expect("should serialize");
-            
+
+            let json =
+                serde_json::to_string(&results).expect("should serialize");
+
             // exec_time should not appear in JSON when None
             assert!(!json.contains("exec_time"));
             assert!(json.contains("\"passed\":0"));
@@ -519,9 +530,10 @@ mod tests {
                 filtered_out: 0,
                 exec_time: Some(3.14159),
             };
-            
-            let json = serde_json::to_string(&results).expect("should serialize");
-            
+
+            let json =
+                serde_json::to_string(&results).expect("should serialize");
+
             assert!(json.contains("\"exec_time\":3.14159"));
             assert!(json.contains("\"passed\":5"));
             assert!(json.contains("\"failed\":1"));
@@ -538,9 +550,9 @@ mod tests {
                 filtered_out: 5,
                 exec_time: Some(6.0),
             };
-            
+
             let results2 = results1; // Should work due to Copy trait
-            
+
             assert_eq!(results1.passed, results2.passed);
             assert_eq!(results1.exec_time, results2.exec_time);
         }

@@ -197,8 +197,12 @@ impl<W, Wr: writer::NonTransforming> writer::NonTransforming
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Event, event::{Cucumber, Metadata}, writer};
     use crate::test_utils::common::EmptyCli;
+    use crate::{
+        Event,
+        event::{Cucumber, Metadata},
+        writer,
+    };
 
     // Mock writer for testing
     #[derive(Debug, Clone)]
@@ -229,7 +233,9 @@ mod tests {
             if let Ok(ev) = event {
                 let event_name = match ev.value {
                     Cucumber::Started => "Started".to_string(),
-                    Cucumber::ParsingFinished { .. } => "ParsingFinished".to_string(),
+                    Cucumber::ParsingFinished { .. } => {
+                        "ParsingFinished".to_string()
+                    }
                     Cucumber::Finished => "Finished".to_string(),
                     Cucumber::Feature(_, _) => "Feature".to_string(),
                 };
@@ -239,12 +245,24 @@ mod tests {
     }
 
     impl<W> writer::Stats<W> for MockWriter {
-        fn passed_steps(&self) -> usize { 0 }
-        fn skipped_steps(&self) -> usize { 0 }
-        fn failed_steps(&self) -> usize { 0 }
-        fn retried_steps(&self) -> usize { 0 }
-        fn parsing_errors(&self) -> usize { 0 }
-        fn hook_errors(&self) -> usize { 0 }
+        fn passed_steps(&self) -> usize {
+            0
+        }
+        fn skipped_steps(&self) -> usize {
+            0
+        }
+        fn failed_steps(&self) -> usize {
+            0
+        }
+        fn retried_steps(&self) -> usize {
+            0
+        }
+        fn parsing_errors(&self) -> usize {
+            0
+        }
+        fn hook_errors(&self) -> usize {
+            0
+        }
     }
 
     impl writer::NonTransforming for MockWriter {}
@@ -253,7 +271,7 @@ mod tests {
     fn test_normalize_new() {
         let mock_writer = MockWriter::new();
         let normalize: Normalize<(), _> = Normalize::new(mock_writer.clone());
-        
+
         assert_eq!(normalize.inner_writer().get_events().len(), 0);
     }
 
@@ -262,7 +280,7 @@ mod tests {
         let mock_writer = MockWriter::new();
         let normalize: Normalize<(), _> = Normalize::new(mock_writer);
         let cloned = normalize.clone();
-        
+
         // Both should have separate but equivalent states
         assert_eq!(cloned.inner_writer().get_events().len(), 0);
     }
@@ -270,12 +288,13 @@ mod tests {
     #[tokio::test]
     async fn test_normalize_cucumber_started_event() {
         let mock_writer = MockWriter::new();
-        let mut normalize: Normalize<(), _> = Normalize::new(mock_writer.clone());
-        
+        let mut normalize: Normalize<(), _> =
+            Normalize::new(mock_writer.clone());
+
         let event = Ok(Event::new(Cucumber::Started));
-        
+
         normalize.handle_event(event, &EmptyCli).await;
-        
+
         // Started events should pass through immediately
         assert_eq!(normalize.inner_writer().get_events(), vec!["Started"]);
     }
@@ -283,16 +302,17 @@ mod tests {
     #[tokio::test]
     async fn test_normalize_finished_state() {
         let mock_writer = MockWriter::new();
-        let mut normalize: Normalize<(), _> = Normalize::new(mock_writer.clone());
-        
+        let mut normalize: Normalize<(), _> =
+            Normalize::new(mock_writer.clone());
+
         // First, finish the queue
         let finish_event = Ok(Event::new(Cucumber::Finished));
         normalize.handle_event(finish_event, &EmptyCli).await;
-        
+
         // Now any event should pass through without normalization
         let event = Ok(Event::new(Cucumber::Started));
         normalize.handle_event(event, &EmptyCli).await;
-        
+
         assert!(normalize.queue.is_finished_and_emitted());
     }
 }

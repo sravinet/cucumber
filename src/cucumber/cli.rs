@@ -2,9 +2,7 @@
 
 use std::marker::PhantomData;
 
-use crate::{
-    Parser, Runner, World, Writer, cli, writer,
-};
+use crate::{Parser, Runner, World, Writer, cli, writer};
 
 use super::core::Cucumber;
 

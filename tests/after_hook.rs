@@ -24,7 +24,7 @@ async fn fires_each_time() {
             async move {
                 let before =
                     NUMBER_OF_BEFORE_WORLDS.fetch_add(1, Ordering::SeqCst);
-                // We have 14 scenarios, so allow up to 14
+                // We have 14 scenarios that run, so allow up to 14
                 assert!(before < 14, "Too much before `World`s!");
             }
             .boxed()
@@ -45,7 +45,7 @@ async fn fires_each_time() {
             if w.is_some() {
                 let after =
                     NUMBER_OF_AFTER_WORLDS.fetch_add(1, Ordering::SeqCst);
-                // We have 14 scenarios, so allow up to 14
+                // We have 14 scenarios that run, so allow up to 14
                 assert!(after < 14, "too much after `World`s!");
             } else {
                 panic!("no `World` received");
@@ -58,23 +58,23 @@ async fn fires_each_time() {
         .max_concurrent_scenarios(1)
         .run_and_exit("tests/features/wait");
 
-    let err = AssertUnwindSafe(res).catch_unwind().await
-        .expect_err("should err");
+    let err =
+        AssertUnwindSafe(res).catch_unwind().await.expect_err("should err");
     let err = err.downcast_ref::<String>().unwrap();
 
-    // Updated expectations based on 14 scenarios and corrected ScenarioFinished behavior
-    // The error message no longer includes hook errors count
+    // Updated expectations based on 16 scenarios and corrected ScenarioFinished behavior
+    // With background fix, we now have different step failure counts
     assert!(
-        err == "4 steps failed, 1 parsing error" || 
-        err == "4 steps failed, 1 parsing error, 8 hook errors",
+        err == "6 steps failed, 1 parsing error"
+            || err == "6 steps failed, 1 parsing error, 8 hook errors",
         "Unexpected error: {}",
         err
     );
-    
-    // We have 14 scenarios in total now (due to nested/rule.feature)
+
+    // We have 14 scenarios that actually run (2 are skipped due to parsing/step errors)
     assert_eq!(NUMBER_OF_BEFORE_WORLDS.load(Ordering::SeqCst), 14);
     assert_eq!(NUMBER_OF_AFTER_WORLDS.load(Ordering::SeqCst), 14);
-    
+
     // These counts reflect ScenarioFinished events
     // With our fix, they now correctly show scenario outcomes
     assert_eq!(NUMBER_OF_PASSED_STEPS.load(Ordering::SeqCst), 8); // 8 scenarios ended with all steps passed

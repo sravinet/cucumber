@@ -10,19 +10,14 @@
 
 //! Core libtest writer structure and implementation.
 
-use std::{
-    fmt::Debug,
-    io,
-    time::SystemTime,
-};
+use std::{fmt::Debug, io, time::SystemTime};
 
 use crate::{
-    Event, World, Writer, cli,
-    event,
-    parser,
+    Event, World, Writer, cli, event, parser,
     writer::{
-        self, Normalize, ext::Ext as _,
-        common::{WriterStats, OutputFormatter},
+        self, Normalize,
+        common::{OutputFormatter, WriterStats},
+        ext::Ext as _,
         out::WriteStrExt as _,
     },
 };
@@ -324,7 +319,7 @@ mod tests {
         #[test]
         fn libtest_raw_creates_default_state() {
             let writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
-            
+
             assert_eq!(writer.events.len(), 0);
             assert!(!writer.parsed_all);
             assert_eq!(writer.passed, 0);
@@ -344,9 +339,9 @@ mod tests {
             writer.passed = 5;
             writer.failed = 2;
             writer.parsed_all = true;
-            
+
             let cloned = writer.clone();
-            
+
             assert_eq!(cloned.passed, 5);
             assert_eq!(cloned.failed, 2);
             assert!(cloned.parsed_all);
@@ -369,9 +364,10 @@ mod tests {
             fn assert_writer_cli<W: Writer<MockWorld>>() -> W::Cli {
                 panic!("This function is only for type checking")
             }
-            
+
             // This should compile without errors
-            let _: fn() -> Cli = || assert_writer_cli::<Libtest<MockWorld, Vec<u8>>>();
+            let _: fn() -> Cli =
+                || assert_writer_cli::<Libtest<MockWorld, Vec<u8>>>();
         }
     }
 
@@ -387,7 +383,7 @@ mod tests {
             writer.retried = 2;
             writer.parsing_errors = 1;
             writer.hook_errors = 1;
-            
+
             assert_eq!(writer.passed_steps(), 10);
             assert_eq!(writer.skipped_steps(), 5);
             assert_eq!(writer.failed_steps(), 3);
@@ -403,11 +399,11 @@ mod tests {
         #[test]
         fn libtest_output_formatter_implementation() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
-            
+
             // Test output_mut access
             let output = writer.output_mut();
             output.extend_from_slice(b"test");
-            
+
             assert_eq!(writer.output, b"test");
         }
     }
@@ -436,10 +432,10 @@ mod tests {
         #[tokio::test]
         async fn libtest_arbitrary_write() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
-            
+
             // Test writing a string value
             writer.write("test string").await;
-            
+
             // The exact output format depends on WriteStrExt implementation,
             // but we can verify that something was written
             assert!(!writer.output.is_empty());
@@ -448,10 +444,10 @@ mod tests {
         #[tokio::test]
         async fn libtest_arbitrary_write_string() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
-            
+
             // Test writing a String value
             writer.write(String::from("test string")).await;
-            
+
             assert!(!writer.output.is_empty());
         }
     }
@@ -471,7 +467,7 @@ mod tests {
         fn or_basic_type_alias_compilation() {
             // Test that the OrBasic type alias compiles correctly
             fn _test_or_basic_type() -> OrBasic<MockWorld> {
-                panic!("Type checking only") 
+                panic!("Type checking only")
             }
         }
     }

@@ -30,7 +30,10 @@ mod tests {
 
     use crate::{
         Event, World,
-        event::{self, Cucumber, Feature as FeatureEvent, Scenario as ScenarioEvent, Step},
+        event::{
+            self, Cucumber, Feature as FeatureEvent, Scenario as ScenarioEvent,
+            Step,
+        },
         parser,
         writer::Verbosity,
     };
@@ -81,10 +84,8 @@ mod tests {
         let cli = Cli::default();
 
         // Start Cucumber
-        let cucumber_start = Ok(Event {
-            value: Cucumber::Started,
-            at: SystemTime::UNIX_EPOCH,
-        });
+        let cucumber_start =
+            Ok(Event { value: Cucumber::Started, at: SystemTime::UNIX_EPOCH });
         writer.handle_event(cucumber_start, &cli).await;
 
         // Start Feature
@@ -125,10 +126,15 @@ mod tests {
                 FeatureEvent::Scenario(
                     scenario.clone(),
                     event::RetryableScenario {
-                        event: ScenarioEvent::Step(step, Step::Passed {
-                            captures: regex::Regex::new("").unwrap().capture_locations(),
-                            location: None,
-                        }),
+                        event: ScenarioEvent::Step(
+                            step,
+                            Step::Passed {
+                                captures: regex::Regex::new("")
+                                    .unwrap()
+                                    .capture_locations(),
+                                location: None,
+                            },
+                        ),
                         retries: None,
                     },
                 ),
@@ -184,30 +190,37 @@ mod tests {
         let cli = Cli::default();
 
         // Start feature and scenario
-        writer.handle_event(
-            Ok(Event {
-                value: Cucumber::Feature(feature.clone(), FeatureEvent::Started),
-                at: SystemTime::UNIX_EPOCH,
-            }),
-            &cli,
-        ).await;
-
-        writer.handle_event(
-            Ok(Event {
-                value: Cucumber::Feature(
-                    feature.clone(),
-                    FeatureEvent::Scenario(
-                        scenario.clone(),
-                        event::RetryableScenario {
-                            event: ScenarioEvent::Started,
-                            retries: None,
-                        },
+        writer
+            .handle_event(
+                Ok(Event {
+                    value: Cucumber::Feature(
+                        feature.clone(),
+                        FeatureEvent::Started,
                     ),
-                ),
-                at: SystemTime::UNIX_EPOCH,
-            }),
-            &cli,
-        ).await;
+                    at: SystemTime::UNIX_EPOCH,
+                }),
+                &cli,
+            )
+            .await;
+
+        writer
+            .handle_event(
+                Ok(Event {
+                    value: Cucumber::Feature(
+                        feature.clone(),
+                        FeatureEvent::Scenario(
+                            scenario.clone(),
+                            event::RetryableScenario {
+                                event: ScenarioEvent::Started,
+                                retries: None,
+                            },
+                        ),
+                    ),
+                    at: SystemTime::UNIX_EPOCH,
+                }),
+                &cli,
+            )
+            .await;
 
         // Add a failed step
         let failed_step = gherkin::Step {
@@ -218,64 +231,80 @@ mod tests {
             table: None,
             position: LineCol { line: 7, col: 5 },
         };
-        writer.handle_event(
-            Ok(Event {
-                value: Cucumber::Feature(
-                    feature.clone(),
-                    FeatureEvent::Scenario(
-                        scenario.clone(),
-                        event::RetryableScenario {
-                            event: ScenarioEvent::Step(
-                                failed_step,
-                                Step::Failed {
-                                    captures: None,
-                                    location: None,
-                                    world: None,
-                                    error: crate::event::StepError::NotFound,
-                                },
-                            ),
-                            retries: None,
-                        },
+        writer
+            .handle_event(
+                Ok(Event {
+                    value: Cucumber::Feature(
+                        feature.clone(),
+                        FeatureEvent::Scenario(
+                            scenario.clone(),
+                            event::RetryableScenario {
+                                event: ScenarioEvent::Step(
+                                    failed_step,
+                                    Step::Failed {
+                                        captures: None,
+                                        location: None,
+                                        world: None,
+                                        error:
+                                            crate::event::StepError::NotFound,
+                                    },
+                                ),
+                                retries: None,
+                            },
+                        ),
                     ),
-                ),
-                at: SystemTime::UNIX_EPOCH + std::time::Duration::from_millis(50),
-            }),
-            &cli,
-        ).await;
+                    at: SystemTime::UNIX_EPOCH
+                        + std::time::Duration::from_millis(50),
+                }),
+                &cli,
+            )
+            .await;
 
         // Finish scenario and feature
-        writer.handle_event(
-            Ok(Event {
-                value: Cucumber::Feature(
-                    feature.clone(),
-                    FeatureEvent::Scenario(
-                        scenario.clone(),
-                        event::RetryableScenario {
-                            event: ScenarioEvent::Finished,
-                            retries: None,
-                        },
+        writer
+            .handle_event(
+                Ok(Event {
+                    value: Cucumber::Feature(
+                        feature.clone(),
+                        FeatureEvent::Scenario(
+                            scenario.clone(),
+                            event::RetryableScenario {
+                                event: ScenarioEvent::Finished,
+                                retries: None,
+                            },
+                        ),
                     ),
-                ),
-                at: SystemTime::UNIX_EPOCH + std::time::Duration::from_millis(100),
-            }),
-            &cli,
-        ).await;
+                    at: SystemTime::UNIX_EPOCH
+                        + std::time::Duration::from_millis(100),
+                }),
+                &cli,
+            )
+            .await;
 
-        writer.handle_event(
-            Ok(Event {
-                value: Cucumber::Feature(feature.clone(), FeatureEvent::Finished),
-                at: SystemTime::UNIX_EPOCH + std::time::Duration::from_millis(150),
-            }),
-            &cli,
-        ).await;
+        writer
+            .handle_event(
+                Ok(Event {
+                    value: Cucumber::Feature(
+                        feature.clone(),
+                        FeatureEvent::Finished,
+                    ),
+                    at: SystemTime::UNIX_EPOCH
+                        + std::time::Duration::from_millis(150),
+                }),
+                &cli,
+            )
+            .await;
 
-        writer.handle_event(
-            Ok(Event {
-                value: Cucumber::Finished,
-                at: SystemTime::UNIX_EPOCH + std::time::Duration::from_millis(200),
-            }),
-            &cli,
-        ).await;
+        writer
+            .handle_event(
+                Ok(Event {
+                    value: Cucumber::Finished,
+                    at: SystemTime::UNIX_EPOCH
+                        + std::time::Duration::from_millis(200),
+                }),
+                &cli,
+            )
+            .await;
 
         // Verify failed test case in XML
         let output_str = String::from_utf8(writer.output).unwrap();
@@ -292,20 +321,25 @@ mod tests {
         // Send a parser error
         let parse_error = gherkin::ParseFileError::Reading {
             path: PathBuf::from("/test/broken.feature"),
-            source: std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "File not found",
+            ),
         };
         let error = Err(parser::Error::Parsing(Box::new(parse_error)));
 
         writer.handle_event(error, &cli).await;
 
         // Finish cucumber to generate XML
-        writer.handle_event(
-            Ok(Event {
-                value: Cucumber::Finished,
-                at: SystemTime::UNIX_EPOCH,
-            }),
-            &cli,
-        ).await;
+        writer
+            .handle_event(
+                Ok(Event {
+                    value: Cucumber::Finished,
+                    at: SystemTime::UNIX_EPOCH,
+                }),
+                &cli,
+            )
+            .await;
 
         // Verify error suite in XML
         let output_str = String::from_utf8(writer.output).unwrap();
@@ -327,6 +361,7 @@ mod tests {
     fn module_re_exports_work() {
         let _cli: Cli = Cli::default();
         let output = Vec::new();
-        let _writer: JUnit<TestWorld, _> = JUnit::raw(output, Verbosity::Default);
+        let _writer: JUnit<TestWorld, _> =
+            JUnit::raw(output, Verbosity::Default);
     }
 }

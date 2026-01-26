@@ -249,7 +249,7 @@ mod tests {
         };
 
         assert_eq!(compose.coloring(), Coloring::Always);
-        
+
         let (left, right) = compose.into_inner();
         assert!(left.left_flag);
         assert!(!right.right_flag);
@@ -273,13 +273,18 @@ mod tests {
         for (left_color, right_color, expected) in test_cases {
             // Manually test the compose logic directly
             let result = match (left_color, right_color) {
-                (Coloring::Always, _) | (_, Coloring::Always) => Coloring::Always,
+                (Coloring::Always, _) | (_, Coloring::Always) => {
+                    Coloring::Always
+                }
                 (Coloring::Auto, _) | (_, Coloring::Auto) => Coloring::Auto,
                 (Coloring::Never, Coloring::Never) => Coloring::Never,
             };
 
-            assert_eq!(result, expected, 
-                "Failed for left: {:?}, right: {:?}", left_color, right_color);
+            assert_eq!(
+                result, expected,
+                "Failed for left: {:?}, right: {:?}",
+                left_color, right_color
+            );
         }
     }
 
@@ -297,13 +302,11 @@ mod tests {
             }
         }
 
-        let compose = Compose {
-            left: TestCli { test_flag: true },
-            right: Empty,
-        };
+        let compose =
+            Compose { left: TestCli { test_flag: true }, right: Empty };
 
         assert_eq!(compose.coloring(), Coloring::Auto);
-        
+
         let (left, _right) = compose.into_inner();
         assert!(left.test_flag);
     }
@@ -329,15 +332,9 @@ mod tests {
             }
         }
 
-        let compose1 = Compose {
-            left: AutoCli,
-            right: AlwaysCli,
-        };
+        let compose1 = Compose { left: AutoCli, right: AlwaysCli };
 
-        let compose2 = Compose {
-            left: AlwaysCli,
-            right: AutoCli,
-        };
+        let compose2 = Compose { left: AlwaysCli, right: AutoCli };
 
         assert_eq!(compose1.coloring(), compose2.coloring());
         assert_eq!(compose1.coloring(), Coloring::Always);

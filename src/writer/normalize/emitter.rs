@@ -80,8 +80,12 @@ pub trait Emitter<World> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Event, event::{Cucumber, Metadata}, parser, Writer};
     use crate::test_utils::common::{EmptyCli, TestWorld};
+    use crate::{
+        Event, Writer,
+        event::{Cucumber, Metadata},
+        parser,
+    };
 
     // Using common TestWorld from test_utils
 
@@ -93,10 +97,7 @@ mod tests {
 
     impl MockEmitter {
         fn new(should_emit: bool) -> Self {
-            Self {
-                should_emit,
-                events: Vec::new(),
-            }
+            Self { should_emit, events: Vec::new() }
         }
     }
 
@@ -119,11 +120,7 @@ mod tests {
             _writer: &mut W,
             _cli: &W::Cli,
         ) -> Option<Self::Emitted> {
-            if self.should_emit {
-                Some(42)
-            } else {
-                None
-            }
+            if self.should_emit { Some(42) } else { None }
         }
     }
 
@@ -134,9 +131,7 @@ mod tests {
 
     impl MockWriter {
         fn new() -> Self {
-            Self {
-                events: Vec::new(),
-            }
+            Self { events: Vec::new() }
         }
     }
 
@@ -164,11 +159,11 @@ mod tests {
     async fn test_emitter_with_current_item() {
         let emitter = MockEmitter::new(true);
         let mut writer = MockWriter::new();
-        
+
         // Test that current_item returns Some when should_emit is true
         let current = emitter.current_item();
         assert_eq!(current, Some("current_item".to_string()));
-        
+
         // Test emit returns Some when should_emit is true
         let emitter2 = MockEmitter::new(true);
         let result = emitter2.emit((), &mut writer, &EmptyCli).await;
@@ -179,11 +174,11 @@ mod tests {
     async fn test_emitter_without_current_item() {
         let emitter = MockEmitter::new(false);
         let mut writer = MockWriter::new();
-        
+
         // Test that current_item returns None when should_emit is false
         let current = emitter.current_item();
         assert_eq!(current, None);
-        
+
         // Test emit returns None when should_emit is false
         let emitter2 = MockEmitter::new(false);
         let result = emitter2.emit((), &mut writer, &EmptyCli).await;
@@ -194,11 +189,11 @@ mod tests {
     async fn test_emitter_with_writer() {
         let emitter = MockEmitter::new(true);
         let mut writer = MockWriter::new();
-        
+
         // Test that emit can work with a writer
         let result = emitter.emit((), &mut writer, &EmptyCli).await;
         assert!(result.is_some());
-        
+
         // Writer should remain functional
         assert_eq!(writer.events.len(), 0); // No events sent in this test
     }
@@ -207,7 +202,7 @@ mod tests {
     fn test_emitter_type_definitions() {
         // Test that the type definitions are correct
         let emitter = MockEmitter::new(true);
-        
+
         // These should compile, proving the associated types are correctly defined
         let _current: Option<String> = emitter.current_item();
     }

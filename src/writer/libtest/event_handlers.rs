@@ -135,15 +135,16 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
     }
 
     /// Handles parsing errors by converting them to test events.
-    fn handle_parsing_error(&mut self, e: parser::Error) -> Vec<LibTestJsonEvent> {
+    fn handle_parsing_error(
+        &mut self,
+        e: parser::Error,
+    ) -> Vec<LibTestJsonEvent> {
         self.parsing_errors += 1;
 
         let path = match &e {
             parser::Error::Parsing(e) => match &**e {
                 gherkin::ParseFileError::Parsing { path, .. }
-                | gherkin::ParseFileError::Reading { path, .. } => {
-                    Some(path)
-                }
+                | gherkin::ParseFileError::Reading { path, .. } => Some(path),
             },
             parser::Error::ExampleExpansion(e) => e.path.as_ref(),
         };
@@ -155,9 +156,7 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
 
         vec![
             TestEvent::started(name.clone()).into(),
-            TestEvent::failed(name, None)
-                .with_stdout(e.to_string())
-                .into(),
+            TestEvent::failed(name, None).with_stdout(e.to_string()).into(),
         ]
     }
 
@@ -263,15 +262,16 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
 
                 vec![
                     TestEvent::started(name.clone()).into(),
-                    TestEvent::failed(name, LibtestUtils::step_exec_time(self, meta, cli))
-                        .with_stdout(format!(
-                            "{}{}",
-                            coerce_error(&info),
-                            world
-                                .map(|w| format!("\n{w:#?}"))
-                                .unwrap_or_default(),
-                        ))
-                        .into(),
+                    TestEvent::failed(
+                        name,
+                        LibtestUtils::step_exec_time(self, meta, cli),
+                    )
+                    .with_stdout(format!(
+                        "{}{}",
+                        coerce_error(&info),
+                        world.map(|w| format!("\n{w:#?}")).unwrap_or_default(),
+                    ))
+                    .into(),
                 ]
             }
         }
@@ -311,7 +311,10 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
             Step::Passed { location, .. } => {
                 self.passed += 1;
 
-                let event = TestEvent::ok(name, LibtestUtils::step_exec_time(self, meta, cli));
+                let event = TestEvent::ok(
+                    name,
+                    LibtestUtils::step_exec_time(self, meta, cli),
+                );
                 if cli.show_output {
                     event.with_stdout(format!(
                         "{}:{}:{} (defined){}",
@@ -322,11 +325,12 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
                             .unwrap_or(&feature.name),
                         step.position.line,
                         step.position.col,
-                        location.map(|l| format!(
-                            "\n{}:{}:{} (matched)",
-                            l.path, l.line, l.column,
-                        ))
-                        .unwrap_or_default()
+                        location
+                            .map(|l| format!(
+                                "\n{}:{}:{} (matched)",
+                                l.path, l.line, l.column,
+                            ))
+                            .unwrap_or_default()
                     ))
                 } else {
                     event
@@ -335,8 +339,10 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
             Step::Skipped => {
                 self.ignored += 1;
 
-                let event =
-                    TestEvent::ignored(name, LibtestUtils::step_exec_time(self, meta, cli));
+                let event = TestEvent::ignored(
+                    name,
+                    LibtestUtils::step_exec_time(self, meta, cli),
+                );
                 if cli.show_output {
                     event.with_stdout(format!(
                         "{}:{}:{} (defined)",
@@ -361,23 +367,27 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
                     self.failed += 1;
                 }
 
-                TestEvent::failed(name, LibtestUtils::step_exec_time(self, meta, cli))
-                    .with_stdout(format!(
-                        "{}:{}:{} (defined){}\n{error}{}",
-                        feature
-                            .path
-                            .as_ref()
-                            .and_then(|p| p.to_str().map(trim_path))
-                            .unwrap_or(&feature.name),
-                        step.position.line,
-                        step.position.col,
-                        location.map(|l| format!(
+                TestEvent::failed(
+                    name,
+                    LibtestUtils::step_exec_time(self, meta, cli),
+                )
+                .with_stdout(format!(
+                    "{}:{}:{} (defined){}\n{error}{}",
+                    feature
+                        .path
+                        .as_ref()
+                        .and_then(|p| p.to_str().map(trim_path))
+                        .unwrap_or(&feature.name),
+                    step.position.line,
+                    step.position.col,
+                    location
+                        .map(|l| format!(
                             "\n{}:{}:{} (matched)",
                             l.path, l.line, l.column,
                         ))
                         .unwrap_or_default(),
-                        world.map(|w| format!("\n{w:#?}")).unwrap_or_default(),
-                    ))
+                    world.map(|w| format!("\n{w:#?}")).unwrap_or_default(),
+                ))
             }
         };
 
@@ -401,13 +411,13 @@ mod tests {
         fn handle_cucumber_event_before_parsing_finished() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli::default();
-            
+
             // Create a mock Started event
             let meta = event::Metadata::new(SystemTime::now());
             let event = Ok(meta.insert(event::Cucumber::Started));
-            
+
             writer.handle_cucumber_event(event, &cli);
-            
+
             // Events should be stored, not processed yet
             assert_eq!(writer.events.len(), 1);
             assert!(!writer.parsed_all);
@@ -417,15 +427,15 @@ mod tests {
         fn handle_cucumber_event_started_sets_timestamp() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli::default();
-            
+
             let start_time = SystemTime::now();
             let meta = event::Metadata::new(start_time);
             let event = Ok(meta.insert(event::Cucumber::Started));
-            
+
             // Simulate parsing finished to trigger processing
             writer.parsed_all = true;
             writer.handle_cucumber_event(event, &cli);
-            
+
             assert_eq!(writer.started_at, Some(start_time));
         }
 
@@ -433,19 +443,25 @@ mod tests {
         fn expand_cucumber_event_parsing_finished() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli::default();
-            
+
             let meta = event::Metadata::new(SystemTime::now());
-            let event = Ok((event::Cucumber::ParsingFinished {
-                steps: 10,
-                parser_errors: 2,
-                features: 3,
-            }, meta));
-            
+            let event = Ok((
+                event::Cucumber::ParsingFinished {
+                    steps: 10,
+                    parser_errors: 2,
+                    features: 3,
+                },
+                meta,
+            ));
+
             let events = writer.expand_cucumber_event(event, &cli);
-            
+
             assert_eq!(events.len(), 1);
             // Verify it's a suite started event with correct test count
-            if let LibTestJsonEvent::Suite { event: SuiteEvent::Started { test_count } } = &events[0] {
+            if let LibTestJsonEvent::Suite {
+                event: SuiteEvent::Started { test_count },
+            } = &events[0]
+            {
                 assert_eq!(*test_count, 12); // 10 steps + 2 parser errors
             } else {
                 panic!("Expected SuiteEvent::Started");
@@ -456,24 +472,27 @@ mod tests {
         fn expand_cucumber_event_finished_success() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli::default();
-            
+
             writer.passed = 5;
             writer.ignored = 2;
             writer.failed = 0;
             writer.parsing_errors = 0;
             writer.hook_errors = 0;
-            
+
             let start_time = SystemTime::now();
             writer.started_at = Some(start_time);
             let finish_time = start_time + Duration::from_secs(1);
-            
+
             let meta = event::Metadata::new(finish_time);
             let event = Ok((event::Cucumber::Finished, meta));
-            
+
             let events = writer.expand_cucumber_event(event, &cli);
-            
+
             assert_eq!(events.len(), 1);
-            if let LibTestJsonEvent::Suite { event: SuiteEvent::Ok { results } } = &events[0] {
+            if let LibTestJsonEvent::Suite {
+                event: SuiteEvent::Ok { results },
+            } = &events[0]
+            {
                 assert_eq!(results.passed, 5);
                 assert_eq!(results.failed, 0);
                 assert_eq!(results.ignored, 2);
@@ -487,19 +506,22 @@ mod tests {
         fn expand_cucumber_event_finished_failure() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli::default();
-            
+
             writer.passed = 3;
             writer.failed = 2;
             writer.parsing_errors = 1;
             writer.hook_errors = 0;
-            
+
             let meta = event::Metadata::new(SystemTime::now());
             let event = Ok((event::Cucumber::Finished, meta));
-            
+
             let events = writer.expand_cucumber_event(event, &cli);
-            
+
             assert_eq!(events.len(), 1);
-            if let LibTestJsonEvent::Suite { event: SuiteEvent::Failed { results } } = &events[0] {
+            if let LibTestJsonEvent::Suite {
+                event: SuiteEvent::Failed { results },
+            } = &events[0]
+            {
                 assert_eq!(results.passed, 3);
                 assert_eq!(results.failed, 3); // 2 failed + 1 parsing error
                 assert!(results.exec_time.is_none()); // No start time set
@@ -515,7 +537,7 @@ mod tests {
         #[test]
         fn handle_parsing_error_increments_counter() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
-            
+
             let error = parser::Error::ExampleExpansion(gherkin::ExampleExpansionError {
                 path: None,
                 position: gherkin::Position::new(1, 1),
@@ -524,9 +546,9 @@ mod tests {
                     actual: vec!["other".to_string()],
                 },
             });
-            
+
             let events = writer.handle_parsing_error(error);
-            
+
             assert_eq!(writer.parsing_errors, 1);
             assert_eq!(events.len(), 2); // Started + Failed events
         }
@@ -534,7 +556,7 @@ mod tests {
         #[test]
         fn handle_parsing_error_creates_test_events() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
-            
+
             let error = parser::Error::ExampleExpansion(gherkin::ExampleExpansionError {
                 path: Some(std::path::PathBuf::from("test.feature")),
                 position: gherkin::Position::new(1, 1),
@@ -543,20 +565,24 @@ mod tests {
                     actual: vec!["other".to_string()],
                 },
             });
-            
+
             let events = writer.handle_parsing_error(error);
-            
+
             assert_eq!(events.len(), 2);
-            
+
             // Check first event is Started
-            if let LibTestJsonEvent::Test { event: TestEvent::Started(_) } = &events[0] {
+            if let LibTestJsonEvent::Test { event: TestEvent::Started(_) } =
+                &events[0]
+            {
                 // Good
             } else {
                 panic!("Expected TestEvent::Started");
             }
-            
+
             // Check second event is Failed with error message
-            if let LibTestJsonEvent::Test { event: TestEvent::Failed(inner) } = &events[1] {
+            if let LibTestJsonEvent::Test { event: TestEvent::Failed(inner) } =
+                &events[1]
+            {
                 assert!(inner.stdout.is_some());
             } else {
                 panic!("Expected TestEvent::Failed");
@@ -571,15 +597,15 @@ mod tests {
         fn events_stored_before_parsing_finished() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli::default();
-            
+
             // Add some events before parsing is finished
             let meta = event::Metadata::new(SystemTime::now());
             let event1 = Ok(meta.insert(event::Cucumber::Started));
             let event2 = Ok(meta.insert(event::Cucumber::Started));
-            
+
             writer.handle_cucumber_event(event1, &cli);
             writer.handle_cucumber_event(event2, &cli);
-            
+
             assert_eq!(writer.events.len(), 2);
             assert!(!writer.parsed_all);
             assert!(writer.output.is_empty()); // No output yet
@@ -589,22 +615,23 @@ mod tests {
         fn events_flushed_on_parsing_finished() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli::default();
-            
+
             // Add some events before parsing is finished
             let meta = event::Metadata::new(SystemTime::now());
             let started_event = Ok(meta.insert(event::Cucumber::Started));
             writer.handle_cucumber_event(started_event, &cli);
-            
+
             assert_eq!(writer.events.len(), 1);
-            
+
             // Now send parsing finished - this should flush all events
-            let parsing_finished_event = Ok(meta.insert(event::Cucumber::ParsingFinished {
-                steps: 5,
-                parser_errors: 0,
-                features: 1,
-            }));
+            let parsing_finished_event =
+                Ok(meta.insert(event::Cucumber::ParsingFinished {
+                    steps: 5,
+                    parser_errors: 0,
+                    features: 1,
+                }));
             writer.handle_cucumber_event(parsing_finished_event, &cli);
-            
+
             assert_eq!(writer.events.len(), 0); // Events flushed
             assert!(writer.parsed_all);
             assert!(!writer.output.is_empty()); // Output generated

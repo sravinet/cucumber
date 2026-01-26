@@ -3,8 +3,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-    Parser, Runner, World, Writer, WriterExt as _, event, parser, writer,
-    Event,
+    Event, Parser, Runner, World, Writer, WriterExt as _, event, parser, writer,
 };
 
 use super::core::Cucumber;

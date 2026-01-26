@@ -1,7 +1,7 @@
 //! Extensions to Cucumber for better integration with external systems
 
-use crate::{Cucumber, World, Parser, Writer};
 use crate::runner::Basic;
+use crate::{Cucumber, Parser, World, Writer};
 
 impl<W, P, I, Wr, Cli> Cucumber<W, P, I, Basic<W>, Wr, Cli>
 where
@@ -11,10 +11,10 @@ where
     Cli: clap::Args,
 {
     /// Register an observer for test execution monitoring
-    /// 
+    ///
     /// This allows external systems like ObservaBDD to observe test execution
     /// without modifying the writer chain.
-    /// 
+    ///
     /// # Example
     /// ```rust
     /// # use cucumber::{Cucumber, World};

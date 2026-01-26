@@ -1,18 +1,21 @@
 //! Event collector for gathering tracing events and managing scenario spans.
 
-use std::collections::HashMap;
 use futures::channel::mpsc;
 use itertools::Either;
+use std::collections::HashMap;
 use tracing::span;
 
 use crate::{
+    ScenarioType, World,
     event::{self, Source},
     runner::basic::{RetryOptions, ScenarioId},
-    ScenarioType, World,
 };
 
 use super::{
-    types::{Scenarios, SpanEventsCallbacks, Callback, LogReceiver, SpanCloseReceiver},
+    types::{
+        Callback, LogReceiver, Scenarios, SpanCloseReceiver,
+        SpanEventsCallbacks,
+    },
     waiter::SpanCloseWaiter,
 };
 
@@ -161,18 +164,18 @@ impl Collector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use futures::TryStreamExt;
     use crate::event::Source;
+    use futures::TryStreamExt;
 
     #[test]
     fn test_collector_creation() {
         let (logs_sender, logs_receiver) = mpsc::unbounded();
         let (span_sender, span_receiver) = mpsc::unbounded();
-        
+
         let collector = Collector::new(logs_receiver, span_receiver);
         assert_eq!(collector.scenarios.len(), 0);
         assert_eq!(collector.span_events.len(), 0);
-        
+
         drop(logs_sender);
         drop(span_sender);
     }
@@ -181,10 +184,10 @@ mod tests {
     fn test_scenario_span_event_waiter() {
         let (logs_sender, logs_receiver) = mpsc::unbounded();
         let (span_sender, span_receiver) = mpsc::unbounded();
-        
+
         let collector = Collector::new(logs_receiver, span_receiver);
         let _waiter = collector.scenario_span_event_waiter();
-        
+
         drop(logs_sender);
         drop(span_sender);
     }
@@ -193,9 +196,9 @@ mod tests {
     fn test_start_scenarios() {
         let (logs_sender, logs_receiver) = mpsc::unbounded();
         let (span_sender, span_receiver) = mpsc::unbounded();
-        
+
         let mut collector = Collector::new(logs_receiver, span_receiver);
-        
+
         let feature = gherkin::Feature {
             name: "Test Feature".to_string(),
             ..Default::default()
@@ -204,7 +207,7 @@ mod tests {
             name: "Test Scenario".to_string(),
             ..Default::default()
         };
-        
+
         let runnable = vec![(
             ScenarioId(1),
             Source::new(feature, None),
@@ -213,10 +216,10 @@ mod tests {
             ScenarioType::Normal,
             None,
         )];
-        
+
         collector.start_scenarios(&runnable);
         assert_eq!(collector.scenarios.len(), 1);
-        
+
         drop(logs_sender);
         drop(span_sender);
     }
@@ -225,9 +228,9 @@ mod tests {
     fn test_finish_scenario() {
         let (logs_sender, logs_receiver) = mpsc::unbounded();
         let (span_sender, span_receiver) = mpsc::unbounded();
-        
+
         let mut collector = Collector::new(logs_receiver, span_receiver);
-        
+
         let feature = gherkin::Feature {
             name: "Test Feature".to_string(),
             ..Default::default()
@@ -236,7 +239,7 @@ mod tests {
             name: "Test Scenario".to_string(),
             ..Default::default()
         };
-        
+
         let runnable = vec![(
             ScenarioId(1),
             Source::new(feature, None),
@@ -245,13 +248,13 @@ mod tests {
             ScenarioType::Normal,
             None,
         )];
-        
+
         collector.start_scenarios(&runnable);
         assert_eq!(collector.scenarios.len(), 1);
-        
+
         collector.finish_scenario(ScenarioId(1));
         assert_eq!(collector.scenarios.len(), 0);
-        
+
         drop(logs_sender);
         drop(span_sender);
     }
@@ -260,19 +263,19 @@ mod tests {
     fn test_notify_about_closing_spans() {
         let (logs_sender, logs_receiver) = mpsc::unbounded();
         let (span_sender, span_receiver) = mpsc::unbounded();
-        
+
         let mut collector = Collector::new(logs_receiver, span_receiver);
-        
+
         // Send a span close event
         let span_id = span::Id::from_u64(42);
         span_sender.unbounded_send(span_id.clone()).unwrap();
-        
+
         // This should process the span close event
         collector.notify_about_closing_spans();
-        
+
         // Verify the span event was recorded
         assert!(collector.span_events.contains_key(&span_id));
-        
+
         drop(logs_sender);
         drop(span_sender);
     }

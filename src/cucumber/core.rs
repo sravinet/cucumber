@@ -4,9 +4,7 @@ use std::marker::PhantomData;
 
 use derive_more::with_trait::Debug;
 
-use crate::{
-    Parser, Runner, World, Writer, cli,
-};
+use crate::{Parser, Runner, World, Writer, cli};
 
 /// Top-level [Cucumber] executor.
 ///

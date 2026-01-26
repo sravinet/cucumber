@@ -16,7 +16,10 @@ use crate::{
     feature::ExpandExamplesError,
     writer::{
         basic::trim_path,
-        json::{element::Element, types::{RunResult, Status, Step, Tag}},
+        json::{
+            element::Element,
+            types::{RunResult, Status, Step, Tag},
+        },
     },
 };
 
@@ -154,9 +157,7 @@ impl Feature {
         scenario: &gherkin::Scenario,
         ty: &'static str,
     ) -> Option<&Element> {
-        self.elements
-            .iter()
-            .find(|el| el.matches_scenario(rule, scenario, ty))
+        self.elements.iter().find(|el| el.matches_scenario(rule, scenario, ty))
     }
 
     /// Finds a mutable element matching the given parameters.
@@ -234,7 +235,7 @@ mod tests {
     fn feature_new_from_gherkin() {
         let gherkin_feature = create_test_gherkin_feature();
         let feature = Feature::new(&gherkin_feature);
-        
+
         assert_eq!(feature.uri, Some("features/test.feature".to_string()));
         assert_eq!(feature.keyword, "Feature");
         assert_eq!(feature.name, "Test Feature");
@@ -250,20 +251,23 @@ mod tests {
             path: Some(PathBuf::from("features/error.feature")),
             pos: LineCol { line: 10, col: 5 },
         };
-        
+
         let feature = Feature::example_expansion_err(&error);
-        
+
         assert_eq!(feature.uri, Some("features/error.feature".to_string()));
         assert_eq!(feature.keyword, "");
         assert_eq!(feature.name, "");
         assert!(feature.tags.is_empty());
         assert_eq!(feature.elements.len(), 1);
-        
+
         let element = &feature.elements[0];
         assert_eq!(element.r#type, "scenario");
-        assert_eq!(element.id, "failed-to-expand-examplesfeatures/error.feature");
+        assert_eq!(
+            element.id,
+            "failed-to-expand-examplesfeatures/error.feature"
+        );
         assert_eq!(element.steps.len(), 1);
-        
+
         let step = &element.steps[0];
         assert_eq!(step.line, 10);
         assert_eq!(step.name, "scenario");
@@ -275,22 +279,25 @@ mod tests {
     fn feature_parsing_error() {
         let error = gherkin::ParseFileError::Reading {
             path: PathBuf::from("features/bad.feature"),
-            source: std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "File not found",
+            ),
         };
-        
+
         let feature = Feature::parsing_err(&error);
-        
+
         assert_eq!(feature.uri, Some("features/bad.feature".to_string()));
         assert_eq!(feature.keyword, "");
         assert_eq!(feature.name, "");
         assert!(feature.tags.is_empty());
         assert_eq!(feature.elements.len(), 1);
-        
+
         let element = &feature.elements[0];
         assert_eq!(element.r#type, "scenario");
         assert_eq!(element.id, "failed-to-parsefeatures/bad.feature");
         assert_eq!(element.steps.len(), 1);
-        
+
         let step = &element.steps[0];
         assert_eq!(step.line, 0);
         assert_eq!(step.name, "scenario");
@@ -303,10 +310,15 @@ mod tests {
         let gherkin_feature = create_test_gherkin_feature();
         let scenario = create_test_scenario();
         let mut feature = Feature::new(&gherkin_feature);
-        
+
         // Add an element
-        feature.elements.push(Element::new(&gherkin_feature, None, &scenario, "scenario"));
-        
+        feature.elements.push(Element::new(
+            &gherkin_feature,
+            None,
+            &scenario,
+            "scenario",
+        ));
+
         // Test finding the element
         assert!(feature.find_element(None, &scenario, "scenario").is_some());
         assert!(feature.find_element(None, &scenario, "background").is_none());
@@ -317,19 +329,24 @@ mod tests {
         let gherkin_feature = create_test_gherkin_feature();
         let scenario = create_test_scenario();
         let mut feature = Feature::new(&gherkin_feature);
-        
+
         // Add an element
-        feature.elements.push(Element::new(&gherkin_feature, None, &scenario, "scenario"));
-        
+        feature.elements.push(Element::new(
+            &gherkin_feature,
+            None,
+            &scenario,
+            "scenario",
+        ));
+
         // Test finding mutable element
         let element = feature.find_element_mut(None, &scenario, "scenario");
         assert!(element.is_some());
-        
+
         // Modify the element to test mutability
         if let Some(element) = element {
             element.name = "Modified Name".to_string();
         }
-        
+
         assert_eq!(feature.elements[0].name, "Modified Name");
     }
 
@@ -338,12 +355,17 @@ mod tests {
         let gherkin_feature = create_test_gherkin_feature();
         let scenario = create_test_scenario();
         let mut feature = Feature::new(&gherkin_feature);
-        
+
         assert_eq!(feature.element_count(), 0);
         assert!(!feature.has_elements());
-        
-        feature.elements.push(Element::new(&gherkin_feature, None, &scenario, "scenario"));
-        
+
+        feature.elements.push(Element::new(
+            &gherkin_feature,
+            None,
+            &scenario,
+            "scenario",
+        ));
+
         assert_eq!(feature.element_count(), 1);
         assert!(feature.has_elements());
     }
@@ -352,9 +374,9 @@ mod tests {
     fn feature_partial_eq_with_gherkin() {
         let gherkin_feature = create_test_gherkin_feature();
         let feature = Feature::new(&gherkin_feature);
-        
+
         assert_eq!(feature, gherkin_feature);
-        
+
         // Test with different name
         let mut different_feature = gherkin_feature.clone();
         different_feature.name = "Different Name".to_string();
@@ -365,9 +387,9 @@ mod tests {
     fn feature_serialization() {
         let gherkin_feature = create_test_gherkin_feature();
         let feature = Feature::new(&gherkin_feature);
-        
+
         let json = serde_json::to_value(&feature).unwrap();
-        
+
         assert_eq!(json["uri"], "features/test.feature");
         assert_eq!(json["keyword"], "Feature");
         assert_eq!(json["name"], "Test Feature");

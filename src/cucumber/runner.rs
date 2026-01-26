@@ -1,11 +1,11 @@
 //! Runner configuration methods for Cucumber executor.
 
-use std::{time::Duration, marker::PhantomData};
+use std::{marker::PhantomData, time::Duration};
 
 use gherkin::tagexpr::TagOperation;
 
 use crate::{
-    Parser, World, Writer, ScenarioType,
+    Parser, ScenarioType, World, Writer,
     runner::{self, basic::RetryOptions},
 };
 

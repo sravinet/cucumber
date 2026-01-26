@@ -33,7 +33,7 @@
 //!
 //! ```rust,no_run
 //! use cucumber::writer::{Basic, Normalize};
-//! 
+//!
 //! let writer = Basic::stdout();
 //! let normalized_writer = Normalize::new(writer);
 //! ```
@@ -52,7 +52,10 @@ pub mod wrapper;
 // Re-export all public types for backward compatibility
 pub use self::{
     assert::{AssertNormalized, Normalized},
-    cucumber::{CucumberQueue, FeatureQueue, NextRuleOrScenario, RuleOrScenario, RuleOrScenarioQueue},
+    cucumber::{
+        CucumberQueue, FeatureQueue, NextRuleOrScenario, RuleOrScenario,
+        RuleOrScenarioQueue,
+    },
     emitter::Emitter,
     queue::{FinishedState, Queue},
     rules::RulesQueue,
@@ -64,12 +67,12 @@ pub use self::{
 #[allow(dead_code)]
 mod integration_tests {
     use super::*;
+    use crate::test_utils::common::{EmptyCli, TestWorld};
     use crate::{
         Event, Writer,
         event::{self, Metadata, Source},
         parser,
     };
-    use crate::test_utils::common::{EmptyCli, TestWorld};
 
     // Using common TestWorld from test_utils
 
@@ -102,30 +105,49 @@ mod integration_tests {
             if let Ok(ev) = event {
                 let event_name = match ev.value {
                     event::Cucumber::Started => "CucumberStarted".to_string(),
-                    event::Cucumber::ParsingFinished { .. } => "ParsingFinished".to_string(),
+                    event::Cucumber::ParsingFinished { .. } => {
+                        "ParsingFinished".to_string()
+                    }
                     event::Cucumber::Finished => "CucumberFinished".to_string(),
                     event::Cucumber::Feature(_, feature_event) => {
                         match feature_event {
-                            event::Feature::Started => "FeatureStarted".to_string(),
-                            event::Feature::Finished => "FeatureFinished".to_string(),
+                            event::Feature::Started => {
+                                "FeatureStarted".to_string()
+                            }
+                            event::Feature::Finished => {
+                                "FeatureFinished".to_string()
+                            }
                             event::Feature::Scenario(_, scenario_event) => {
                                 match scenario_event.event {
-                                    event::Scenario::Started => "ScenarioStarted".to_string(),
-                                    event::Scenario::Finished => "ScenarioFinished".to_string(),
+                                    event::Scenario::Started => {
+                                        "ScenarioStarted".to_string()
+                                    }
+                                    event::Scenario::Finished => {
+                                        "ScenarioFinished".to_string()
+                                    }
                                     _ => "Scenario".to_string(),
                                 }
                             }
                             event::Feature::Rule(_, rule_event) => {
                                 match rule_event {
-                                    event::Rule::Started => "RuleStarted".to_string(),
-                                    event::Rule::Finished => "RuleFinished".to_string(),
-                                    event::Rule::Scenario(_, scenario_event) => {
-                                        match scenario_event.event {
-                                            event::Scenario::Started => "RuleScenarioStarted".to_string(),
-                                            event::Scenario::Finished => "RuleScenarioFinished".to_string(),
-                                            _ => "RuleScenario".to_string(),
-                                        }
+                                    event::Rule::Started => {
+                                        "RuleStarted".to_string()
                                     }
+                                    event::Rule::Finished => {
+                                        "RuleFinished".to_string()
+                                    }
+                                    event::Rule::Scenario(
+                                        _,
+                                        scenario_event,
+                                    ) => match scenario_event.event {
+                                        event::Scenario::Started => {
+                                            "RuleScenarioStarted".to_string()
+                                        }
+                                        event::Scenario::Finished => {
+                                            "RuleScenarioFinished".to_string()
+                                        }
+                                        _ => "RuleScenario".to_string(),
+                                    },
                                 }
                             }
                         }
@@ -137,12 +159,24 @@ mod integration_tests {
     }
 
     impl<W: crate::World> crate::writer::Stats<W> for MockWriter {
-        fn passed_steps(&self) -> usize { 0 }
-        fn skipped_steps(&self) -> usize { 0 }
-        fn failed_steps(&self) -> usize { 0 }
-        fn retried_steps(&self) -> usize { 0 }
-        fn parsing_errors(&self) -> usize { 0 }
-        fn hook_errors(&self) -> usize { 0 }
+        fn passed_steps(&self) -> usize {
+            0
+        }
+        fn skipped_steps(&self) -> usize {
+            0
+        }
+        fn failed_steps(&self) -> usize {
+            0
+        }
+        fn retried_steps(&self) -> usize {
+            0
+        }
+        fn parsing_errors(&self) -> usize {
+            0
+        }
+        fn hook_errors(&self) -> usize {
+            0
+        }
     }
 
     impl crate::writer::NonTransforming for MockWriter {}
@@ -165,10 +199,12 @@ mod integration_tests {
     #[tokio::test]
     async fn test_normalize_wrapper_integration() {
         let mock_writer = MockWriter::new();
-        let mut normalize: wrapper::Normalize<TestWorld, _> = Normalize::new(mock_writer.clone());
+        let mut normalize: wrapper::Normalize<TestWorld, _> =
+            Normalize::new(mock_writer.clone());
 
         // Test that Cucumber::Started events pass through immediately
-        let started_event = Ok(Event::new(event::Cucumber::<TestWorld>::Started));
+        let started_event =
+            Ok(Event::new(event::Cucumber::<TestWorld>::Started));
         normalize.handle_event(started_event, &EmptyCli).await;
 
         let events = normalize.inner_writer().get_events();
@@ -178,19 +214,25 @@ mod integration_tests {
     #[tokio::test]
     async fn test_normalize_feature_lifecycle() {
         let mock_writer = MockWriter::new();
-        let mut normalize: wrapper::Normalize<TestWorld, _> = Normalize::new(mock_writer.clone());
+        let mut normalize: wrapper::Normalize<TestWorld, _> =
+            Normalize::new(mock_writer.clone());
         let feature = create_test_feature();
 
         // Start a feature
-        let feature_started = Ok(Event::new(event::Cucumber::<TestWorld>::feature_started(feature.clone())));
+        let feature_started = Ok(Event::new(
+            event::Cucumber::<TestWorld>::feature_started(feature.clone()),
+        ));
         normalize.handle_event(feature_started, &EmptyCli).await;
 
         // Finish the feature
-        let feature_finished = Ok(Event::new(event::Cucumber::<TestWorld>::feature_finished(feature)));
+        let feature_finished = Ok(Event::new(
+            event::Cucumber::<TestWorld>::feature_finished(feature),
+        ));
         normalize.handle_event(feature_finished, &EmptyCli).await;
 
         // Finish cucumber
-        let cucumber_finished = Ok(Event::new(event::Cucumber::<TestWorld>::Finished));
+        let cucumber_finished =
+            Ok(Event::new(event::Cucumber::<TestWorld>::Finished));
         normalize.handle_event(cucumber_finished, &EmptyCli).await;
 
         let events = normalize.inner_writer().get_events();
@@ -215,21 +257,23 @@ mod integration_tests {
         let _: Queue<String, i32> = Queue::new(Metadata::new(()));
         let _: FinishedState = FinishedState::NotFinished;
         let _: ScenariosQueue<TestWorld> = ScenariosQueue::new();
-        
+
         // Test that the main wrapper types are available
         let mock_writer = MockWriter::new();
-        let _: Normalize<TestWorld, MockWriter> = Normalize::new(mock_writer.clone());
-        let _: AssertNormalized<MockWriter> = AssertNormalized::new(mock_writer);
+        let _: Normalize<TestWorld, MockWriter> =
+            Normalize::new(mock_writer.clone());
+        let _: AssertNormalized<MockWriter> =
+            AssertNormalized::new(mock_writer);
     }
 
     #[test]
     fn test_queue_integration() {
         let mut queue: Queue<String, i32> = Queue::new(Metadata::new(()));
-        
+
         // Test basic queue operations
         queue.fifo.insert("key1".to_string(), 42);
         queue.finished(Metadata::new(()));
-        
+
         assert!(!queue.is_finished_and_emitted());
         let meta = queue.state.take_to_emit();
         assert!(meta.is_some());
@@ -239,17 +283,17 @@ mod integration_tests {
     #[test]
     fn test_finished_state_transitions() {
         let mut state = FinishedState::NotFinished;
-        
+
         // Should start as not finished
         assert!(matches!(state, FinishedState::NotFinished));
-        
+
         // Should not have metadata to emit when not finished
         assert!(state.take_to_emit().is_none());
-        
+
         // Transition to finished but not emitted
         state = FinishedState::FinishedButNotEmitted(Metadata::new(()));
         assert!(matches!(state, FinishedState::FinishedButNotEmitted(_)));
-        
+
         // Should have metadata to emit
         let meta = state.take_to_emit();
         assert!(meta.is_some());
@@ -259,21 +303,19 @@ mod integration_tests {
     #[test]
     fn test_scenarios_queue_integration() {
         let mut queue: scenarios::ScenariosQueue<()> = ScenariosQueue::new();
-        
+
         // Start with empty queue
         assert!((&mut queue).current_item().is_none());
-        
+
         // Add an event
-        queue.0.push(Event::new(
-            event::RetryableScenario {
-                event: event::Scenario::Started,
-                retries: None,
-            }
-        ));
-        
+        queue.0.push(Event::new(event::RetryableScenario {
+            event: event::Scenario::Started,
+            retries: None,
+        }));
+
         // Should now have a current item
         assert!((&mut queue).current_item().is_some());
-        
+
         // After getting current item, queue should be empty again
         assert!((&mut queue).current_item().is_none());
     }
@@ -282,13 +324,14 @@ mod integration_tests {
     fn test_backward_compatibility() {
         // Test that all the original public API is still available through re-exports
         let mock_writer = MockWriter::new();
-        
+
         // Should be able to create a Normalize wrapper
-        let _normalize: Normalize<TestWorld, _> = Normalize::new(mock_writer.clone());
-        
+        let _normalize: Normalize<TestWorld, _> =
+            Normalize::new(mock_writer.clone());
+
         // Should be able to create an AssertNormalized wrapper
         let _assert: AssertNormalized<_> = AssertNormalized::new(mock_writer);
-        
+
         // Should be able to use the Normalized trait
         fn test_normalized<T: Normalized>(_: T) {}
         test_normalized(_assert);

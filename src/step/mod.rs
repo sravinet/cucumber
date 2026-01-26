@@ -12,7 +12,7 @@
 //! corresponding [`Regex`] patterns.
 //!
 //! This module has been refactored into smaller, focused modules while maintaining
-//! backward compatibility through re-exports. Each module follows the Single 
+//! backward compatibility through re-exports. Each module follows the Single
 //! Responsibility Principle:
 //!
 //! - [`collection`]: Step collection management and matching
@@ -20,9 +20,11 @@
 //! - [`error`]: Error types for step matching failures
 //! - [`location`]: File location tracking for step definitions
 //! - [`regex`]: Hashable regex wrapper utilities
+//! - [`builder`]: Modular step builder traits for enterprise-scale BDD
 //!
 //! [`Step`]: gherkin::Step
 
+pub mod builder;
 pub mod collection;
 pub mod context;
 pub mod error;
@@ -31,6 +33,7 @@ pub mod regex;
 pub mod table;
 
 // Re-export all public items for easy access
+pub use builder::{StepBuilder, compose_step_builders};
 pub use collection::{Collection, WithContext};
 pub use context::{CaptureName, Context};
 pub use error::AmbiguousMatchError;

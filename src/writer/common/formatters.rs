@@ -50,7 +50,10 @@ pub struct ErrorFormatter;
 
 impl ErrorFormatter {
     /// Formats an error message with context.
-    pub fn format_with_context(error: &dyn std::error::Error, context: &str) -> String {
+    pub fn format_with_context(
+        error: &dyn std::error::Error,
+        context: &str,
+    ) -> String {
         format!("{context}: {error}")
     }
 
@@ -74,16 +77,18 @@ mod tests {
     #[test]
     fn world_formatter_respects_verbosity_default() {
         let world = Some(&42);
-        
-        let result = WorldFormatter::format_world_if_needed(world, Verbosity::Default);
+
+        let result =
+            WorldFormatter::format_world_if_needed(world, Verbosity::Default);
         assert!(result.is_none());
     }
 
     #[test]
     fn world_formatter_respects_verbosity_show_world() {
         let world = Some(&42);
-        
-        let result = WorldFormatter::format_world_if_needed(world, Verbosity::ShowWorld);
+
+        let result =
+            WorldFormatter::format_world_if_needed(world, Verbosity::ShowWorld);
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "42");
     }
@@ -91,8 +96,11 @@ mod tests {
     #[test]
     fn world_formatter_respects_verbosity_show_world_and_docstring() {
         let world = Some(&"test_world");
-        
-        let result = WorldFormatter::format_world_if_needed(world, Verbosity::ShowWorldAndDocString);
+
+        let result = WorldFormatter::format_world_if_needed(
+            world,
+            Verbosity::ShowWorldAndDocString,
+        );
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "\"test_world\"");
     }
@@ -100,8 +108,9 @@ mod tests {
     #[test]
     fn world_formatter_handles_none_world() {
         let world: Option<&i32> = None;
-        
-        let result = WorldFormatter::format_world_if_needed(world, Verbosity::ShowWorld);
+
+        let result =
+            WorldFormatter::format_world_if_needed(world, Verbosity::ShowWorld);
         assert!(result.is_none());
     }
 
@@ -114,7 +123,7 @@ mod tests {
 
     #[test]
     fn world_formatter_docstring_verbosity_show_world() {
-        // Test docstring handling concept  
+        // Test docstring handling concept
         let shows_docstring = Verbosity::ShowWorld.shows_docstring();
         assert!(!shows_docstring);
     }
@@ -122,7 +131,8 @@ mod tests {
     #[test]
     fn world_formatter_docstring_verbosity_show_world_and_docstring() {
         // Test docstring handling concept
-        let shows_docstring = Verbosity::ShowWorldAndDocString.shows_docstring();
+        let shows_docstring =
+            Verbosity::ShowWorldAndDocString.shows_docstring();
         assert!(shows_docstring);
     }
 
@@ -133,9 +143,7 @@ mod tests {
 
     impl MockStep {
         fn new(docstring: Option<&str>) -> Self {
-            Self {
-                docstring: docstring.map(String::from),
-            }
+            Self { docstring: docstring.map(String::from) }
         }
     }
 
@@ -151,11 +159,7 @@ mod tests {
             step: &MockStep,
             verbosity: Verbosity,
         ) -> Option<&str> {
-            if verbosity.shows_docstring() {
-                step.docstring()
-            } else {
-                None
-            }
+            if verbosity.shows_docstring() { step.docstring() } else { None }
         }
     }
 
@@ -163,32 +167,43 @@ mod tests {
     fn world_formatter_docstring_mock_test() {
         let step_with_docstring = MockStep::new(Some("test docstring"));
         let step_without_docstring = MockStep::new(None);
-        
+
         // Test with docstring showing verbosity
         assert_eq!(
-            WorldFormatter::format_docstring_if_needed_mock(&step_with_docstring, Verbosity::ShowWorldAndDocString),
+            WorldFormatter::format_docstring_if_needed_mock(
+                &step_with_docstring,
+                Verbosity::ShowWorldAndDocString
+            ),
             Some("test docstring")
         );
-        
+
         // Test without docstring showing verbosity
         assert_eq!(
-            WorldFormatter::format_docstring_if_needed_mock(&step_with_docstring, Verbosity::ShowWorld),
+            WorldFormatter::format_docstring_if_needed_mock(
+                &step_with_docstring,
+                Verbosity::ShowWorld
+            ),
             None
         );
-        
+
         // Test with None docstring
         assert_eq!(
-            WorldFormatter::format_docstring_if_needed_mock(&step_without_docstring, Verbosity::ShowWorldAndDocString),
+            WorldFormatter::format_docstring_if_needed_mock(
+                &step_without_docstring,
+                Verbosity::ShowWorldAndDocString
+            ),
             None
         );
     }
 
     #[test]
     fn error_formatter_formats_with_context() {
-        let error = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
-        
-        let formatted = ErrorFormatter::format_with_context(&error, "File operation");
-        
+        let error =
+            std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
+
+        let formatted =
+            ErrorFormatter::format_with_context(&error, "File operation");
+
         assert_eq!(formatted, "File operation: file not found");
     }
 
@@ -196,9 +211,9 @@ mod tests {
     fn error_formatter_formats_panic_message_string() {
         let panic_msg = "test panic message".to_string();
         let info: crate::event::Info = std::sync::Arc::new(panic_msg);
-        
+
         let formatted = ErrorFormatter::format_panic_message(&info);
-        
+
         assert_eq!(formatted, "test panic message");
     }
 
@@ -206,9 +221,9 @@ mod tests {
     fn error_formatter_formats_panic_message_str() {
         let panic_msg = "test panic message";
         let info: crate::event::Info = std::sync::Arc::new(panic_msg);
-        
+
         let formatted = ErrorFormatter::format_panic_message(&info);
-        
+
         assert_eq!(formatted, "test panic message");
     }
 
@@ -216,9 +231,9 @@ mod tests {
     fn error_formatter_formats_panic_message_unknown() {
         let unknown_data = 42i32;
         let info: crate::event::Info = std::sync::Arc::new(unknown_data);
-        
+
         let formatted = ErrorFormatter::format_panic_message(&info);
-        
+
         assert_eq!(formatted, "Unknown error");
     }
 
@@ -230,16 +245,19 @@ mod tests {
             name: String,
             values: Vec<i32>,
         }
-        
+
         let world = ComplexWorld {
             id: 1,
             name: "test".to_string(),
             values: vec![1, 2, 3],
         };
-        
-        let result = WorldFormatter::format_world_if_needed(Some(&world), Verbosity::ShowWorld);
+
+        let result = WorldFormatter::format_world_if_needed(
+            Some(&world),
+            Verbosity::ShowWorld,
+        );
         assert!(result.is_some());
-        
+
         let formatted = result.unwrap();
         assert!(formatted.contains("ComplexWorld"));
         assert!(formatted.contains("id: 1"));
@@ -249,18 +267,25 @@ mod tests {
 
     #[test]
     fn error_formatter_context_with_special_characters() {
-        let error = std::io::Error::new(std::io::ErrorKind::InvalidInput, "bad input: {}[]");
-        
-        let formatted = ErrorFormatter::format_with_context(&error, "Operation with: special chars");
-        
+        let error = std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "bad input: {}[]",
+        );
+
+        let formatted = ErrorFormatter::format_with_context(
+            &error,
+            "Operation with: special chars",
+        );
+
         assert_eq!(formatted, "Operation with: special chars: bad input: {}[]");
     }
 
     #[test]
     fn world_formatter_empty_string_world() {
         let world = Some(&"");
-        
-        let result = WorldFormatter::format_world_if_needed(world, Verbosity::ShowWorld);
+
+        let result =
+            WorldFormatter::format_world_if_needed(world, Verbosity::ShowWorld);
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "\"\"");
     }

@@ -7,7 +7,10 @@ use crate::{
     writer::out::WriteStrExt as _,
 };
 
-use super::{basic_struct::Basic, formatting::{coerce_error, format_str_with_indent, trim_path}};
+use super::{
+    basic_struct::Basic,
+    formatting::{coerce_error, format_str_with_indent, trim_path},
+};
 
 impl<Out: io::Write> Basic<Out> {
     /// Outputs the [`Scenario`]'s [started]/[background]/[step] event.
@@ -146,4 +149,3 @@ impl<Out: io::Write> Basic<Out> {
         }
     }
 }
-

@@ -24,7 +24,10 @@ pub struct Context {
 impl Context {
     /// Creates a new [`Context`] with the given step and matches.
     #[must_use]
-    pub fn new(step: gherkin::Step, matches: Vec<(CaptureName, String)>) -> Self {
+    pub fn new(
+        step: gherkin::Step,
+        matches: Vec<(CaptureName, String)>,
+    ) -> Self {
         Self { step, matches }
     }
 
@@ -88,7 +91,7 @@ mod tests {
             (None, "I have 5 cucumbers".to_string()),
             (Some("count".to_string()), "5".to_string()),
         ];
-        
+
         let context = Context::new(step.clone(), matches.clone());
         assert_eq!(context.step.value, step.value);
         assert_eq!(context.matches, matches);
@@ -98,7 +101,7 @@ mod tests {
     fn context_step_returns_step_reference() {
         let step = create_test_step();
         let context = Context::new(step.clone(), vec![]);
-        
+
         assert_eq!(context.step().value, step.value);
         assert_eq!(context.step().ty, step.ty);
     }
@@ -110,7 +113,7 @@ mod tests {
             (None, "whole match".to_string()),
             (Some("group1".to_string()), "value1".to_string()),
         ];
-        
+
         let context = Context::new(step, matches.clone());
         assert_eq!(context.matches(), &matches);
     }
@@ -123,7 +126,7 @@ mod tests {
             (Some("count".to_string()), "5".to_string()),
             (Some("item".to_string()), "cucumbers".to_string()),
         ];
-        
+
         let context = Context::new(step, matches);
         assert_eq!(context.get_named_capture("count"), Some("5"));
         assert_eq!(context.get_named_capture("item"), Some("cucumbers"));
@@ -138,7 +141,7 @@ mod tests {
             (Some("group1".to_string()), "value1".to_string()),
             (Some("group2".to_string()), "value2".to_string()),
         ];
-        
+
         let context = Context::new(step, matches);
         assert_eq!(context.get_capture(0), Some("whole match"));
         assert_eq!(context.get_capture(1), Some("value1"));
@@ -153,7 +156,7 @@ mod tests {
             (None, "whole match".to_string()),
             (Some("group1".to_string()), "value1".to_string()),
         ];
-        
+
         let context = Context::new(step, matches);
         assert_eq!(context.capture_count(), 2);
     }
@@ -165,10 +168,10 @@ mod tests {
             (None, "test".to_string()),
             (Some("group".to_string()), "value".to_string()),
         ];
-        
+
         let context = Context::new(step.clone(), matches.clone());
         let cloned = context.clone();
-        
+
         assert_eq!(cloned.step.value, step.value);
         assert_eq!(cloned.matches, matches);
     }
@@ -176,10 +179,8 @@ mod tests {
     #[test]
     fn context_debug_format_works() {
         let step = create_test_step();
-        let matches = vec![
-            (None, "test".to_string()),
-        ];
-        
+        let matches = vec![(None, "test".to_string())];
+
         let context = Context::new(step, matches);
         let debug_output = format!("{:?}", context);
         assert!(debug_output.contains("Context"));

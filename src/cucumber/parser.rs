@@ -2,9 +2,7 @@
 
 use std::{borrow::Cow, path::Path};
 
-use crate::{
-    Runner, World, Writer, parser,
-};
+use crate::{Runner, World, Writer, parser};
 
 use super::core::Cucumber;
 

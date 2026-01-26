@@ -131,10 +131,15 @@ mod tests {
     struct MockCli;
 
     impl clap::FromArgMatches for MockCli {
-        fn from_arg_matches(_matches: &clap::ArgMatches) -> clap::error::Result<Self> {
+        fn from_arg_matches(
+            _matches: &clap::ArgMatches,
+        ) -> clap::error::Result<Self> {
             Ok(Self)
         }
-        fn update_from_arg_matches(&mut self, _matches: &clap::ArgMatches) -> clap::error::Result<()> {
+        fn update_from_arg_matches(
+            &mut self,
+            _matches: &clap::ArgMatches,
+        ) -> clap::error::Result<()> {
             Ok(())
         }
     }

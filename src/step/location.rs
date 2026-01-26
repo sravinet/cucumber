@@ -52,7 +52,7 @@ impl Location {
         // Try to find the last component from either path separator
         let unix_parts: Vec<&str> = self.path.split('/').collect();
         let windows_parts: Vec<&str> = self.path.split('\\').collect();
-        
+
         // Use whichever gave us more parts (meaning it found separators)
         if unix_parts.len() > windows_parts.len() {
             unix_parts.last().copied().unwrap_or(self.path)
@@ -151,9 +151,9 @@ mod tests {
         let location3 = Location::new("a.rs", 2, 1);
         let location4 = Location::new("a.rs", 1, 2);
 
-        assert!(location1 < location2);  // Different files
-        assert!(location1 < location3);  // Same file, different line
-        assert!(location1 < location4);  // Same file, same line, different column
+        assert!(location1 < location2); // Different files
+        assert!(location1 < location3); // Same file, different line
+        assert!(location1 < location4); // Same file, same line, different column
     }
 
     #[test]
@@ -220,8 +220,17 @@ mod tests {
         let location1 = Location::new("a.rs", 1, 1);
         let location2 = Location::new("b.rs", 1, 1);
 
-        assert_eq!(location1.partial_cmp(&location2), Some(std::cmp::Ordering::Less));
-        assert_eq!(location2.partial_cmp(&location1), Some(std::cmp::Ordering::Greater));
-        assert_eq!(location1.partial_cmp(&location1), Some(std::cmp::Ordering::Equal));
+        assert_eq!(
+            location1.partial_cmp(&location2),
+            Some(std::cmp::Ordering::Less)
+        );
+        assert_eq!(
+            location2.partial_cmp(&location1),
+            Some(std::cmp::Ordering::Greater)
+        );
+        assert_eq!(
+            location1.partial_cmp(&location1),
+            Some(std::cmp::Ordering::Equal)
+        );
     }
 }

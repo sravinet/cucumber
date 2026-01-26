@@ -148,9 +148,7 @@ impl WorldError {
     /// Creates a new WorldError with the given message.
     #[must_use]
     pub fn new(message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-        }
+        Self { message: message.into() }
     }
 }
 
@@ -232,7 +230,7 @@ mod tests {
     async fn test_async_world_init() {
         let mut world = TestWorld::new().await.unwrap();
         assert_eq!(world.value, 42);
-        
+
         let init_result = world.init().await;
         assert!(init_result.is_ok());
         assert_eq!(world.value, 100);
@@ -242,7 +240,7 @@ mod tests {
     async fn test_world_cleanup() {
         let mut world = TestWorld::new().await.unwrap();
         assert_eq!(world.value, 42);
-        
+
         let cleanup_result = world.cleanup().await;
         assert!(cleanup_result.is_ok());
         assert_eq!(world.value, 0);
@@ -267,7 +265,7 @@ mod tests {
         let error1 = WorldError::new("Same message");
         let error2 = WorldError::new("Same message");
         let error3 = WorldError::new("Different message");
-        
+
         assert_eq!(error1, error2);
         assert_ne!(error1, error3);
     }
@@ -287,7 +285,7 @@ mod tests {
         fn _test_world_bounds<W: World>() {
             // This function compiles if World has proper bounds
         }
-        
+
         _test_world_bounds::<TestWorld>();
     }
 }

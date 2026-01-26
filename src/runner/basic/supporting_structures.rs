@@ -3,8 +3,8 @@
 use std::{
     any::Any,
     sync::{
-        atomic::{AtomicU64, Ordering},
         Arc,
+        atomic::{AtomicU64, Ordering},
     },
 };
 
@@ -12,8 +12,8 @@ use derive_more::with_trait::{Display, FromStr};
 use regex::CaptureLocations;
 
 use crate::{
-    event::{self, Info, Metadata},
     event::source::Source,
+    event::{self, Info, Metadata},
     step,
 };
 
@@ -40,7 +40,6 @@ impl Default for ScenarioId {
         Self::new()
     }
 }
-
 
 /// Alias for a failed [`Scenario`].
 ///
@@ -136,7 +135,9 @@ impl<W> ExecutionFailure<W> {
     }
 
     /// Creates an [`event::ScenarioFinished`] from this [`ExecutionFailure`].
-    pub(super) fn get_scenario_finished_event(&self) -> event::ScenarioFinished {
+    pub(super) fn get_scenario_finished_event(
+        &self,
+    ) -> event::ScenarioFinished {
         use event::ScenarioFinished::{
             BeforeHookFailed, StepFailed, StepSkipped,
         };
@@ -154,7 +155,6 @@ impl<W> ExecutionFailure<W> {
     }
 }
 
-
 /// [`Metadata`] of [`HookType::After`] events.
 pub(super) struct AfterHookEventsMeta {
     /// [`Metadata`] at the time [`HookType::After`] started.
@@ -162,7 +162,7 @@ pub(super) struct AfterHookEventsMeta {
 
     /// [`Metadata`] at the time [`HookType::After`] finished.
     pub(super) finished: Metadata,
-    
+
     /// The outcome of the scenario execution.
     pub(super) scenario_finished: event::ScenarioFinished,
 }
@@ -180,7 +180,7 @@ mod tests {
     fn test_scenario_id_creation() {
         let id1 = ScenarioId::new();
         let id2 = ScenarioId::new();
-        
+
         assert_ne!(id1, id2);
         assert!(id2.0 > id1.0);
     }
@@ -189,7 +189,7 @@ mod tests {
     fn test_scenario_id_default() {
         let id1 = ScenarioId::default();
         let id2 = ScenarioId::default();
-        
+
         assert_ne!(id1, id2);
     }
 
@@ -202,14 +202,14 @@ mod tests {
     #[test]
     fn test_scenario_id_hash() {
         use std::collections::HashMap;
-        
+
         let id1 = ScenarioId(1);
         let id2 = ScenarioId(2);
-        
+
         let mut map = HashMap::new();
         map.insert(id1, "first");
         map.insert(id2, "second");
-        
+
         assert_eq!(map.get(&id1), Some(&"first"));
         assert_eq!(map.get(&id2), Some(&"second"));
     }
@@ -218,13 +218,13 @@ mod tests {
     #[test]
     fn test_scenario_tracing_spans() {
         let id = ScenarioId(123);
-        
+
         let scenario_span = id.scenario_span();
         let step_span = id.step_span(false);
         let bg_step_span = id.step_span(true);
         let before_hook_span = id.hook_span(event::HookType::Before);
         let after_hook_span = id.hook_span(event::HookType::After);
-        
+
         // Just test that spans are created without errors
         assert_eq!(scenario_span.metadata().unwrap().name(), "Scenario");
         assert_eq!(step_span.metadata().unwrap().name(), "Step");
@@ -237,10 +237,10 @@ mod tests {
     fn test_execution_failure_world_take() {
         #[derive(Debug, PartialEq)]
         struct TestWorld(i32);
-        
+
         let mut failure = ExecutionFailure::StepSkipped(Some(TestWorld(42)));
         let world = failure.take_world();
-        
+
         assert_eq!(world, Some(TestWorld(42)));
         assert_eq!(failure.take_world(), None); // Should be None after taking
     }
@@ -248,17 +248,17 @@ mod tests {
     #[test]
     fn test_execution_failure_scenario_finished_event() {
         use event::ScenarioFinished;
-        
+
         let failure = ExecutionFailure::<()>::StepSkipped(None);
         let event = failure.get_scenario_finished_event();
-        
+
         assert!(matches!(event, ScenarioFinished::StepSkipped));
     }
 
     #[test]
     fn test_coerce_into_info() {
         let info = coerce_into_info("test string");
-        
+
         // Should be able to downcast back
         assert!(info.downcast_ref::<&str>().is_some());
     }
@@ -270,7 +270,7 @@ mod tests {
             finished: Metadata::new(()),
             scenario_finished: event::ScenarioFinished::StepPassed,
         };
-        
+
         // Just test that structure can be created and has timing info
         #[cfg(feature = "timestamps")]
         {
@@ -285,15 +285,17 @@ mod tests {
     fn test_execution_failure_before_hook_panicked() {
         let info = coerce_into_info("panic message");
         let meta = Metadata::new(());
-        
+
         let failure = ExecutionFailure::<i32>::BeforeHookPanicked {
             world: Some(42),
             panic_info: info.clone(),
             meta,
         };
-        
+
         match failure {
-            ExecutionFailure::BeforeHookPanicked { world, panic_info, .. } => {
+            ExecutionFailure::BeforeHookPanicked {
+                world, panic_info, ..
+            } => {
                 assert_eq!(world, Some(42));
                 assert!(panic_info.downcast_ref::<&str>().is_some());
             }
@@ -304,7 +306,7 @@ mod tests {
     #[test]
     fn test_execution_failure_step_panicked() {
         use crate::event::source::Source;
-        
+
         let step = Source::new(gherkin::Step {
             ty: gherkin::StepType::Given,
             value: "test step".to_string(),
@@ -314,7 +316,7 @@ mod tests {
             keyword: "Given".to_string(),
             position: gherkin::LineCol { line: 1, col: 1 },
         });
-        
+
         let failure = ExecutionFailure::<()>::StepPanicked {
             world: None,
             step,
@@ -324,7 +326,7 @@ mod tests {
             meta: Metadata::new(()),
             is_background: false,
         };
-        
+
         match failure {
             ExecutionFailure::StepPanicked { is_background, .. } => {
                 assert!(!is_background);

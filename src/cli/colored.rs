@@ -99,11 +99,7 @@ mod tests {
 
     impl Colored for TestCliConditional {
         fn coloring(&self) -> Coloring {
-            if self.force_color {
-                Coloring::Always
-            } else {
-                Coloring::Auto
-            }
+            if self.force_color { Coloring::Always } else { Coloring::Auto }
         }
     }
 
@@ -140,7 +136,7 @@ mod tests {
         assert_eq!(Coloring::Never, Coloring::Never);
         assert_eq!(Coloring::Auto, Coloring::Auto);
         assert_eq!(Coloring::Always, Coloring::Always);
-        
+
         assert_ne!(Coloring::Never, Coloring::Auto);
         assert_ne!(Coloring::Auto, Coloring::Always);
         assert_ne!(Coloring::Never, Coloring::Always);
