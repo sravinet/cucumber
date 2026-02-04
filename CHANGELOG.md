@@ -26,9 +26,26 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
     - `event::Scenario::background_step_started()`, `event::Scenario::background_step_passed()` and `event::Scenario::background_step_skipped()`.
 - Kept only currently executed row of `Examples` table in expanded `Scenario Outline`s. ([#371], [#369])
 
+### Added
+
+- Enhanced event system with proper metadata integration for improved observability and debugging capabilities.
+- Comprehensive step failure handling methods for better error context and recovery.
+- Modular step builder infrastructure for enterprise-scale BDD architectures.
+
+### Changed
+
+- **BREAKING**: Standardized step event output format to use struct variants instead of tuple variants:
+  - `Passed { captures, location }` instead of `Passed(captures, location)`
+  - `Failed { captures, location, world, error }` instead of `Failed(captures, location, world, error)`
+  - This affects debug output parsing and external tools that consume step event output
+- Updated all test output files to use canonical struct variant format
+- Enhanced `send_event_with_meta` to properly wrap events with execution context metadata
+
 ### Fixed
 
 - Performance degradation on large `.feature` files. ([#352], [#331])
+- Test output format inconsistencies between implementation and expected outputs
+- Missing metadata context in event transmission for debugging and observability
 
 [#331]: /../../issues/331
 [#352]: /../../pull/352

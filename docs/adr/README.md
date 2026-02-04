@@ -32,6 +32,8 @@ An Architecture Decision Record captures an important architectural decision mad
 | [0020](0020-rust-190-modernization.md) | Rust 1.90+ Language Modernization | Accepted | Adopt modern Rust idioms including is_some_and and improved error handling patterns |
 | [0021](0021-background-execution-in-rules.md) | Background Execution in Rules | Accepted | Feature-level backgrounds execute for all scenarios including those in rules |
 | [0022](0022-modular-step-builder-architecture.md) | Modular Step Builder Architecture | Accepted | Enable enterprise-scale BDD with domain-specific step builders and modular composition |
+| [0023](0023-step-event-output-standardization.md) | Step Event Output Format Standardization | Accepted | Standardize on struct variant format for all step event outputs across debug, basic, and colored modes |
+| [0024](0024-event-metadata-integration.md) | Event Metadata Integration Enhancement | Accepted | Enable proper metadata wrapping for all events to enhance observability and debugging capabilities |
 
 ## ADR Template
 
