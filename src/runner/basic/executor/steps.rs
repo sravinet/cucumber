@@ -11,7 +11,7 @@ use crate::{
 };
 
 use super::super::supporting_structures::{
-    AfterHookEventsMeta, ScenarioId, coerce_into_info,
+    AfterHookEventsMeta, ExecutionFailure, ScenarioId, coerce_into_info,
 };
 
 /// Step execution functionality for the Executor.
@@ -424,6 +424,57 @@ impl StepExecutor {
             },
         ));
         send_event(event.value);
+    }
+
+    /// Creates an ExecutionFailure::StepSkipped from a skipped step scenario.
+    pub(super) fn create_step_skipped_failure<W>(
+        world: Option<W>,
+    ) -> ExecutionFailure<W> {
+        ExecutionFailure::StepSkipped(world)
+    }
+
+    /// Creates an ExecutionFailure::StepPanicked from a failed step.
+    pub(super) fn create_step_panicked_failure<W>(
+        world: Option<W>,
+        step: Source<gherkin::Step>,
+        captures: Option<regex::CaptureLocations>,
+        loc: Option<step::Location>,
+        err: event::StepError,
+        is_background: bool,
+    ) -> ExecutionFailure<W> {
+        ExecutionFailure::StepPanicked {
+            world,
+            step,
+            captures,
+            loc,
+            err,
+            meta: event::Metadata::new(()),
+            is_background,
+        }
+    }
+
+    /// Creates an ExecutionFailure based on the step execution result.
+    pub(super) fn create_execution_failure_from_step_result<W>(
+        step_result: &event::Step<W>,
+        step: Source<gherkin::Step>,
+        is_background: bool,
+    ) -> Option<ExecutionFailure<W>> {
+        match step_result {
+            event::Step::Failed { captures, location, error, .. } => {
+                Some(Self::create_step_panicked_failure(
+                    None, // World is not available here
+                    step,
+                    captures.clone(),
+                    *location,
+                    error.clone(),
+                    is_background,
+                ))
+            }
+            event::Step::Skipped => {
+                Some(Self::create_step_skipped_failure(None))
+            }
+            _ => None,
+        }
     }
 }
 

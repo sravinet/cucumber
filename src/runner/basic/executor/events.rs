@@ -151,10 +151,19 @@ impl<W: World> EventSender<W> {
     pub(super) fn send_event_with_meta(
         &self,
         event: event::Cucumber<W>,
-        _meta: &crate::event::Metadata,
+        meta: &crate::event::Metadata,
     ) {
-        // Currently just sends the event, but could be extended to include metadata
-        self.send_event(event);
+        // Create event with the provided metadata
+        let event_with_meta = meta.wrap(event.clone());
+        
+        // Send through normal channel
+        self.sender
+            .unbounded_send(Ok(event_with_meta.clone()))
+            .unwrap_or_else(|e| panic!("Failed to send `Cucumber` event: {e}"));
+
+        // Notify observers if enabled
+        #[cfg(feature = "observability")]
+        self.notify_observers(&event_with_meta, &event);
     }
 }
 

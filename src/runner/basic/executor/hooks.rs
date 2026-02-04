@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::super::supporting_structures::{
-    ExecutionFailure, ScenarioId, coerce_into_info,
+    AfterHookEventsMeta, ExecutionFailure, ScenarioId, coerce_into_info,
 };
 
 /// Hook execution functionality for the Executor.
@@ -76,11 +76,33 @@ impl HookExecutor {
                 }
             }
 
-            let (hook_event, should_fail) = match result {
-                Ok(()) => (event::Hook::Passed, false),
+            let hook_event = match result {
+                Ok(()) => event::Hook::Passed,
                 Err(err) => {
                     let info = coerce_into_info(err);
-                    (event::Hook::Failed(None, info), true)
+                    
+                    // Create BeforeHookPanicked failure with proper information
+                    let failure = ExecutionFailure::BeforeHookPanicked {
+                        world: None, // World is not extractable at this point
+                        panic_info: info.clone(),
+                        meta: crate::event::Metadata::new(()),
+                    };
+
+                    let event = Event::new(event::Cucumber::scenario(
+                        feature,
+                        rule,
+                        scenario,
+                        event::RetryableScenario {
+                            event: event::Scenario::Hook(
+                                HookType::Before,
+                                event::Hook::Failed(None, info),
+                            ),
+                            retries: None,
+                        },
+                    ));
+                    send_event(event.value);
+
+                    return Err(failure);
                 }
             };
 
@@ -94,10 +116,6 @@ impl HookExecutor {
                 },
             ));
             send_event(event.value);
-
-            if should_fail {
-                return Err(ExecutionFailure::Before);
-            }
         }
 
         Ok(())
@@ -116,7 +134,7 @@ impl HookExecutor {
         #[cfg(feature = "tracing")] waiter: Option<
             &crate::tracing::SpanCloseWaiter,
         >,
-    ) -> Option<Info>
+    ) -> AfterHookEventsMeta
     where
         W: World,
         After: for<'a> Fn(
@@ -127,6 +145,9 @@ impl HookExecutor {
             Option<&'a mut W>,
         ) -> LocalBoxFuture<'a, ()>,
     {
+        // Capture the start time for metadata
+        let started_meta = crate::event::Metadata::new(());
+        
         if let Some(after_hook) = hook {
             let event = Event::new(event::Cucumber::scenario(
                 feature.clone(),
@@ -143,7 +164,7 @@ impl HookExecutor {
             send_event(event.value);
 
             #[cfg(feature = "tracing")]
-            let span = id.hook_span(HookType::After);
+            let span = _id.hook_span(HookType::After);
             #[cfg(feature = "tracing")]
             let _guard = span.enter();
 
@@ -165,11 +186,11 @@ impl HookExecutor {
                 }
             }
 
-            let (hook_event, error) = match result {
-                Ok(()) => (event::Hook::Passed, None),
+            let hook_event = match result {
+                Ok(()) => event::Hook::Passed,
                 Err(err) => {
                     let info = coerce_into_info(err);
-                    (event::Hook::Failed(None, info.clone()), Some(info))
+                    event::Hook::Failed(None, info)
                 }
             };
 
@@ -183,10 +204,16 @@ impl HookExecutor {
                 },
             ));
             send_event(event.value);
-
-            return error;
         }
-        None
+
+        // Capture the finish time and create AfterHookEventsMeta
+        let finished_meta = crate::event::Metadata::new(());
+        
+        AfterHookEventsMeta {
+            started: started_meta,
+            finished: finished_meta,
+            scenario_finished: scenario_finished.clone(),
+        }
     }
 }
 
