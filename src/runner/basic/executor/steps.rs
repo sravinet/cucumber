@@ -233,7 +233,9 @@ impl StepExecutor {
         {
             drop(_guard);
             if let Some(waiter) = waiter {
-                waiter.wait_for_span_close(span.id()).await;
+                if let Some(span_id) = span.id() {
+                    waiter.wait_for_span_close(span_id).await;
+                }
             }
         }
 
@@ -341,7 +343,9 @@ impl StepExecutor {
         {
             drop(_guard);
             if let Some(waiter) = waiter {
-                waiter.wait_for_span_close(span.id()).await;
+                if let Some(span_id) = span.id() {
+                    waiter.wait_for_span_close(span_id).await;
+                }
             }
         }
 

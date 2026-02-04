@@ -20,7 +20,7 @@ impl HookExecutor {
     /// Runs a before hook if present.
     pub(super) async fn run_before_hook<W, Before>(
         hook: Option<&Before>,
-        _id: ScenarioId,
+        id: ScenarioId,
         feature: Source<gherkin::Feature>,
         rule: Option<Source<gherkin::Rule>>,
         scenario: Source<gherkin::Scenario>,
@@ -72,7 +72,9 @@ impl HookExecutor {
             {
                 drop(_guard);
                 if let Some(waiter) = waiter {
-                    waiter.wait_for_span_close(span.id()).await;
+                    if let Some(span_id) = span.id() {
+                        waiter.wait_for_span_close(span_id).await;
+                    }
                 }
             }
 
@@ -124,7 +126,7 @@ impl HookExecutor {
     /// Runs an after hook if present.
     pub(super) async fn run_after_hook<W, After>(
         hook: Option<&After>,
-        _id: ScenarioId,
+        id: ScenarioId,
         feature: Source<gherkin::Feature>,
         rule: Option<Source<gherkin::Rule>>,
         scenario: Source<gherkin::Scenario>,
@@ -164,7 +166,7 @@ impl HookExecutor {
             send_event(event.value);
 
             #[cfg(feature = "tracing")]
-            let span = _id.hook_span(HookType::After);
+            let span = id.hook_span(HookType::After);
             #[cfg(feature = "tracing")]
             let _guard = span.enter();
 
@@ -182,7 +184,9 @@ impl HookExecutor {
             {
                 drop(_guard);
                 if let Some(waiter) = waiter {
-                    waiter.wait_for_span_close(span.id()).await;
+                    if let Some(span_id) = span.id() {
+                        waiter.wait_for_span_close(span_id).await;
+                    }
                 }
             }
 
