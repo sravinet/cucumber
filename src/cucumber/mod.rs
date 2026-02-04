@@ -3,7 +3,7 @@
 //! [Cucumber]: https://cucumber.io
 
 // Core module must be first
-pub mod core;
+pub(crate) mod core;
 
 // Feature modules
 mod cli;

@@ -174,7 +174,7 @@ pub mod world;
 
 // Existing core modules
 pub mod cli;
-mod cucumber;
+pub mod cucumber;
 mod cucumber_ext;
 pub mod data_table;
 pub mod error;

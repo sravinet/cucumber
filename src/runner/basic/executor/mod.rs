@@ -11,7 +11,7 @@ mod events;
 mod hooks;
 mod steps;
 
-pub use core::Executor;
+pub(super) use core::Executor;
 
 #[cfg(test)]
 mod integration_tests {

@@ -58,7 +58,7 @@ type InsertedScenarios = HashMap<
 /// [`Feature`]: gherkin::Feature
 /// [`Scenario`]: gherkin::Scenario
 #[derive(Clone, Default)]
-pub struct Features {
+pub(super) struct Features {
     /// Storage itself.
     scenarios: Arc<Mutex<Scenarios>>,
 
@@ -74,7 +74,7 @@ impl Features {
     ///
     /// [`Feature`]: gherkin::Feature
     /// [`Scenario`]: gherkin::Scenario
-    pub async fn insert<Which>(
+    pub(super) async fn insert<Which>(
         &self,
         feature: gherkin::Feature,
         which_scenario: &Which,
@@ -122,7 +122,7 @@ impl Features {
     /// storage.
     ///
     /// [`Scenario`]: gherkin::Scenario
-    pub async fn insert_retried_scenario(
+    pub(super) async fn insert_retried_scenario(
         &self,
         feature: Source<gherkin::Feature>,
         rule: Option<Source<gherkin::Rule>>,
@@ -217,7 +217,7 @@ impl Features {
     /// all retried [`Scenario`]s.
     ///
     /// [`Scenario`]: gherkin::Scenario
-    pub async fn get(
+    pub(super) async fn get(
         &self,
         max_concurrent_scenarios: Option<usize>,
     ) -> (
@@ -291,7 +291,7 @@ impl Features {
     /// Marks that there will be no more [`Feature`]s to execute.
     ///
     /// [`Feature`]: gherkin::Feature
-    pub fn finish(&self) {
+    pub(super) fn finish(&self) {
         self.finished.store(true, Ordering::SeqCst);
     }
 
@@ -301,7 +301,7 @@ impl Features {
     /// be omitted.
     ///
     /// [`Feature`]: gherkin::Feature
-    pub async fn is_finished(&self, fail_fast: bool) -> bool {
+    pub(super) async fn is_finished(&self, fail_fast: bool) -> bool {
         self.finished.load(Ordering::SeqCst)
             && (fail_fast
                 || self.scenarios.lock().await.values().all(Vec::is_empty))
@@ -312,7 +312,7 @@ impl Features {
 /// [`Feature`]s.
 ///
 /// [`Feature`]: gherkin::Feature
-pub type FinishedFeaturesSender = mpsc::UnboundedSender<(
+pub(super) type FinishedFeaturesSender = mpsc::UnboundedSender<(
     ScenarioId,
     Source<gherkin::Feature>,
     Option<Source<gherkin::Rule>>,
@@ -324,7 +324,7 @@ pub type FinishedFeaturesSender = mpsc::UnboundedSender<(
 /// [`Feature`]s.
 ///
 /// [`Feature`]: gherkin::Feature
-pub type FinishedFeaturesReceiver = mpsc::UnboundedReceiver<(
+pub(super) type FinishedFeaturesReceiver = mpsc::UnboundedReceiver<(
     ScenarioId,
     Source<gherkin::Feature>,
     Option<Source<gherkin::Rule>>,
@@ -337,7 +337,7 @@ pub type FinishedFeaturesReceiver = mpsc::UnboundedReceiver<(
 ///
 /// [`Feature`]: gherkin::Feature
 /// [`Rule`]: gherkin::Rule
-pub struct FinishedRulesAndFeatures {
+pub(super) struct FinishedRulesAndFeatures {
     /// Number of finished [`Scenario`]s of [`Feature`].
     ///
     /// [`Feature`]: gherkin::Feature
@@ -363,7 +363,7 @@ pub struct FinishedRulesAndFeatures {
 
 impl FinishedRulesAndFeatures {
     /// Creates a new [`FinishedRulesAndFeatures`] store.
-    pub fn new(finished_receiver: FinishedFeaturesReceiver) -> Self {
+    pub(super) fn new(finished_receiver: FinishedFeaturesReceiver) -> Self {
         Self {
             features_scenarios_count: HashMap::new(),
             rule_scenarios_count: HashMap::new(),
@@ -377,7 +377,7 @@ impl FinishedRulesAndFeatures {
     /// [`Rule`]: gherkin::Rule
     /// [`Rule::Finished`]: event::Rule::Finished
     /// [`Scenario`]: gherkin::Scenario
-    pub fn rule_scenario_finished<W>(
+    pub(super) fn rule_scenario_finished<W>(
         &mut self,
         feature: Source<gherkin::Feature>,
         rule: Source<gherkin::Rule>,
@@ -406,7 +406,7 @@ impl FinishedRulesAndFeatures {
     /// [`Feature`]: gherkin::Feature
     /// [`Feature::Finished`]: event::Feature::Finished
     /// [`Scenario`]: gherkin::Scenario
-    pub fn feature_scenario_finished<W>(
+    pub(super) fn feature_scenario_finished<W>(
         &mut self,
         feature: Source<gherkin::Feature>,
         is_retried: bool,
@@ -432,7 +432,7 @@ impl FinishedRulesAndFeatures {
     ///
     /// [`Feature`]: gherkin::Feature
     /// [`Rule`]: gherkin::Rule
-    pub fn finish_all_rules_and_features<W>(
+    pub(super) fn finish_all_rules_and_features<W>(
         &mut self,
     ) -> impl Iterator<Item = event::Cucumber<W>> {
         self.rule_scenarios_count
@@ -454,7 +454,7 @@ impl FinishedRulesAndFeatures {
     /// [`Rule`]: gherkin::Rule
     /// [`Rule::Started`]: event::Rule::Started
     /// [`Scenario`]: gherkin::Scenario
-    pub fn start_scenarios<W, R>(
+    pub(super) fn start_scenarios<W, R>(
         &mut self,
         runnable: R,
     ) -> impl Iterator<Item = event::Cucumber<W>> + use<W, R>

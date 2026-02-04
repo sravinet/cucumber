@@ -25,7 +25,7 @@ use super::{events::EventSender, hooks::HookExecutor, steps::StepExecutor};
 ///
 /// [`Scenario`]: gherkin::Scenario
 #[cfg(not(feature = "observability"))]
-pub struct Executor<W, Before, After> {
+pub(crate) struct Executor<W, Before, After> {
     /// [`Step`]s [`Collection`].
     ///
     /// [`Collection`]: step::Collection
@@ -118,7 +118,7 @@ where
     ) -> LocalBoxFuture<'a, ()>,
 {
     /// Creates a new [`Executor`].
-    pub fn new(
+    pub(crate) fn new(
         collection: step::Collection<W>,
         before_hook: Option<Before>,
         after_hook: Option<After>,
@@ -163,7 +163,7 @@ where
     /// Runs a [`Scenario`] with the given [`ScenarioId`].
     ///
     /// [`Scenario`]: gherkin::Scenario
-    pub async fn run_scenario(
+    pub(crate) async fn run_scenario(
         &self,
         id: ScenarioId,
         feature: Source<gherkin::Feature>,
@@ -404,7 +404,7 @@ where
         };
 
         // Run after hook
-        let after_hook_error = HookExecutor::run_after_hook(
+        let after_hook_meta = HookExecutor::run_after_hook(
             self.after_hook.as_ref(),
             id,
             feature.clone(),
@@ -418,7 +418,9 @@ where
         )
         .await;
 
-        let is_failed = is_failed || after_hook_error.is_some();
+        // After hook meta contains timing information that can be used for future events
+        let _started_time = after_hook_meta.started;
+        let _finished_time = after_hook_meta.finished;
 
         // Send finished event
         let finished_event = event::Cucumber::scenario(
@@ -491,7 +493,7 @@ where
     }
 
     /// Sends a single event.
-    pub fn send_event(&self, event: event::Cucumber<W>) {
+    pub(crate) fn send_event(&self, event: event::Cucumber<W>) {
         // Send through normal channel
         let _event_wrapped = Event::new(event.clone());
         self.event_sender.send_event(event);
@@ -577,7 +579,7 @@ where
     }
 
     /// Sends multiple events.
-    pub fn send_all_events(
+    pub(crate) fn send_all_events(
         &self,
         events: impl IntoIterator<Item = event::Cucumber<W>>,
     ) {
