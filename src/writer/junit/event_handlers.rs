@@ -2,16 +2,15 @@
 
 use std::{fmt::Debug, io, mem, time::SystemTime};
 
-use junit_report::{Duration, TestSuiteBuilder};
+use junit_report::TestSuiteBuilder;
 
+use super::{
+    error_handler::ErrorHandler, test_case_builder::JUnitTestCaseBuilder,
+};
 use crate::{
     Event, World,
     event::{self, Scenario},
     writer::basic::trim_path,
-};
-
-use super::{
-    error_handler::ErrorHandler, test_case_builder::JUnitTestCaseBuilder,
 };
 
 /// Advice phrase to use in panic messages of incorrect [events][1] ordering.
@@ -147,14 +146,13 @@ mod tests {
     use gherkin::{Feature, LineCol, Scenario};
     use junit_report::Report;
 
+    use super::*;
     use crate::{
         Event,
         event::{self, Step},
         parser,
         writer::Verbosity,
     };
-
-    use super::*;
 
     #[derive(Debug)]
     struct TestWorld;

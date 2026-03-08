@@ -4,10 +4,9 @@ use futures::channel::mpsc;
 use tracing::{Dispatch, Subscriber};
 use tracing_subscriber::{
     Layer as _,
-    field::RecordFields,
     filter::LevelFilter,
     fmt::{
-        FmtContext, FormatEvent, FormatFields, MakeWriter,
+        FormatEvent, FormatFields,
         format::{self, Format},
     },
     layer::{Layered, SubscriberExt as _},
@@ -15,14 +14,13 @@ use tracing_subscriber::{
     util::SubscriberInitExt as _,
 };
 
-use crate::{Cucumber, Parser, Runner, World, Writer, runner};
-
 use super::{
     collector::Collector,
     formatter::{AppendScenarioMsg, SkipScenarioIdSpan},
     layer::RecordScenarioId,
     writer::CollectorWriter,
 };
+use crate::{Cucumber, Parser, Runner, World, Writer, runner};
 
 impl<W, P, I, Wr, Cli, WhichSc, Before, After>
     Cucumber<W, P, I, runner::Basic<W, WhichSc, Before, After>, Wr, Cli>
@@ -131,14 +129,15 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tracing_subscriber::fmt::format;
+
+    use super::*;
 
     #[derive(Debug, Default)]
     struct TestWorld;
 
     impl World for TestWorld {
-        type Error = ();
+        type Error = std::convert::Infallible;
 
         async fn new() -> Result<Self, Self::Error> {
             Ok(Self::default())
@@ -147,10 +146,11 @@ mod tests {
 
     #[test]
     fn test_init_tracing_returns_self() {
-        use crate::cucumber::DefaultCli;
-        use crate::cucumber::DefaultParser;
-        use crate::runner::Basic;
-        use crate::writer;
+        use crate::{
+            cucumber::{DefaultCli, DefaultParser},
+            runner::Basic,
+            writer,
+        };
 
         let cucumber: Cucumber<
             TestWorld,
@@ -167,10 +167,11 @@ mod tests {
 
     #[test]
     fn test_configure_and_init_tracing_accepts_custom_format() {
-        use crate::cucumber::DefaultCli;
-        use crate::cucumber::DefaultParser;
-        use crate::runner::Basic;
-        use crate::writer;
+        use crate::{
+            cucumber::{DefaultCli, DefaultParser},
+            runner::Basic,
+            writer,
+        };
 
         let cucumber: Cucumber<
             TestWorld,

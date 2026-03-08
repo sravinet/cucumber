@@ -5,7 +5,7 @@ use std::{fmt::Debug, io, mem, time::SystemTime};
 use junit_report::{Duration, TestCase, TestCaseBuilder};
 
 use crate::{
-    Event, World,
+    World,
     event::{self, Hook, HookType, Scenario, Step},
     writer::{
         Verbosity,
@@ -62,14 +62,16 @@ impl<W: World + Debug> JUnitTestCaseBuilder<W> {
         Duration::try_from(ended_at.duration_since(started_at).unwrap_or_else(
             |e| {
                 panic!(
-                    "failed to compute duration between {ended_at:?} and \
+                    "failed to compute duration for scenario '{}' between {ended_at:?} and \
                      {started_at:?}: {e}",
+                    sc.name
                 )
             },
         ))
         .unwrap_or_else(|e| {
             panic!(
-                "cannot convert `std::time::Duration` to `time::Duration`: {e}",
+                "cannot convert `std::time::Duration` to `time::Duration` for scenario '{}': {e}",
+                sc.name
             )
         })
     }
@@ -203,13 +205,12 @@ mod tests {
     use gherkin::{Feature, LineCol, Scenario};
     use junit_report::Duration;
 
+    use super::*;
     use crate::{
         Event,
         event::{self, Hook, HookType, Step, StepError},
         writer::Verbosity,
     };
-
-    use super::*;
 
     #[derive(Debug)]
     struct TestWorld;

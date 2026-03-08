@@ -13,7 +13,7 @@
 use std::{mem, time::SystemTime};
 
 use crate::{
-    event::{self, HookType, Metadata, Scenario},
+    event::{self, Scenario},
     writer::{
         basic::coerce_error,
         common::{StepContext, WriterStats},
@@ -321,12 +321,14 @@ impl Default for EventHandler {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::event::{Hook, HookType, Step};
+    use std::{path::PathBuf, time::SystemTime};
+
     use gherkin::{
         Feature as GherkinFeature, LineCol, Scenario as GherkinScenario,
     };
-    use std::{path::PathBuf, time::SystemTime};
+
+    use super::*;
+    use crate::event::{Hook, HookType, Step};
 
     fn create_test_feature() -> GherkinFeature {
         GherkinFeature {

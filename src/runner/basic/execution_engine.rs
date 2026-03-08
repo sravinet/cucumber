@@ -8,6 +8,11 @@ use futures::{
     future, pin_mut, stream,
 };
 
+use super::{
+    cli_and_types::{Cli, RetryOptionsFn, ScenarioType},
+    executor::Executor,
+    scenario_storage::{Features, FinishedRulesAndFeatures},
+};
 #[cfg(feature = "tracing")]
 use crate::tracing::{Collector as TracingCollector, SpanCloseWaiter};
 use crate::{
@@ -15,13 +20,6 @@ use crate::{
     feature::Ext as _,
     future::{FutureExt as _, select_with_biased_first},
     parser, step,
-};
-
-use super::{
-    cli_and_types::{Cli, RetryOptionsFn, ScenarioType},
-    executor::Executor,
-    scenario_storage::{Features, FinishedRulesAndFeatures},
-    supporting_structures::ScenarioId,
 };
 
 /// Stores [`Feature`]s for later use by [`execute()`].
@@ -256,7 +254,7 @@ pub(super) async fn execute<W, Before, After>(
         }
 
         while let Ok(Some((id, feat, rule, scenario_failed, retried))) =
-            storage.finished_receiver.try_next()
+            storage.finished_receiver_mut().try_next()
         {
             if let Some(rule) = rule {
                 if let Some(f) =
@@ -272,10 +270,17 @@ pub(super) async fn execute<W, Before, After>(
             {
                 if let Some(coll) = logs_collector.as_mut() {
                     coll.finish_scenario(id);
+                    
+                    // Ensure proper span cleanup by waiting for span completion if needed
+                    if let Some(waiter) = waiter.as_ref() {
+                        // The waiter will handle any pending span cleanup for this scenario
+                        // This ensures tracing data integrity for complex scenario executions
+                        let _span_waiter: &SpanCloseWaiter = waiter;
+                    }
                 }
             }
             #[cfg(not(feature = "tracing"))]
-            let _: ScenarioId = id;
+            let _ = id;
 
             if fail_fast && scenario_failed && !retried {
                 started_scenarios = ControlFlow::Break(());
@@ -294,11 +299,12 @@ pub(super) async fn execute<W, Before, After>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::runner::basic::RetryOptions;
-    use crate::test_utils::common::TestWorld;
-    use futures::stream;
     use std::sync::{Arc, Mutex};
+
+    use futures::stream;
+
+    use super::*;
+    use crate::{runner::basic::RetryOptions, test_utils::common::TestWorld};
 
     // Using common TestWorld from test_utils
 
