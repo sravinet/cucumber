@@ -25,7 +25,6 @@ pub use gherkin;
 #[cfg(feature = "macros")]
 #[doc(inline)]
 pub use crate::codegen::Parameter;
-
 // Core internal module re-exports
 #[doc(inline)]
 pub use crate::{
@@ -44,13 +43,18 @@ pub use crate::{
 
 /// Type alias for the default Cucumber instance when macros feature is enabled.
 #[cfg(feature = "macros")]
-pub type DefaultCucumber<W, I> = crate::cucumber::DefaultCucumber<W, I>;
+pub type DefaultCucumber<W, I> = super::cucumber::DefaultCucumber<W, I>;
 
 /// Re-export of the Future trait for async operations.
 pub use std::future::Future;
 
 /// Provides convenient access to commonly used types in one import.
 pub mod prelude {
+    #[cfg(feature = "macros")]
+    pub use cucumber_codegen::{Parameter, World, given, then, when};
+
+    #[cfg(feature = "macros")]
+    pub use crate::codegen::Parameter;
     pub use crate::{
         cucumber::Cucumber,
         error::{CucumberError, Result},
@@ -64,33 +68,31 @@ pub mod prelude {
             Stats as StatsWriter, Writer,
         },
     };
-
-    #[cfg(feature = "macros")]
-    pub use cucumber_codegen::{Parameter, World, given, then, when};
-
-    #[cfg(feature = "macros")]
-    pub use crate::codegen::Parameter;
 }
 
 /// Provides version information about the cucumber crate.
 pub mod version {
     /// Returns the version of the cucumber crate.
+    #[must_use]
     pub const fn version() -> &'static str {
         env!("CARGO_PKG_VERSION")
     }
 
     /// Returns the name of the cucumber crate.
+    #[must_use]
     pub const fn name() -> &'static str {
         env!("CARGO_PKG_NAME")
     }
 
     /// Returns the description of the cucumber crate.
+    #[must_use]
     pub const fn description() -> &'static str {
         env!("CARGO_PKG_DESCRIPTION")
     }
 
     /// Returns a formatted version string.
-    pub fn version_string() -> String {
+    #[must_use]
+    pub fn display_string() -> String {
         format!("{} v{}", name(), version())
     }
 }

@@ -13,15 +13,15 @@
 //! This module contains the core World trait that represents shared user-defined
 //! state for Cucumber test runs, along with its associated methods and functionality.
 
-use std::{fmt::Display, future::Future};
-
 #[cfg(feature = "macros")]
 use std::{fmt::Debug, path::Path};
+use std::{fmt::{Display, Formatter, Result as FmtResult}, future::Future, error::Error, result::Result};
 
 #[cfg(feature = "macros")]
 use crate::{
     codegen::{StepConstructor as _, WorldInventory},
     cucumber::DefaultCucumber,
+    step::Collection,
 };
 
 /// Represents a shared user-defined state for a [Cucumber] run.
@@ -41,17 +41,17 @@ pub trait World: Sized + 'static {
     type Error: Display;
 
     /// Creates a new [`World`] instance.
-    fn new() -> impl Future<Output = std::result::Result<Self, Self::Error>>;
+    fn new() -> impl Future<Output = Result<Self, Self::Error>>;
 
     #[cfg(feature = "macros")]
     /// Returns runner for tests with auto-wired steps marked by [`given`],
     /// [`when`] and [`then`] attributes.
     #[must_use]
-    fn collection() -> crate::step::Collection<Self>
+    fn collection() -> Collection<Self>
     where
         Self: Debug + WorldInventory,
     {
-        let mut out = crate::step::Collection::new();
+        let mut out = Collection::new();
 
         for given in inventory::iter::<Self::Given> {
             let (loc, regex, fun) = given.inner();
@@ -131,18 +131,19 @@ pub trait World: Sized + 'static {
 
 /// A simple error type for World creation failures.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[expect(clippy::module_name_repetitions, reason = "WorldError is a descriptive name for this module")]
 pub struct WorldError {
     /// The error message.
     pub message: String,
 }
 
 impl Display for WorldError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "World creation error: {}", self.message)
     }
 }
 
-impl std::error::Error for WorldError {}
+impl Error for WorldError {}
 
 impl WorldError {
     /// Creates a new WorldError with the given message.

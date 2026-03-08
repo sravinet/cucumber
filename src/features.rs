@@ -36,17 +36,23 @@ pub mod test_deps {
 }
 
 /// Checks if the "macros" feature is enabled at compile time.
+#[must_use]
 pub const fn has_macros_feature() -> bool {
     cfg!(feature = "macros")
 }
 
 /// Checks if the "tracing" feature is enabled at compile time.
+#[must_use]
 pub const fn has_tracing_feature() -> bool {
     cfg!(feature = "tracing")
 }
 
 /// Returns a list of enabled features as a static string slice.
-pub fn enabled_features() -> &'static [&'static str] {
+/// 
+/// This can be evaluated at compile time, providing zero-runtime-cost
+/// feature detection for conditional behavior.
+#[must_use]
+pub const fn enabled() -> &'static [&'static str] {
     &[
         #[cfg(feature = "macros")]
         "macros",
@@ -56,10 +62,11 @@ pub fn enabled_features() -> &'static [&'static str] {
 }
 
 /// Returns a formatted string describing all enabled features.
-pub fn features_summary() -> String {
-    let features = enabled_features();
+#[must_use]
+pub fn summary() -> String {
+    let features = enabled();
     if features.is_empty() {
-        "No optional features enabled".to_string()
+        "No optional features enabled".to_owned()
     } else {
         format!("Enabled features: {}", features.join(", "))
     }
