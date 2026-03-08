@@ -4,8 +4,9 @@
 //! location where step functions are defined, which is automatically
 //! filled by proc macros.
 
-use derive_more::with_trait::{Debug, Display};
 use std::hash::Hash;
+
+use derive_more::with_trait::{Debug, Display};
 
 /// Location of a [`Step`] [`fn`] automatically filled by a proc macro.
 #[derive(Clone, Copy, Debug, Display, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -70,8 +71,9 @@ impl Location {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::{HashMap, HashSet};
+
+    use super::*;
 
     #[test]
     fn location_new_creates_location() {

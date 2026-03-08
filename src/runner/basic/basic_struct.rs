@@ -9,14 +9,13 @@ use futures::future::LocalBoxFuture;
 use gherkin::tagexpr::TagOperation;
 use regex::Regex;
 
-#[cfg(feature = "tracing")]
-use crate::tracing::Collector as TracingCollector;
-use crate::{Step, event, step};
-
 use super::cli_and_types::{
     AfterHookFn, BeforeHookFn, Cli, RetryOptions, RetryOptionsFn, ScenarioType,
     WhichScenarioFn,
 };
+#[cfg(feature = "tracing")]
+use crate::tracing::Collector as TracingCollector;
+use crate::{Step, event, step};
 
 /// Default [`Runner`] implementation which follows [_order guarantees_][1] from
 /// the [`Runner`] trait docs.
@@ -513,8 +512,7 @@ impl<World, Which, Before, After> Basic<World, Which, Before, After> {
     /// # use cucumber::runner::Basic;
     /// # #[cfg(feature = "observability")]
     /// # fn example<W: cucumber::World>() {
-    /// let runner = Basic::<W>::default()
-    ///     .register_observer(Box::new(my_observer));
+    /// let runner = Basic::<W>::default().register_observer(Box::new(my_observer));
     /// # }
     /// ```
     #[cfg(feature = "observability")]
@@ -789,8 +787,10 @@ mod tests {
         assert!(Arc::strong_count(&basic.observers) >= 1);
 
         // Test register_observer
-        use crate::Event;
-        use crate::observer::{ObservationContext, TestObserver};
+        use crate::{
+            Event,
+            observer::{ObservationContext, TestObserver},
+        };
 
         struct MockObserver;
         impl TestObserver<TestWorld> for MockObserver {

@@ -2,9 +2,8 @@
 
 use std::{borrow::Cow, path::Path};
 
-use crate::{Runner, World, Writer, parser};
-
 use super::core::Cucumber;
+use crate::{Runner, World, Writer, parser};
 
 impl<W, I, R, Wr, Cli> Cucumber<W, parser::Basic, I, R, Wr, Cli>
 where

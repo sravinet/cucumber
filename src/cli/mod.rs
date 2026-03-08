@@ -33,7 +33,6 @@ mod opts;
 
 // Re-exports for backward compatibility and ease of use
 pub use clap::{Args, Parser};
-
 pub use colored::Colored;
 pub use compose::{Compose, Empty};
 pub use opts::Opts;

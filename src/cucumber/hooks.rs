@@ -4,9 +4,8 @@ use std::marker::PhantomData;
 
 use futures::future::LocalBoxFuture;
 
-use crate::{Parser, World, Writer, event, runner};
-
 use super::core::Cucumber;
+use crate::{Parser, World, Writer, event, runner};
 
 impl<W, I, P, Wr, F, B, A, Cli>
     Cucumber<W, P, I, runner::Basic<W, F, B, A>, Wr, Cli>

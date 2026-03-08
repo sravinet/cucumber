@@ -14,6 +14,12 @@ use std::{fmt::Debug, io, iter, mem};
 
 use either::Either;
 
+use super::{
+    cli::Cli,
+    json_events::{LibTestJsonEvent, SuiteEvent, SuiteResults, TestEvent},
+    utils::LibtestUtils,
+    writer::Libtest,
+};
 use crate::{
     Event, World,
     event::{self, Retries},
@@ -22,13 +28,6 @@ use crate::{
         basic::{coerce_error, trim_path},
         out::WriteStrExt as _,
     },
-};
-
-use super::{
-    cli::Cli,
-    json_events::{LibTestJsonEvent, SuiteEvent, SuiteResults, TestEvent},
-    utils::LibtestUtils,
-    writer::Libtest,
 };
 
 impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
@@ -397,12 +396,19 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::{Duration, SystemTime};
+
+    use super::*;
 
     #[derive(Debug)]
     struct MockWorld;
-    impl World for MockWorld {}
+    impl World for MockWorld {
+        type Error = std::convert::Infallible;
+
+        async fn new() -> Result<Self, Self::Error> {
+            Ok(Self)
+        }
+    }
 
     mod cucumber_event_tests {
         use super::*;

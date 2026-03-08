@@ -213,7 +213,7 @@ fn test_public_exports() {
 #[test]
 fn test_conditional_exports_json() {
     // Test that Json is available when feature is enabled
-    let _: Json<std::io::Stdout> = Json::stdout();
+    let _ = Json::stdout::<TestWorld>();
 }
 
 #[cfg(feature = "output-junit")]

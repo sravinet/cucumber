@@ -14,17 +14,16 @@ use std::{
 use futures::{channel::mpsc, lock::Mutex};
 use itertools::Itertools as _;
 
-use crate::{
-    event::{self, source::Source},
-    feature::Ext as _,
-};
-
 use super::{
     cli_and_types::{
         Cli, RetryOptions, RetryOptionsFn, RetryOptionsWithDeadline,
         ScenarioType,
     },
     supporting_structures::{IsFailed, IsRetried, ScenarioId},
+};
+use crate::{
+    event::{self, source::Source},
+    feature::Ext as _,
 };
 
 /// [`Scenario`]s storage.
@@ -358,7 +357,7 @@ pub(super) struct FinishedRulesAndFeatures {
     /// Receiver for notifying state of [`Scenario`]s completion.
     ///
     /// [`Scenario`]: gherkin::Scenario
-    pub finished_receiver: FinishedFeaturesReceiver,
+    finished_receiver: FinishedFeaturesReceiver,
 }
 
 impl FinishedRulesAndFeatures {
@@ -369,6 +368,11 @@ impl FinishedRulesAndFeatures {
             rule_scenarios_count: HashMap::new(),
             finished_receiver,
         }
+    }
+    
+    /// Returns a mutable reference to the finished receiver for scenario completion notifications.
+    pub(super) fn finished_receiver_mut(&mut self) -> &mut FinishedFeaturesReceiver {
+        &mut self.finished_receiver
     }
 
     /// Marks [`Rule`]'s [`Scenario`] as finished and returns [`Rule::Finished`]
@@ -513,11 +517,15 @@ impl FinishedRulesAndFeatures {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::runner::basic::{Cli, RetryOptions, RetryOptionsFn};
-    use crate::test_utils::common::TestWorld;
-    use futures::channel::mpsc;
     use std::sync::Arc;
+
+    use futures::channel::mpsc;
+
+    use super::*;
+    use crate::{
+        runner::basic::{Cli, RetryOptions, RetryOptionsFn},
+        test_utils::common::TestWorld,
+    };
 
     #[tokio::test]
     async fn test_features_empty() {

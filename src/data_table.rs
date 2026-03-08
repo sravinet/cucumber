@@ -13,8 +13,7 @@
 //! This module provides a [`DataTable`] type that offers a rich API
 //! for working with Gherkin data tables, similar to cucumber-js.
 
-use std::collections::HashMap;
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
 /// A data table from a Gherkin step.
 ///
@@ -41,6 +40,10 @@ use std::fmt;
 /// ```
 #[derive(Clone, Debug, PartialEq)]
 pub struct DataTable {
+    /// Raw table data as a 2D vector of strings
+    /// 
+    /// Contains all rows including headers (if present). Each inner vector
+    /// represents a row of cells in the table.
     rows: Vec<Vec<String>>,
 }
 
@@ -58,7 +61,7 @@ impl DataTable {
     /// ]);
     /// ```
     #[must_use]
-    pub fn new(rows: Vec<Vec<String>>) -> Self {
+    pub const fn new(rows: Vec<Vec<String>>) -> Self {
         Self { rows }
     }
 
@@ -77,10 +80,7 @@ impl DataTable {
     /// ```rust
     /// use cucumber::DataTable;
     ///
-    /// let table = DataTable::from(vec![
-    ///     vec!["name", "age"],
-    ///     vec!["Alice", "30"],
-    /// ]);
+    /// let table = DataTable::from(vec![vec!["name", "age"], vec!["Alice", "30"]]);
     ///
     /// let raw = table.raw();
     /// assert_eq!(raw.len(), 2);
@@ -268,7 +268,7 @@ impl DataTable {
 
     /// Checks if the table is empty.
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.rows.is_empty()
     }
 

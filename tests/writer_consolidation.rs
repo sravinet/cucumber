@@ -119,8 +119,9 @@ mod context_integration_tests {
 // Test error consolidation integration
 #[test]
 fn error_handling_consolidation_works() {
-    use cucumber::error::WriterError;
     use std::io;
+
+    use cucumber::error::WriterError;
 
     // Test WriterError creation from io::Error
     let io_err = io::Error::new(io::ErrorKind::BrokenPipe, "test error");
@@ -137,8 +138,9 @@ fn error_handling_consolidation_works() {
 
 #[test]
 fn error_handling_fmt_error_conversion() {
-    use cucumber::error::WriterError;
     use std::fmt;
+
+    use cucumber::error::WriterError;
 
     let fmt_err = fmt::Error;
     let writer_err = WriterError::from(fmt_err);

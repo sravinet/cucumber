@@ -8,12 +8,12 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! Extended `#[given]`, `#[when]` and `#[then]` attribute macros with DataTable support.
+//! Extended `#[given]`, `#[when]` and `#[then]` attribute macros with `DataTable` support.
 
 use proc_macro2::TokenStream;
 use quote::quote;
 
-/// Information about a DataTable parameter in a step function.
+/// Information about a `DataTable` parameter in a step function.
 #[derive(Clone, Debug)]
 pub(crate) struct DataTableParam {
     /// Name of the parameter.
@@ -21,11 +21,11 @@ pub(crate) struct DataTableParam {
     /// Whether it's optional (Option<DataTable>).
     pub is_optional: bool,
     /// Position in the function arguments.
-    #[allow(dead_code)]
+    // TODO: Implement DataTable position validation - ensure DataTable params are at correct positions
     pub position: usize,
 }
 
-/// Detects DataTable parameters in a function signature.
+/// Detects `DataTable` parameters in a function signature.
 pub(crate) fn detect_table_param(func: &syn::ItemFn) -> Option<DataTableParam> {
     func.sig
         .inputs
@@ -36,7 +36,6 @@ pub(crate) fn detect_table_param(func: &syn::ItemFn) -> Option<DataTableParam> {
             if let syn::FnArg::Typed(pat_type) = arg {
                 if let syn::Pat::Ident(pat_ident) = &*pat_type.pat {
                     let ident = &pat_ident.ident;
-                    
                     // Check if this is a DataTable or Option<DataTable>
                     if is_data_table_type(&pat_type.ty) {
                         return Some(DataTableParam {
@@ -51,7 +50,7 @@ pub(crate) fn detect_table_param(func: &syn::ItemFn) -> Option<DataTableParam> {
         })
 }
 
-/// Checks if a function argument is a DataTable type.
+/// Checks if a function argument is a `DataTable` type.
 pub(crate) fn is_data_table_type_from_arg(arg: &syn::FnArg) -> bool {
     if let syn::FnArg::Typed(pat_type) = arg {
         is_data_table_type(&pat_type.ty)
@@ -60,7 +59,7 @@ pub(crate) fn is_data_table_type_from_arg(arg: &syn::FnArg) -> bool {
     }
 }
 
-/// Checks if a type is DataTable.
+/// Checks if a type is `DataTable`.
 fn is_data_table_type(ty: &syn::Type) -> bool {
     match ty {
         syn::Type::Path(type_path) => {
@@ -70,7 +69,11 @@ fn is_data_table_type(ty: &syn::Type) -> bool {
             }
             false
         }
-        _ => false,
+        syn::Type::Array(_) | syn::Type::BareFn(_) | syn::Type::Group(_) 
+        | syn::Type::ImplTrait(_) | syn::Type::Infer(_) | syn::Type::Macro(_) 
+        | syn::Type::Never(_) | syn::Type::Paren(_) | syn::Type::Ptr(_) 
+        | syn::Type::Reference(_) | syn::Type::Slice(_) | syn::Type::TraitObject(_) 
+        | syn::Type::Tuple(_) | syn::Type::Verbatim(_) | _ => false,
     }
 }
 
@@ -82,15 +85,13 @@ pub(crate) fn is_option_data_table(ty: &syn::Type) -> bool {
                 if let syn::PathArguments::AngleBracketed(args) =
                     &segment.arguments
                 {
-                    if let Some(syn::GenericArgument::Type(inner_ty)) =
+                    if let Some(syn::GenericArgument::Type(syn::Type::Path(inner_path))) =
                         args.args.first()
                     {
-                        if let syn::Type::Path(inner_path) = inner_ty {
-                            if let Some(inner_segment) =
-                                inner_path.path.segments.last()
-                            {
-                                return inner_segment.ident == "DataTable";
-                            }
+                        if let Some(inner_segment) =
+                            inner_path.path.segments.last()
+                        {
+                            return inner_segment.ident == "DataTable";
                         }
                     }
                 }
@@ -100,7 +101,21 @@ pub(crate) fn is_option_data_table(ty: &syn::Type) -> bool {
     false
 }
 
-/// Generates code to inject a DataTable parameter.
+/// Validates that `DataTable` parameters are in allowed positions.
+/// `DataTable` parameters should typically come after world and step context parameters.
+pub(crate) fn validate_table_position(table_param: &DataTableParam) -> syn::Result<()> {
+    // Position 0 is world, position 1+ are step parameters
+    // DataTable should be in position 1 or later
+    if table_param.position == 0 {
+        return Err(syn::Error::new_spanned(
+            &table_param.ident,
+            "DataTable parameter cannot be in world position (first parameter)"
+        ));
+    }
+    Ok(())
+}
+
+/// Generates code to inject a `DataTable` parameter.
 pub(crate) fn generate_table_injection(
     table_param: &DataTableParam,
     func_name: &syn::Ident,
@@ -131,8 +146,9 @@ pub(crate) fn generate_table_injection(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_detect_data_table() {

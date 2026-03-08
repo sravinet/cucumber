@@ -121,8 +121,9 @@ pub trait Stats<World>: Writer<World> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::future;
+
+    use super::*;
 
     #[derive(Debug, Default)]
     struct MockWorld;

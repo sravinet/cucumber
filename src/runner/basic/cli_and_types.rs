@@ -284,8 +284,9 @@ pub type AfterHookFn<World> = for<'a> fn(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::thread;
+
+    use super::*;
 
     #[test]
     fn test_cli_default() {

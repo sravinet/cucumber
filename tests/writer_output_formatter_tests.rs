@@ -1,8 +1,11 @@
 //! Output formatter edge case and error handling tests.
 
-use cucumber::error::WriterError;
-use cucumber::writer::{CommonWriterExt, OutputFormatter};
 use std::io::{self, Write};
+
+use cucumber::{
+    error::WriterError,
+    writer::{CommonWriterExt, OutputFormatter},
+};
 
 /// Mock writer that can simulate different failure modes
 struct FailingWriter {

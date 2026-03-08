@@ -1,7 +1,6 @@
 //! Extensions to Cucumber for better integration with external systems
 
-use crate::runner::Basic;
-use crate::{Cucumber, Parser, World, Writer};
+use crate::{Cucumber, Parser, World, Writer, runner::Basic};
 
 impl<W, P, I, Wr, Cli> Cucumber<W, P, I, Basic<W>, Wr, Cli>
 where
@@ -22,8 +21,8 @@ where
     /// # struct TestWorld;
     /// # #[cfg(feature = "observability")]
     /// # async fn example() {
-    /// let cucumber = TestWorld::cucumber()
-    ///     .register_observer(Box::new(my_observer));
+    /// let cucumber =
+    ///     TestWorld::cucumber().register_observer(Box::new(my_observer));
     /// # }
     /// ```
     #[cfg(feature = "observability")]

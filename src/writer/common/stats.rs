@@ -97,6 +97,45 @@ impl WriterStats {
     pub fn total_steps(&self) -> usize {
         self.passed_steps + self.skipped_steps + self.failed_steps
     }
+    
+    /// Gets the number of passed steps.
+    #[must_use]
+    pub fn passed(&self) -> usize {
+        self.passed_steps
+    }
+    
+    /// Gets the number of failed steps.
+    #[must_use]
+    pub fn failed(&self) -> usize {
+        self.failed_steps
+    }
+    
+    /// Gets the number of skipped steps.
+    #[must_use]
+    pub fn skipped(&self) -> usize {
+        self.skipped_steps
+    }
+    
+    /// Gets the total number of steps (alias for total_steps).
+    #[must_use]
+    pub fn total(&self) -> usize {
+        self.total_steps()
+    }
+    
+    /// Increments passed step count (alias for record_passed_step).
+    pub fn increment_passed(&mut self) {
+        self.record_passed_step()
+    }
+    
+    /// Increments failed step count (alias for record_failed_step).
+    pub fn increment_failed(&mut self) {
+        self.record_failed_step()
+    }
+    
+    /// Increments skipped step count (alias for record_skipped_step).
+    pub fn increment_skipped(&mut self) {
+        self.record_skipped_step()
+    }
 }
 
 #[cfg(test)]

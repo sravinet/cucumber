@@ -1,10 +1,13 @@
 //! Tests for Basic runner RetryOptions parsing functionality.
 
-use cucumber::event::Retries;
-use cucumber::runner::basic::{Cli, RetryOptions};
+use std::time::Duration;
+
+use cucumber::{
+    event::Retries,
+    runner::basic::{Cli, RetryOptions},
+};
 use gherkin::GherkinEnv;
 use humantime::parse_duration;
-use std::time::Duration;
 
 mod scenario_tags {
     use super::*;

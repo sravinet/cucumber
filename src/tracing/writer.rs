@@ -1,7 +1,8 @@
 //! Writer implementation for collecting tracing events and sending them to the collector.
 
-use futures::channel::mpsc;
 use std::io;
+
+use futures::channel::mpsc;
 use tracing_subscriber::fmt::MakeWriter;
 
 use super::{
@@ -12,6 +13,7 @@ use crate::runner::basic::ScenarioId;
 
 /// [`io::Write`]r sending [`tracing::Event`]s to a `Collector`.
 #[derive(Clone, Debug)]
+#[expect(clippy::module_name_repetitions, reason = "Writer suffix is conventional for this pattern")]
 pub struct CollectorWriter {
     /// Sender for notifying the [`Collector`] about [`tracing::Event`]s.
     ///
@@ -21,6 +23,7 @@ pub struct CollectorWriter {
 
 impl CollectorWriter {
     /// Creates a new [`CollectorWriter`].
+    #[must_use]
     pub const fn new(sender: LogSender) -> Self {
         Self { sender }
     }
@@ -82,9 +85,11 @@ impl io::Write for CollectorWriter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use futures::TryStreamExt;
     use std::io::Write;
+
+    use futures::TryStreamExt;
+
+    use super::*;
 
     #[test]
     fn test_collector_writer_creation() {

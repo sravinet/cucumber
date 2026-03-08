@@ -26,22 +26,19 @@ pub mod writer;
 
 // Re-export public types for backward compatibility
 pub use collector::Collector;
+// Re-export suffix constants for parsing
+pub use formatter::suffix;
 pub use formatter::{AppendScenarioMsg, SkipScenarioIdSpan};
 pub use layer::RecordScenarioId;
-pub use waiter::SpanCloseWaiter;
-pub use writer::CollectorWriter;
-
 // Re-export commonly used type aliases
 pub use types::{
     Callback, IsReceived, LogMessage, LogReceiver, LogSender, Scenarios,
     SpanCloseReceiver, SpanCloseSender, SpanEventsCallbacks,
 };
-
 // Re-export visitor types for advanced usage
 pub use visitor::{GetScenarioId, IsScenarioIdSpan};
-
-// Re-export suffix constants for parsing
-pub use formatter::suffix;
+pub use waiter::SpanCloseWaiter;
+pub use writer::CollectorWriter;
 
 #[cfg(test)]
 mod tests {
@@ -50,29 +47,48 @@ mod tests {
     #[test]
     fn test_public_types_accessible() {
         // Test that all main types are accessible
-        use futures::channel::mpsc;
         use std::collections::HashMap;
 
-        let _scenarios: Scenarios = HashMap::new();
-        let _span_events: SpanEventsCallbacks = HashMap::new();
+        use futures::channel::mpsc;
 
-        let (log_sender, _log_receiver): (LogSender, LogReceiver) =
+        let scenarios: Scenarios = HashMap::new();
+        let span_events: SpanEventsCallbacks = HashMap::new();
+        
+        // Validate that collections can be used
+        assert!(scenarios.is_empty());
+        assert!(span_events.is_empty());
+
+        let (log_sender, log_receiver): (LogSender, LogReceiver) =
             mpsc::unbounded();
-        let (span_sender, _span_receiver): (
+        let (span_sender, span_receiver): (
             SpanCloseSender,
             SpanCloseReceiver,
         ) = mpsc::unbounded();
 
-        let _collector = Collector::new(_log_receiver, _span_receiver);
-        let _waiter = SpanCloseWaiter::new(mpsc::unbounded().0);
-        let _layer = RecordScenarioId::new(span_sender);
-        let _writer = CollectorWriter::new(log_sender);
+        let collector = Collector::new(log_receiver, span_receiver);
+        let waiter = SpanCloseWaiter::new(mpsc::unbounded().0);
+        let layer = RecordScenarioId::new(span_sender);
+        let writer = CollectorWriter::new(log_sender);
+        
+        // Validate that the tracing components can be used
+        let _scenario_waiter = collector.scenario_span_event_waiter();
+        let _cloned_waiter = waiter.clone();
+        
+        // Test that writer implements expected traits
+        use std::fmt::Debug;
+        fn verify_debug<T: Debug>(_item: &T) -> bool { true }
+        assert!(verify_debug(&layer));
+        assert!(verify_debug(&writer));
     }
 
     #[test]
     fn test_visitor_types_accessible() {
-        let _get_visitor = GetScenarioId::new();
-        let _is_visitor = IsScenarioIdSpan::new();
+        let get_visitor = GetScenarioId::new();
+        let is_visitor = IsScenarioIdSpan::new();
+        
+        // Validate that visitors can be used for their intended purpose
+        assert!(get_visitor.get_scenario_id().is_none()); // Initially no ID
+        assert!(!is_visitor.is_scenario_span()); // Initially not a scenario span
     }
 
     #[test]
@@ -113,8 +129,9 @@ mod tests {
 
     #[test]
     fn test_integration_types_compatibility() {
-        use crate::runner::basic::ScenarioId;
         use futures::channel::mpsc;
+
+        use crate::runner::basic::ScenarioId;
 
         // Test that types work together as expected
         let (log_sender, log_receiver) = mpsc::unbounded();

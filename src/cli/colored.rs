@@ -36,8 +36,7 @@ pub trait Colored {
     /// # Examples
     ///
     /// ```rust
-    /// use cucumber::cli::Colored;
-    /// use cucumber::writer::Coloring;
+    /// use cucumber::{cli::Colored, writer::Coloring};
     ///
     /// #[derive(clap::Args)]
     /// struct MyCli {
@@ -47,11 +46,7 @@ pub trait Colored {
     ///
     /// impl Colored for MyCli {
     ///     fn coloring(&self) -> Coloring {
-    ///         if self.force_color {
-    ///             Coloring::Always
-    ///         } else {
-    ///             Coloring::Auto
-    ///         }
+    ///         if self.force_color { Coloring::Always } else { Coloring::Auto }
     ///     }
     /// }
     /// ```
@@ -65,8 +60,9 @@ pub trait Colored {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use clap::Args;
+
+    use super::*;
 
     #[derive(Debug, Default, Clone, Args)]
     struct TestCliNever;

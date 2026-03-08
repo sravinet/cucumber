@@ -2,11 +2,10 @@
 
 use std::marker::PhantomData;
 
+use super::core::Cucumber;
 use crate::{
     Event, Parser, Runner, World, Writer, WriterExt as _, event, parser, writer,
 };
-
-use super::core::Cucumber;
 
 impl<W, P, I, R, Wr, Cli> Cucumber<W, P, I, R, Wr, Cli>
 where

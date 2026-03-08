@@ -73,8 +73,9 @@ impl fmt::Display for AmbiguousMatchError {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use regex::Regex;
+
+    use super::*;
 
     fn create_test_matches() -> Vec<(HashableRegex, Option<Location>)> {
         vec![

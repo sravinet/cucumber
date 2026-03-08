@@ -4,14 +4,13 @@ use std::panic::AssertUnwindSafe;
 
 use futures::FutureExt as _;
 
+use super::super::supporting_structures::{
+    AfterHookEventsMeta, ExecutionFailure, ScenarioId, coerce_into_info,
+};
 use crate::{
     Event, World,
     event::{self, source::Source},
     step,
-};
-
-use super::super::supporting_structures::{
-    AfterHookEventsMeta, ExecutionFailure, ScenarioId, coerce_into_info,
 };
 
 /// Step execution functionality for the Executor.
@@ -56,7 +55,7 @@ impl StepExecutor {
         }
 
         // 2. Add rule-level background steps (if any)
-        if let Some(ref rule) = rule {
+        if let Some(rule) = &rule {
             if let Some(background) = &rule.background {
                 for step in &background.steps {
                     all_steps.push((step.clone(), true)); // true = background step
@@ -134,11 +133,47 @@ impl StepExecutor {
                     // But we need to handle it for exhaustive matching
                 }
                 event::Step::Passed { .. } => _passed_steps += 1,
-                event::Step::Skipped => skipped_steps += 1,
+                event::Step::Skipped => {
+                    skipped_steps += 1;
+                    
+                    // Create execution failure for potential recovery handling
+                    let _failure = Self::create_step_skipped_failure::<W>(None);
+                    #[cfg(feature = "tracing")]
+                    tracing::debug!(
+                        scenario_id = ?id,
+                        step_text = %step.value,
+                        "Step was skipped in scenario execution"
+                    );
+                }
                 event::Step::Failed { captures, location, error, .. } => {
                     _failed_steps += 1;
                     step_failed = true;
-                    last_failure = Some((captures, location, error));
+                    last_failure = Some((captures.clone(), location, error.clone()));
+                    
+                    // Create detailed execution failure for error handling
+                    let _failure = Self::create_step_panicked_failure::<W>(
+                        None, // World not available at this level
+                        Source::new(step.clone()),
+                        captures.clone(),
+                        location,
+                        error.clone(),
+                        is_background,
+                    );
+                    
+                    // Use the execution failure creation utility for consistency
+                    let _alt_failure = Self::create_execution_failure_from_step_result::<W>(
+                        &event::Step::Failed { captures: captures.clone(), location, error: error.clone(), world: None },
+                        Source::new(step.clone()),
+                        is_background,
+                    );
+                    
+                    #[cfg(feature = "tracing")]
+                    tracing::error!(
+                        scenario_id = ?id,
+                        step_text = %step.value,
+                        is_background = is_background,
+                        "Step failed during scenario execution"
+                    );
                 }
             }
         }
@@ -484,9 +519,10 @@ impl StepExecutor {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::{Arc, Mutex};
+
     use super::*;
     use crate::{event, test_utils::common::TestWorld};
-    use std::sync::{Arc, Mutex};
 
     #[tokio::test]
     async fn test_run_steps_empty_scenario() {
@@ -497,7 +533,7 @@ mod tests {
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
 
-        let _meta = StepExecutor::run_steps(
+        let meta = StepExecutor::run_steps(
             &collection,
             id,
             feature,
@@ -529,7 +565,7 @@ mod tests {
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
 
-        let _meta = StepExecutor::run_steps(
+        let meta = StepExecutor::run_steps(
             &collection,
             id,
             feature,
@@ -598,6 +634,52 @@ mod tests {
         // Verify both fields exist
         assert!(matches!(meta.started, _));
         assert!(matches!(meta.finished, _));
+    }
+
+    #[test]
+    fn test_create_execution_failure_from_step_result() {
+        use event::source::Source;
+
+        let step = create_test_step();
+        
+        // Test with failed step
+        let failed_step = event::Step::<TestWorld>::Failed {
+            captures: None,
+            location: Some(step::Location::new("test.rs", 1, 1)),
+            world: None,
+            error: event::StepError::NotFound,
+        };
+        
+        let failure = StepExecutor::create_execution_failure_from_step_result(
+            &failed_step,
+            step.clone(),
+            false,
+        );
+        
+        assert!(failure.is_some());
+        
+        // Test with skipped step
+        let skipped_step = event::Step::<TestWorld>::Skipped;
+        let failure = StepExecutor::create_execution_failure_from_step_result(
+            &skipped_step,
+            step.clone(),
+            false,
+        );
+        
+        assert!(failure.is_some());
+        
+        // Test with passed step (should return None)
+        let passed_step = event::Step::<TestWorld>::Passed {
+            captures: regex::Regex::new("").unwrap().capture_locations(),
+            location: Some(step::Location::new("test.rs", 1, 1)),
+        };
+        let failure = StepExecutor::create_execution_failure_from_step_result(
+            &passed_step,
+            step,
+            false,
+        );
+        
+        assert!(failure.is_none());
     }
 
     fn create_test_feature_and_scenario()

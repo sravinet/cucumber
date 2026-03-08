@@ -1,15 +1,10 @@
 //! Event collector for gathering tracing events and managing scenario spans.
 
+use std::collections::HashMap;
+
 use futures::channel::mpsc;
 use itertools::Either;
-use std::collections::HashMap;
 use tracing::span;
-
-use crate::{
-    ScenarioType, World,
-    event::{self, Source},
-    runner::basic::{RetryOptions, ScenarioId},
-};
 
 use super::{
     types::{
@@ -17,6 +12,11 @@ use super::{
         SpanEventsCallbacks,
     },
     waiter::SpanCloseWaiter,
+};
+use crate::{
+    ScenarioType, World,
+    event::{self, Source},
+    runner::basic::{RetryOptions, ScenarioId},
 };
 
 /// Collector of [`tracing::Event`]s.
@@ -163,9 +163,10 @@ impl Collector {
 
 #[cfg(test)]
 mod tests {
+    use futures::TryStreamExt;
+
     use super::*;
     use crate::event::Source;
-    use futures::TryStreamExt;
 
     #[test]
     fn test_collector_creation() {

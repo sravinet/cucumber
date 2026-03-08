@@ -38,6 +38,8 @@ pub use self::{
 
 #[cfg(test)]
 mod integration_tests {
+    use std::{io::Cursor, time::SystemTime};
+
     use super::*;
     use crate::{
         Event, World, Writer, cli,
@@ -47,13 +49,16 @@ mod integration_tests {
         },
         parser::Result as ParserResult,
     };
-    use std::{io::Cursor, time::SystemTime};
 
     #[derive(Debug)]
     struct TestWorld;
 
     impl World for TestWorld {
-        type Error = ();
+        type Error = std::convert::Infallible;
+
+        async fn new() -> Result<Self, Self::Error> {
+            Ok(Self)
+        }
     }
 
     fn create_test_feature() -> gherkin::Feature {

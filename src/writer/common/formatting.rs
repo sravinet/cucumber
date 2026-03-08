@@ -57,8 +57,9 @@ pub trait OutputFormatter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io::{self, Write};
+
+    use super::*;
 
     // Mock writer for testing OutputFormatter
     struct MockWriter {

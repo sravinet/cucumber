@@ -93,32 +93,32 @@ impl<World> Collection<World> {
     }
 
     /// Merges another [`Collection`] into this one, enabling modular composition.
-    /// 
+    ///
     /// This method allows combining step definitions from multiple collections,
     /// which is essential for enterprise-scale BDD testing where different teams
     /// own different domain-specific step definitions.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```rust
     /// # use cucumber::step::Collection;
     /// # use regex::Regex;
     /// # use futures::future::LocalBoxFuture;
-    /// # 
+    /// #
     /// # #[derive(Default)]
     /// # struct TestWorld;
-    /// # 
+    /// #
     /// # fn test_step(_world: &mut TestWorld, _ctx: cucumber::step::Context) -> LocalBoxFuture<'_, ()> {
     /// #     Box::pin(async {})
     /// # }
-    /// 
+    ///
     /// // Create domain-specific collections
     /// let auth_steps = Collection::new()
     ///     .given(None, Regex::new(r"user is logged in").unwrap(), test_step);
     ///     
     /// let crypto_steps = Collection::new()
     ///     .when(None, Regex::new(r"creating a key").unwrap(), test_step);
-    /// 
+    ///
     /// // Merge collections for comprehensive testing
     /// let all_steps = auth_steps.merge(crypto_steps);
     /// ```
@@ -131,40 +131,42 @@ impl<World> Collection<World> {
     }
 
     /// Composes multiple [`Collection`]s into a single collection.
-    /// 
+    ///
     /// This is a convenience method for merging many collections at once,
     /// particularly useful when building enterprise-scale BDD architectures
     /// with multiple domain-specific step builders.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```rust
     /// # use cucumber::step::Collection;
     /// # use regex::Regex;
     /// # use futures::future::LocalBoxFuture;
-    /// # 
+    /// #
     /// # #[derive(Default)]
     /// # struct TestWorld;
-    /// # 
+    /// #
     /// # fn test_step(_world: &mut TestWorld, _ctx: cucumber::step::Context) -> LocalBoxFuture<'_, ()> {
     /// #     Box::pin(async {})
     /// # }
-    /// 
+    ///
     /// let collections = vec![
     ///     Collection::new().given(None, Regex::new(r"auth").unwrap(), test_step),
     ///     Collection::new().when(None, Regex::new(r"crypto").unwrap(), test_step),
     ///     Collection::new().then(None, Regex::new(r"audit").unwrap(), test_step),
     /// ];
-    /// 
+    ///
     /// let enterprise_steps = Collection::compose(collections);
     /// ```
     #[must_use]
     pub fn compose(collections: Vec<Self>) -> Self {
-        collections.into_iter().fold(Self::new(), |acc, collection| acc.merge(collection))
+        collections
+            .into_iter()
+            .fold(Self::new(), |acc, collection| acc.merge(collection))
     }
 
     /// Returns the number of Given step definitions in this collection.
-    /// 
+    ///
     /// This is useful for testing and validation of modular step builders.
     #[must_use]
     pub fn given_len(&self) -> usize {
@@ -172,7 +174,7 @@ impl<World> Collection<World> {
     }
 
     /// Returns the number of When step definitions in this collection.
-    /// 
+    ///
     /// This is useful for testing and validation of modular step builders.
     #[must_use]
     pub fn when_len(&self) -> usize {
@@ -180,7 +182,7 @@ impl<World> Collection<World> {
     }
 
     /// Returns the number of Then step definitions in this collection.
-    /// 
+    ///
     /// This is useful for testing and validation of modular step builders.
     #[must_use]
     pub fn then_len(&self) -> usize {
@@ -188,7 +190,7 @@ impl<World> Collection<World> {
     }
 
     /// Returns the total number of step definitions in this collection.
-    /// 
+    ///
     /// This is useful for testing and validation of modular step builders.
     #[must_use]
     pub fn total_len(&self) -> usize {
@@ -306,9 +308,10 @@ impl<World> Collection<World> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use gherkin::{Step as GherkinStep, StepType};
     use regex::Regex;
+
+    use super::*;
 
     #[derive(Default)]
     struct TestWorld;
@@ -369,12 +372,24 @@ mod tests {
         // Create first collection with auth steps
         let auth_steps = Collection::new()
             .given(None, Regex::new(r"user is logged in").unwrap(), test_step)
-            .when(None, Regex::new(r"user performs auth action").unwrap(), test_step);
+            .when(
+                None,
+                Regex::new(r"user performs auth action").unwrap(),
+                test_step,
+            );
 
         // Create second collection with crypto steps
         let crypto_steps = Collection::new()
-            .given(None, Regex::new(r"crypto service is available").unwrap(), test_step)
-            .then(None, Regex::new(r"key should be created").unwrap(), test_step);
+            .given(
+                None,
+                Regex::new(r"crypto service is available").unwrap(),
+                test_step,
+            )
+            .then(
+                None,
+                Regex::new(r"key should be created").unwrap(),
+                test_step,
+            );
 
         // Merge collections
         let merged = auth_steps.merge(crypto_steps);
@@ -388,9 +403,21 @@ mod tests {
     #[test]
     fn collection_compose_multiple() {
         let collections = vec![
-            Collection::new().given(None, Regex::new(r"auth step").unwrap(), test_step),
-            Collection::new().when(None, Regex::new(r"crypto step").unwrap(), test_step),
-            Collection::new().then(None, Regex::new(r"audit step").unwrap(), test_step),
+            Collection::new().given(
+                None,
+                Regex::new(r"auth step").unwrap(),
+                test_step,
+            ),
+            Collection::new().when(
+                None,
+                Regex::new(r"crypto step").unwrap(),
+                test_step,
+            ),
+            Collection::new().then(
+                None,
+                Regex::new(r"audit step").unwrap(),
+                test_step,
+            ),
         ];
 
         let composed = Collection::compose(collections);
@@ -404,7 +431,7 @@ mod tests {
     fn collection_compose_empty_vec() {
         let collections: Vec<Collection<TestWorld>> = vec![];
         let composed = Collection::compose(collections);
-        
+
         assert_eq!(composed.given_len(), 0);
         assert_eq!(composed.when_len(), 0);
         assert_eq!(composed.then_len(), 0);
@@ -425,7 +452,7 @@ mod tests {
             .given(None, same_regex, test_step); // Duplicate regex
 
         let merged = collection1.merge(collection2);
-        
+
         // Should have 3 steps total (duplicate regex overwrites)
         assert_eq!(merged.given_len(), 3);
     }
@@ -435,20 +462,45 @@ mod tests {
         // Simulate enterprise domain-specific step builders
         fn create_infrastructure_steps() -> Collection<TestWorld> {
             Collection::new()
-                .given(None, Regex::new(r"the vault service is running").unwrap(), test_step)
-                .when(None, Regex::new(r"checking the health endpoint").unwrap(), test_step)
+                .given(
+                    None,
+                    Regex::new(r"the vault service is running").unwrap(),
+                    test_step,
+                )
+                .when(
+                    None,
+                    Regex::new(r"checking the health endpoint").unwrap(),
+                    test_step,
+                )
         }
 
         fn create_user_management_steps() -> Collection<TestWorld> {
             Collection::new()
-                .given(None, Regex::new(r"(\w+) is an admin user").unwrap(), test_step)
-                .when(None, Regex::new(r"(\w+) logs in with credentials").unwrap(), test_step)
+                .given(
+                    None,
+                    Regex::new(r"(\w+) is an admin user").unwrap(),
+                    test_step,
+                )
+                .when(
+                    None,
+                    Regex::new(r"(\w+) logs in with credentials").unwrap(),
+                    test_step,
+                )
         }
 
         fn create_key_operations_steps() -> Collection<TestWorld> {
             Collection::new()
-                .when(None, Regex::new(r#"(\w+) creates a key "([^"]+)""#).unwrap(), test_step)
-                .then(None, Regex::new(r"the key should be created successfully").unwrap(), test_step)
+                .when(
+                    None,
+                    Regex::new(r#"(\w+) creates a key "([^"]+)""#).unwrap(),
+                    test_step,
+                )
+                .then(
+                    None,
+                    Regex::new(r"the key should be created successfully")
+                        .unwrap(),
+                    test_step,
+                )
         }
 
         // Build enterprise step collection using modular composition
@@ -460,10 +512,12 @@ mod tests {
 
         // Verify comprehensive coverage
         assert_eq!(enterprise_collection.given_len(), 2); // vault running, admin user
-        assert_eq!(enterprise_collection.when_len(), 3);  // health check, login, create key  
+        assert_eq!(enterprise_collection.when_len(), 3); // health check, login, create key  
         assert_eq!(enterprise_collection.then_len(), 1); // key created
-        
-        println!("✅ Enterprise modular pattern: {} total steps registered", 
-                enterprise_collection.total_len());
+
+        println!(
+            "✅ Enterprise modular pattern: {} total steps registered",
+            enterprise_collection.total_len()
+        );
     }
 }

@@ -85,7 +85,8 @@ impl State {
     /// # Returns
     ///
     /// Returns the new state after transition.
-    pub fn mark_finished(&mut self) -> Self {
+    #[must_use = "state transitions should be used to track writer progress"]
+    pub const fn mark_finished(&mut self) -> Self {
         if self.is_in_progress() {
             *self = Self::FinishedButNotOutput;
         }
@@ -99,7 +100,8 @@ impl State {
     /// # Returns
     ///
     /// Returns the new state after transition.
-    pub fn mark_output_complete(&mut self) -> Self {
+    #[must_use = "state transitions should be used to track output completion"]
+    pub const fn mark_output_complete(&mut self) -> Self {
         if self.is_finished_but_not_output() {
             *self = Self::FinishedAndOutput;
         }
@@ -113,7 +115,8 @@ impl State {
     /// # Returns
     ///
     /// Returns the new state after reset.
-    pub fn reset(&mut self) -> Self {
+    #[must_use = "state reset should be used to track writer state changes"]
+    pub const fn reset(&mut self) -> Self {
         *self = Self::InProgress;
         *self
     }
@@ -165,7 +168,7 @@ impl StateManager {
     ///
     /// Returns `true` if the writer should process events and collect statistics.
     #[must_use]
-    pub fn should_collect_stats(&self) -> bool {
+    pub const fn should_collect_stats(&self) -> bool {
         self.state.is_in_progress()
     }
 
@@ -173,7 +176,7 @@ impl StateManager {
     ///
     /// Returns `true` if the summary should be generated and output.
     #[must_use]
-    pub fn should_output_summary(&self) -> bool {
+    pub const fn should_output_summary(&self) -> bool {
         self.state.is_finished_but_not_output()
     }
 
@@ -183,21 +186,21 @@ impl StateManager {
     ///
     /// [`Finished`]: crate::event::Cucumber::Finished
     pub fn handle_finished_event(&mut self) {
-        self.state.mark_finished();
+        self.state = self.state.mark_finished();
     }
 
     /// Marks summary output as complete.
     ///
     /// This should be called after successfully outputting the summary.
     pub fn mark_summary_output_complete(&mut self) {
-        self.state.mark_output_complete();
+        self.state = self.state.mark_output_complete();
     }
 
     /// Resets the state manager to initial state.
     ///
     /// Useful for reusing the same state manager across multiple test runs.
     pub fn reset(&mut self) {
-        self.state.reset();
+        self.state = self.state.reset();
     }
 }
 
@@ -265,12 +268,12 @@ mod tests {
     fn state_invalid_transitions_ignored() {
         // mark_finished from non-InProgress states should not change state
         let mut state = State::FinishedAndOutput;
-        state.mark_finished();
+        let _ = state.mark_finished();
         assert_eq!(state, State::FinishedAndOutput);
 
         // mark_output_complete from non-FinishedButNotOutput states should not change state
         let mut state = State::InProgress;
-        state.mark_output_complete();
+        let _ = state.mark_output_complete();
         assert_eq!(state, State::InProgress);
     }
 
@@ -317,7 +320,7 @@ mod tests {
         manager.handle_finished_event();
         manager.mark_summary_output_complete();
 
-        manager.reset();
+        let _ = manager.reset();
 
         assert_eq!(manager.current_state(), State::InProgress);
         assert!(manager.should_collect_stats());

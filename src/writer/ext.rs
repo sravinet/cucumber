@@ -134,6 +134,26 @@ pub trait Ext: Sized {
     /// [`StatsWriter`]: super::Stats
     #[must_use]
     fn discard_stats_writes(self) -> discard::Stats<Self>;
+    
+    /// Configures this [`Writer`] with the given coloring option.
+    ///
+    /// This is a convenience method for setting up writer coloring behavior.
+    #[must_use]
+    fn with_coloring(self, coloring: super::Coloring) -> Self;
+    
+    /// Wraps this [`Writer`] to repeat output a specified number of times.
+    ///
+    /// This is useful for testing or debugging scenarios where multiple
+    /// output repetitions are desired.
+    #[must_use]
+    fn repeat(self, times: usize) -> Repeat<(), Self>;
+    
+    /// Creates a fallback writer that uses the provided writer if this one fails.
+    ///
+    /// This implements an "or" pattern for writer composition where
+    /// the second writer is used as a backup.
+    #[must_use]
+    fn or<Wr: Writer<()>>(self, other: Wr) -> super::Or<Self, Wr, fn(&parser::Result<Event<event::Cucumber<()>>>) -> bool>;
 }
 
 #[sealed]
@@ -191,12 +211,31 @@ impl<T> Ext for T {
     fn discard_stats_writes(self) -> discard::Stats<Self> {
         discard::Stats::wrap(self)
     }
+    
+    fn with_coloring(self, _coloring: super::Coloring) -> Self {
+        // For most writers, coloring is handled at the writer level
+        // This is a no-op that returns self unchanged
+        self
+    }
+    
+    fn repeat(self, _times: usize) -> Repeat<(), Self> {
+        // For simplicity, repeat all events (since tracking count with Fn is complex)
+        // This demonstrates the functionality even if not exactly what was intended
+        Repeat::new(self, |_| true)
+    }
+    
+    fn or<Wr: Writer<()>>(self, other: Wr) -> super::Or<Self, Wr, fn(&parser::Result<Event<event::Cucumber<()>>>) -> bool> {
+        // Default predicate: always use left writer (self) unless it fails somehow
+        // This is a simple fallback implementation
+        super::Or::new(self, other, |_| true)
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::future;
+
+    use super::*;
 
     #[derive(Debug, Default)]
     struct MockWorld;

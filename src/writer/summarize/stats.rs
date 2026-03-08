@@ -58,27 +58,27 @@ impl Stats {
     }
 
     /// Increments the passed count by one.
-    pub fn increment_passed(&mut self) {
+    pub const fn increment_passed(&mut self) {
         self.passed += 1;
     }
 
     /// Increments the skipped count by one.
-    pub fn increment_skipped(&mut self) {
+    pub const fn increment_skipped(&mut self) {
         self.skipped += 1;
     }
 
     /// Increments the failed count by one.
-    pub fn increment_failed(&mut self) {
+    pub const fn increment_failed(&mut self) {
         self.failed += 1;
     }
 
     /// Increments the retried count by one.
-    pub fn increment_retried(&mut self) {
+    pub const fn increment_retried(&mut self) {
         self.retried += 1;
     }
 
     /// Decrements the skipped count by one, if greater than zero.
-    pub fn decrement_skipped(&mut self) {
+    pub const fn decrement_skipped(&mut self) {
         if self.skipped > 0 {
             self.skipped -= 1;
         }

@@ -21,11 +21,11 @@ pub use supporting_structures::ScenarioId;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::test_utils::common::TestWorld;
-    use crate::{Runner, World};
     use futures::stream;
     use gherkin::Feature;
+
+    use super::*;
+    use crate::{Runner, World, test_utils::common::TestWorld};
 
     // Using common TestWorld from test_utils
 
@@ -64,8 +64,9 @@ mod tests {
 
     #[test]
     fn test_retry_options_creation() {
-        use crate::event::Retries;
         use std::time::Duration;
+
+        use crate::event::Retries;
 
         let opts = RetryOptions {
             retries: Retries::initial(3),

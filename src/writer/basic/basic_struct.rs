@@ -4,12 +4,11 @@ use std::{fmt::Display, io};
 
 use derive_more::with_trait::{Deref, DerefMut};
 
+use super::cli::{Cli, Coloring};
 use crate::writer::{
     self, Ext as _, Verbosity,
     out::{Styles, WriteStrExt as _},
 };
-
-use super::cli::{Cli, Coloring};
 
 /// Default [`Writer`] implementation outputting to an [`io::Write`] implementor
 /// ([`io::Stdout`] by default).
@@ -59,6 +58,12 @@ impl Basic {
     #[must_use]
     pub fn stdout<W>() -> writer::Normalize<W, Self> {
         Self::new(io::stdout(), Coloring::Auto, Verbosity::Default)
+    }
+}
+
+impl Default for Basic {
+    fn default() -> Self {
+        Self::raw(io::stdout(), Coloring::Auto, Verbosity::Default)
     }
 }
 

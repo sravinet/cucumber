@@ -23,6 +23,11 @@ use syn::{
     spanned::Spanned as _,
 };
 
+use crate::attribute_ext::{
+    detect_table_param, generate_table_injection, is_data_table_type_from_arg, 
+    is_option_data_table, validate_table_position, DataTableParam,
+};
+
 /// Names of default [`Parameter`]s.
 const DEFAULT_PARAMETERS: [&str; 5] = ["int", "float", "word", "string", ""];
 
@@ -84,9 +89,8 @@ impl Step {
         }?
         .or_else(|| {
             func.sig.inputs.iter().find_map(|arg| {
-                parse_fn_arg(arg).ok().and_then(|(ident, _)| {
-                    (ident == "step").then(|| ident.clone())
-                })
+                let (ident, _) = parse_fn_arg(arg).ok()?;
+                (ident == "step").then(|| ident.clone())
             })
         });
 
@@ -107,7 +111,12 @@ impl Step {
         let step_type = self.step_type();
 
         // Check for DataTable parameter
-        let table_param = crate::attribute_ext::detect_table_param(&self.func);
+        let table_param = detect_table_param(&self.func);
+        
+        // Validate DataTable position if present
+        if let Some(param) = &table_param {
+            validate_table_position(param)?;
+        }
         let (func_args, addon_parsing) = self
             .fn_arguments_and_additional_parsing_with_table(
                 table_param.as_ref(),
@@ -170,10 +179,10 @@ impl Step {
         }
     }
 
-    /// Generates code that prepares function's arguments with DataTable support.
+    /// Generates code that prepares function's arguments with `DataTable` support.
     fn fn_arguments_and_additional_parsing_with_table(
         &self,
-        _table_param: Option<&crate::attribute_ext::DataTableParam>,
+        _table_param: Option<&DataTableParam>,
     ) -> syn::Result<(TokenStream, Option<TokenStream>)> {
         // Just use the regular parsing - DataTable is handled in arg_ident_and_parse_code
         self.fn_arguments_and_additional_parsing()
@@ -182,6 +191,7 @@ impl Step {
     /// Generates code that prepares function's arguments basing on
     /// [`AttributeArgument`] and additional parsing if it's an
     /// [`AttributeArgument::Regex`].
+    #[expect(clippy::too_many_lines, reason = "Complex argument parsing logic that should be refactored")]
     fn fn_arguments_and_additional_parsing(
         &self,
     ) -> syn::Result<(TokenStream, Option<TokenStream>)> {
@@ -291,10 +301,12 @@ impl Step {
         } else {
             // Check if there's a DataTable parameter even for literal strings
             let table_param =
-                crate::attribute_ext::detect_table_param(&self.func);
+                detect_table_param(&self.func);
             if let Some(param) = table_param {
+                // Validate DataTable position
+                validate_table_position(&param)?;
                 let table_injection =
-                    crate::attribute_ext::generate_table_injection(
+                    generate_table_injection(
                         &param,
                         &self.func.sig.ident,
                     );
@@ -330,7 +342,7 @@ impl Step {
 
         // Check if this is a DataTable parameter
         let is_data_table =
-            crate::attribute_ext::is_data_table_type_from_arg(arg);
+            is_data_table_type_from_arg(arg);
 
         let decl = if is_ctx_arg {
             quote! {
@@ -341,7 +353,7 @@ impl Step {
             // Handle DataTable specially - extract from step
             // Check if it's optional
             let is_optional = if let syn::FnArg::Typed(pat_type) = arg {
-                crate::attribute_ext::is_option_data_table(&pat_type.ty)
+                is_option_data_table(&pat_type.ty)
             } else {
                 false
             };
@@ -447,7 +459,7 @@ impl Step {
         }
 
         // Check if this is a DataTable argument
-        if crate::attribute_ext::is_data_table_type_from_arg(arg) {
+        if is_data_table_type_from_arg(arg) {
             let (ident, _) = parse_fn_arg(arg)?;
             return Ok(quote! { #ident, });
         }

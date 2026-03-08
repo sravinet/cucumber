@@ -69,8 +69,9 @@ impl Context {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use gherkin::{Step as GherkinStep, StepType};
+
+    use super::*;
 
     fn create_test_step() -> GherkinStep {
         GherkinStep {

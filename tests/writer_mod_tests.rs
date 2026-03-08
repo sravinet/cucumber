@@ -1,8 +1,8 @@
 //! Unit tests for writer module core functionality.
 
-use cucumber::writer::*;
-use cucumber::{Event, Writer, cli, event, parser};
 use std::sync::{Arc, Mutex};
+
+use cucumber::{Event, Writer, cli, event, parser, writer::*};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 struct TestWorld;

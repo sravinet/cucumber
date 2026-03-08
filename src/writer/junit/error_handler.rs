@@ -81,7 +81,7 @@ mod tests {
                 "File not found",
             ),
         };
-        let parser_error = parser::Error::Parsing(Box::new(parse_error));
+        let parser_error = parser::Error::Parsing(std::sync::Arc::new(parse_error));
 
         ErrorHandler::handle_error(&mut report, &parser_error);
 
@@ -109,7 +109,7 @@ mod tests {
                 "Access denied",
             ),
         };
-        let parser_error = parser::Error::Parsing(Box::new(parse_error));
+        let parser_error = parser::Error::Parsing(std::sync::Arc::new(parse_error));
 
         ErrorHandler::handle_error(&mut report, &parser_error);
 
@@ -122,13 +122,12 @@ mod tests {
     #[test]
     fn handles_example_expansion_error() {
         let mut report = Report::new();
-        let expansion_error = gherkin::ExampleExpansionError {
+        let expansion_error = crate::feature::ExpandExamplesError {
             path: Some(PathBuf::from("/test/examples.feature")),
             pos: gherkin::LineCol { line: 10, col: 5 },
-            source:
-                gherkin::ExampleExpansionErrorSource::OutlineWithoutExamples,
+            name: "unknown_template".to_string(),
         };
-        let parser_error = parser::Error::ExampleExpansion(expansion_error);
+        let parser_error = parser::Error::ExampleExpansion(std::sync::Arc::new(expansion_error));
 
         ErrorHandler::handle_error(&mut report, &parser_error);
 
@@ -148,13 +147,12 @@ mod tests {
     #[test]
     fn handles_example_expansion_error_without_path() {
         let mut report = Report::new();
-        let expansion_error = gherkin::ExampleExpansionError {
+        let expansion_error = crate::feature::ExpandExamplesError {
             path: None,
             pos: gherkin::LineCol { line: 5, col: 1 },
-            source:
-                gherkin::ExampleExpansionErrorSource::OutlineWithoutExamples,
+            name: "unknown_template".to_string(),
         };
-        let parser_error = parser::Error::ExampleExpansion(expansion_error);
+        let parser_error = parser::Error::ExampleExpansion(std::sync::Arc::new(expansion_error));
 
         ErrorHandler::handle_error(&mut report, &parser_error);
 
@@ -169,10 +167,10 @@ mod tests {
             path: path.clone(),
             source: gherkin::ParseError::new(
                 gherkin::LineCol { line: 1, col: 1 },
-                gherkin::ParseErrorType::MissingFeatureKeyword,
+                "MissingFeatureKeyword",
             ),
         };
-        let parser_error = parser::Error::Parsing(Box::new(parse_error));
+        let parser_error = parser::Error::Parsing(std::sync::Arc::new(parse_error));
 
         let (name, error_type) =
             ErrorHandler::extract_error_info(&parser_error);
@@ -183,13 +181,12 @@ mod tests {
 
     #[test]
     fn extract_error_info_example_expansion_error() {
-        let expansion_error = gherkin::ExampleExpansionError {
+        let expansion_error = crate::feature::ExpandExamplesError {
             path: Some(PathBuf::from("/test/outline.feature")),
             pos: gherkin::LineCol { line: 15, col: 10 },
-            source:
-                gherkin::ExampleExpansionErrorSource::OutlineWithoutExamples,
+            name: "unknown_template".to_string(),
         };
-        let parser_error = parser::Error::ExampleExpansion(expansion_error);
+        let parser_error = parser::Error::ExampleExpansion(std::sync::Arc::new(expansion_error));
 
         let (name, error_type) =
             ErrorHandler::extract_error_info(&parser_error);

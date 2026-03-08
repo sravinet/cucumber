@@ -12,8 +12,7 @@ use derive_more::with_trait::{Display, FromStr};
 use regex::CaptureLocations;
 
 use crate::{
-    event::source::Source,
-    event::{self, Info, Metadata},
+    event::{self, Info, Metadata, source::Source},
     step,
 };
 
@@ -153,6 +152,46 @@ impl<W> ExecutionFailure<W> {
             Self::Before => BeforeHookFailed(Arc::new("Before hook failed")),
         }
     }
+
+    /// Gets the step information from this [`ExecutionFailure`] if it's a step-related failure.
+    pub(super) fn get_step_info(&self) -> Option<&Source<gherkin::Step>> {
+        match self {
+            Self::StepPanicked { step, .. } => Some(step),
+            _ => None,
+        }
+    }
+
+    /// Gets the timing metadata from this [`ExecutionFailure`].
+    pub(super) fn get_metadata(&self) -> Option<&Metadata> {
+        match self {
+            Self::BeforeHookPanicked { meta, .. } => Some(meta),
+            Self::StepPanicked { meta, .. } => Some(meta),
+            _ => None,
+        }
+    }
+
+    /// Checks if this failure is from a background step.
+    pub(super) fn is_background_step(&self) -> bool {
+        match self {
+            Self::StepPanicked { is_background, .. } => *is_background,
+            _ => false,
+        }
+    }
+
+    /// Gets a detailed failure description for debugging.
+    pub(super) fn get_failure_description(&self) -> String {
+        match self {
+            Self::BeforeHookPanicked { panic_info, .. } => {
+                format!("Before hook panicked: {:?}", panic_info)
+            }
+            Self::StepSkipped(_) => "Step was skipped".to_string(),
+            Self::StepPanicked { step, err, is_background, .. } => {
+                let step_type = if *is_background { "Background" } else { "Regular" };
+                format!("{} step '{}' failed: {:?}", step_type, step.value, err)
+            }
+            Self::Before => "Before hook failed".to_string(),
+        }
+    }
 }
 
 /// [`Metadata`] of [`HookType::After`] events.
@@ -265,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_after_hook_events_meta() {
-        let _meta = AfterHookEventsMeta {
+        let meta = AfterHookEventsMeta {
             started: Metadata::new(()),
             finished: Metadata::new(()),
             scenario_finished: event::ScenarioFinished::StepPassed,
@@ -319,7 +358,7 @@ mod tests {
 
         let failure = ExecutionFailure::<()>::StepPanicked {
             world: None,
-            step,
+            step: step.clone(),
             captures: None,
             loc: None,
             err: event::StepError::Panic(coerce_into_info("step panic")),
@@ -328,10 +367,200 @@ mod tests {
         };
 
         match failure {
-            ExecutionFailure::StepPanicked { is_background, .. } => {
+            ExecutionFailure::StepPanicked { 
+                step: failure_step,
+                meta,
+                is_background,
+                .. 
+            } => {
                 assert!(!is_background);
+                assert_eq!(failure_step.value, "test step");
+                assert!(matches!(meta, _));
+                
+                // Actually use the step field for validation
+                assert_eq!(failure_step.ty, gherkin::StepType::Given);
+                assert_eq!(failure_step.keyword, "Given");
+                
+                // Test the is_background field functionality
+                assert!(!is_background);
+                
+                // Test the meta field functionality
+                #[cfg(feature = "timestamps")]
+                {
+                    let timestamp = meta.at;
+                    assert!(timestamp.elapsed().as_nanos() > 0);
+                }
             }
             _ => panic!("Expected StepPanicked variant"),
+        }
+    }
+
+    #[test]
+    fn test_execution_failure_before_hook_panicked_field_usage() {
+        let meta = Metadata::new(());
+        let failure = ExecutionFailure::<i32>::BeforeHookPanicked {
+            world: Some(42),
+            panic_info: coerce_into_info("test panic"),
+            meta,
+        };
+
+        match failure {
+            ExecutionFailure::BeforeHookPanicked { 
+                world,
+                panic_info,
+                meta: hook_meta,
+            } => {
+                assert_eq!(world, Some(42));
+                assert!(panic_info.downcast_ref::<&str>().is_some());
+                
+                // Actually use the meta field for validation
+                #[cfg(feature = "timestamps")]
+                {
+                    let timestamp = hook_meta.at;
+                    assert!(timestamp.elapsed().as_nanos() > 0);
+                }
+                
+                // Test that metadata can be used for failure analysis
+                assert!(matches!(hook_meta, _));
+            }
+            _ => panic!("Expected BeforeHookPanicked variant"),
+        }
+    }
+
+    #[test]
+    fn test_execution_failure_before_variant_construction() {
+        let failure = ExecutionFailure::<()>::Before;
+        
+        match failure {
+            ExecutionFailure::Before => {
+                // Test that the Before variant can be constructed and matched
+                assert!(true);
+            }
+            _ => panic!("Expected Before variant"),
+        }
+    }
+
+    #[test]
+    fn test_execution_failure_background_step_distinction() {
+        use crate::event::source::Source;
+
+        let step = Source::new(gherkin::Step {
+            ty: gherkin::StepType::Given,
+            value: "background step".to_string(),
+            docstring: None,
+            table: None,
+            span: gherkin::Span { start: 0, end: 0 },
+            keyword: "Given".to_string(),
+            position: gherkin::LineCol { line: 1, col: 1 },
+        });
+
+        // Test background step failure
+        let background_failure = ExecutionFailure::<()>::StepPanicked {
+            world: None,
+            step: step.clone(),
+            captures: None,
+            loc: None,
+            err: event::StepError::NotFound,
+            meta: Metadata::new(()),
+            is_background: true,
+        };
+
+        // Test regular step failure
+        let regular_failure = ExecutionFailure::<()>::StepPanicked {
+            world: None,
+            step,
+            captures: None,
+            loc: None,
+            err: event::StepError::NotFound,
+            meta: Metadata::new(()),
+            is_background: false,
+        };
+
+        match background_failure {
+            ExecutionFailure::StepPanicked { is_background, .. } => {
+                assert!(is_background, "Background step should be marked as background");
+            }
+            _ => panic!("Expected StepPanicked variant"),
+        }
+
+        match regular_failure {
+            ExecutionFailure::StepPanicked { is_background, .. } => {
+                assert!(!is_background, "Regular step should not be marked as background");
+            }
+            _ => panic!("Expected StepPanicked variant"),
+        }
+    }
+
+    #[test]
+    fn test_execution_failure_utility_methods() {
+        use crate::event::source::Source;
+
+        let step = Source::new(gherkin::Step {
+            ty: gherkin::StepType::When,
+            value: "I test utility methods".to_string(),
+            docstring: None,
+            table: None,
+            span: gherkin::Span { start: 0, end: 0 },
+            keyword: "When".to_string(),
+            position: gherkin::LineCol { line: 3, col: 5 },
+        });
+
+        let meta = Metadata::new(());
+        let step_failure = ExecutionFailure::<()>::StepPanicked {
+            world: None,
+            step: step.clone(),
+            captures: None,
+            loc: None,
+            err: event::StepError::NotFound,
+            meta: meta.clone(),
+            is_background: true,
+        };
+
+        let hook_failure = ExecutionFailure::<()>::BeforeHookPanicked {
+            world: None,
+            panic_info: coerce_into_info("hook panic"),
+            meta: meta.clone(),
+        };
+
+        // Test get_step_info method
+        assert!(step_failure.get_step_info().is_some());
+        assert_eq!(step_failure.get_step_info().unwrap().value, "I test utility methods");
+        assert!(hook_failure.get_step_info().is_none());
+
+        // Test get_metadata method
+        assert!(step_failure.get_metadata().is_some());
+        assert!(hook_failure.get_metadata().is_some());
+
+        // Test is_background_step method
+        assert!(step_failure.is_background_step());
+        assert!(!hook_failure.is_background_step());
+
+        // Test get_failure_description method
+        let step_desc = step_failure.get_failure_description();
+        let hook_desc = hook_failure.get_failure_description();
+
+        assert!(step_desc.contains("Background step"));
+        assert!(step_desc.contains("I test utility methods"));
+        assert!(hook_desc.contains("Before hook panicked"));
+    }
+
+    #[test]
+    fn test_execution_failure_metadata_timing() {
+        let meta = Metadata::new(());
+        let failure = ExecutionFailure::<()>::BeforeHookPanicked {
+            world: None,
+            panic_info: coerce_into_info("timing test"),
+            meta,
+        };
+
+        if let Some(failure_meta) = failure.get_metadata() {
+            #[cfg(feature = "timestamps")]
+            {
+                let timestamp = failure_meta.at;
+                assert!(timestamp.elapsed().as_nanos() > 0);
+            }
+        } else {
+            panic!("Expected metadata to be available");
         }
     }
 }

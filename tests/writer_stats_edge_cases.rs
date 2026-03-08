@@ -1,10 +1,11 @@
 //! WriterStats edge case and stress tests.
 
-use cucumber::event;
-use cucumber::event::Retries;
-use cucumber::writer::WriterStats;
-use std::sync::{Arc, Mutex};
-use std::thread;
+use std::{
+    sync::{Arc, Mutex},
+    thread,
+};
+
+use cucumber::{event, event::Retries, writer::WriterStats};
 
 #[test]
 fn writer_stats_extreme_values() {

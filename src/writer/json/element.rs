@@ -141,8 +141,9 @@ impl Element {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use gherkin::{Feature, Rule, Scenario};
+
+    use super::*;
 
     fn create_test_feature() -> Feature {
         Feature {

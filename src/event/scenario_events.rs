@@ -2,12 +2,11 @@
 
 use std::sync::Arc;
 
-use crate::step;
-
 use super::{
     Hook, HookType, Source, Step, StepError, event_struct::Info,
     retries::Retries,
 };
+use crate::step;
 
 /// Event specific to a particular [Scenario].
 ///

@@ -4,17 +4,16 @@ use std::{fmt::Debug, io};
 
 use regex::CaptureLocations;
 
-use crate::{
-    event::{self, Retries},
-    step,
-    writer::out::WriteStrExt as _,
-};
-
 use super::{
     basic_struct::Basic,
     formatting::{
         format_captures, format_str_with_indent, format_table, trim_path,
     },
+};
+use crate::{
+    event::{self, Retries},
+    step,
+    writer::out::WriteStrExt as _,
 };
 
 impl<Out: io::Write> Basic<Out> {

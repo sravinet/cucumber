@@ -7,14 +7,13 @@ use futures::{
     stream,
 };
 
-use crate::{Event, Runner, World, event, parser};
-
 use super::{
     basic_struct::Basic,
     cli_and_types::Cli,
     execution_engine::{execute, insert_features},
     scenario_storage::Features,
 };
+use crate::{Event, Runner, World, event, parser};
 
 impl<W, Which, Before, After> Runner<W> for Basic<W, Which, Before, After>
 where
@@ -114,10 +113,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
+    use futures::stream;
+
     use super::*;
     use crate::test_utils::common::TestWorld;
-    use futures::stream;
-    use std::time::Duration;
 
     // Using common TestWorld from test_utils
 

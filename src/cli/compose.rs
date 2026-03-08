@@ -28,8 +28,7 @@ use crate::writer::Coloring;
 /// # Example
 ///
 /// ```rust
-/// use cucumber::cli::Empty;
-/// use cucumber::Cucumber;
+/// use cucumber::{Cucumber, cli::Empty};
 ///
 /// # #[derive(cucumber::World, Debug, Default)]
 /// # struct MyWorld;

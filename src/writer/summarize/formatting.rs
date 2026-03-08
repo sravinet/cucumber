@@ -4,9 +4,8 @@ use std::borrow::Cow;
 
 use itertools::Itertools as _;
 
-use crate::writer::out::Styles;
-
 use super::{core::Summarize, stats::Stats};
+use crate::writer::out::Styles;
 
 /// Extension trait for [`Styles`] to provide summary formatting functionality.
 ///
@@ -237,9 +236,11 @@ impl SummaryUtils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::common::{EmptyCli, TestWorld};
-    use crate::writer::Coloring;
-    use crate::{Event, Writer, parser};
+    use crate::{
+        Event, Writer, parser,
+        test_utils::common::{EmptyCli, TestWorld},
+        writer::Coloring,
+    };
 
     fn create_test_stats() -> Stats {
         Stats { passed: 5, skipped: 2, failed: 1, retried: 3 }

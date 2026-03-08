@@ -80,11 +80,11 @@ pub trait Emitter<World> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::common::{EmptyCli, TestWorld};
     use crate::{
         Event, Writer,
         event::{Cucumber, Metadata},
         parser,
+        test_utils::common::{EmptyCli, TestWorld},
     };
 
     // Using common TestWorld from test_utils

@@ -2,14 +2,13 @@
 
 use std::{fmt::Debug, io};
 
-use crate::{
-    event::{self, Info, Retries},
-    writer::out::WriteStrExt as _,
-};
-
 use super::{
     basic_struct::Basic,
     formatting::{coerce_error, format_str_with_indent, trim_path},
+};
+use crate::{
+    event::{self, Info, Retries},
+    writer::out::WriteStrExt as _,
 };
 
 impl<Out: io::Write> Basic<Out> {

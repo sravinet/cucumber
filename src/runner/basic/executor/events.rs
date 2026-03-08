@@ -1,20 +1,34 @@
 //! Event sending logic for the Basic executor.
 
 use futures::channel::mpsc;
+#[cfg(feature = "observability")]
+use std::sync::{Arc, Mutex};
 
-use crate::{Event, World, event, parser};
+use crate::{
+    Event, World, event, parser,
+};
+
+#[cfg(feature = "observability")]
+use crate::{
+    event::source::Source,
+    runner::basic::ScenarioId,
+};
 
 /// Event sending functionality for the Executor.
 #[cfg(not(feature = "observability"))]
 pub(super) struct EventSender<W> {
+    /// Channel sender for broadcasting Cucumber events to subscribers
     sender: mpsc::UnboundedSender<parser::Result<Event<event::Cucumber<W>>>>,
 }
 
 /// Event sending functionality for the Executor with observability.
 #[cfg(feature = "observability")]
 pub(super) struct EventSender<W: World> {
+    /// Channel sender for broadcasting Cucumber events to subscribers
     sender: mpsc::UnboundedSender<parser::Result<Event<event::Cucumber<W>>>>,
+    /// Registry of observers for external monitoring and integrations
     observers: Arc<Mutex<crate::observer::ObserverRegistry<W>>>,
+    /// Current scenario execution context for observer notifications
     current_context: Arc<Mutex<Option<ScenarioContext>>>,
 }
 
@@ -119,7 +133,7 @@ impl<W: World> EventSender<W> {
         if let Ok(context) = self.current_context.lock() {
             if let Some(ref ctx) = *context {
                 // Build observation context from scenario context
-                let observation_context = crate::observer::ObservationContext {
+                let mut observation_context = crate::observer::ObservationContext {
                     scenario_id: Some(ctx.scenario_id.0),
                     feature_name: ctx.feature.name.clone(),
                     rule_name: ctx.rule.as_ref().map(|r| r.name.clone()),
@@ -128,6 +142,37 @@ impl<W: World> EventSender<W> {
                     tags: ctx.scenario.tags.clone(),
                     timestamp: std::time::Instant::now(),
                 };
+
+                // Extract additional context from the event itself for more accurate reporting
+                match event {
+                    event::Cucumber::Feature(feature_src, feature_event) => {
+                        // Update feature name from actual event if different
+                        observation_context.feature_name = feature_src.name.clone();
+                        
+                        // Extract scenario-specific information from event
+                        match feature_event {
+                            event::Feature::Scenario(scenario_src, retryable) => {
+                                observation_context.scenario_name = scenario_src.name.clone();
+                                observation_context.retry_info = retryable.retries.clone();
+                                observation_context.tags = scenario_src.tags.iter()
+                                    .map(|t| t.to_string())
+                                    .collect();
+                            }
+                            event::Feature::Rule(rule_src, rule_event) => {
+                                observation_context.rule_name = Some(rule_src.name.clone());
+                                if let event::Rule::Scenario(scenario_src, retryable) = rule_event {
+                                    observation_context.scenario_name = scenario_src.name.clone();
+                                    observation_context.retry_info = retryable.retries.clone();
+                                    observation_context.tags = scenario_src.tags.iter()
+                                        .map(|t| t.to_string())
+                                        .collect();
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
 
                 // Notify all registered observers
                 if let Ok(mut registry) = self.observers.lock() {
@@ -148,20 +193,23 @@ impl<W: World> EventSender<W> {
     }
 
     /// Sends an event with additional metadata.
+    /// 
+    /// This method is used for events that need specific timing or context metadata,
+    /// such as hook execution timing or step duration measurements.
     pub(super) fn send_event_with_meta(
         &self,
         event: event::Cucumber<W>,
         meta: &crate::event::Metadata,
     ) {
-        // Create event with the provided metadata
+        // Create event with the provided metadata for precise timing
         let event_with_meta = meta.wrap(event.clone());
-        
-        // Send through normal channel
+
+        // Send through normal channel with metadata
         self.sender
             .unbounded_send(Ok(event_with_meta.clone()))
-            .unwrap_or_else(|e| panic!("Failed to send `Cucumber` event: {e}"));
+            .unwrap_or_else(|e| panic!("Failed to send `Cucumber` event with metadata: {e}"));
 
-        // Notify observers if enabled
+        // Notify observers if enabled - observers receive events with timing metadata
         #[cfg(feature = "observability")]
         self.notify_observers(&event_with_meta, &event);
     }
@@ -169,9 +217,10 @@ impl<W: World> EventSender<W> {
 
 #[cfg(test)]
 mod tests {
+    use futures::{TryStreamExt as _, channel::mpsc};
+
     use super::*;
     use crate::{event, test_utils::common::TestWorld};
-    use futures::{TryStreamExt as _, channel::mpsc};
 
     #[test]
     fn test_event_sender_creation() {
@@ -256,6 +305,50 @@ mod tests {
 
         let received1 = receiver1.try_next().unwrap().unwrap().unwrap();
         let received2 = receiver2.try_next().unwrap().unwrap().unwrap();
+
+        assert!(matches!(received1.value, event::Cucumber::Started));
+        assert!(matches!(received2.value, event::Cucumber::Finished));
+    }
+
+    #[test]
+    fn test_send_event_with_meta_functionality() {
+        let (sender, mut receiver) = mpsc::unbounded();
+        let event_sender = EventSender::<TestWorld>::new_with_sender(sender);
+
+        let event = event::Cucumber::<TestWorld>::Started;
+        let meta = crate::event::Metadata::new(());
+
+        // Test that send_event_with_meta actually uses the metadata properly
+        event_sender.send_event_with_meta(event, &meta);
+
+        // Should receive the event with metadata
+        let received = receiver.try_next().unwrap().unwrap().unwrap();
+        assert!(matches!(received.value, event::Cucumber::Started));
+        
+        // Verify the event has metadata (indicates send_event_with_meta worked)
+        #[cfg(feature = "timestamps")]
+        {
+            let event_timestamp = received.at;
+            assert!(event_timestamp.elapsed().as_nanos() > 0);
+        }
+    }
+
+    #[test]
+    fn test_send_event_vs_send_event_with_meta_distinction() {
+        let (sender, mut receiver) = mpsc::unbounded();
+        let event_sender = EventSender::<TestWorld>::new_with_sender(sender);
+
+        let event1 = event::Cucumber::<TestWorld>::Started;
+        let event2 = event::Cucumber::<TestWorld>::Finished;
+        let meta = crate::event::Metadata::new(());
+
+        // Send one event normally and one with metadata
+        event_sender.send_event(event1);
+        event_sender.send_event_with_meta(event2, &meta);
+
+        // Both should be received
+        let received1 = receiver.try_next().unwrap().unwrap().unwrap();
+        let received2 = receiver.try_next().unwrap().unwrap().unwrap();
 
         assert!(matches!(received1.value, event::Cucumber::Started));
         assert!(matches!(received2.value, event::Cucumber::Finished));

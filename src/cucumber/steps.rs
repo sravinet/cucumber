@@ -2,9 +2,8 @@
 
 use regex::Regex;
 
-use crate::{Parser, Step, World, Writer, runner, step};
-
 use super::core::Cucumber;
+use crate::{Parser, Step, World, Writer, runner, step};
 
 impl<W, I, P, Wr, F, B, A, Cli>
     Cucumber<W, P, I, runner::Basic<W, F, B, A>, Wr, Cli>

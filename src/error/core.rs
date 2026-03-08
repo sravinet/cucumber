@@ -137,9 +137,9 @@ impl From<ConfigError> for CucumberError {
 
 #[cfg(test)]
 mod tests {
+    use std::{error::Error, sync::Arc};
+
     use super::*;
-    use std::error::Error;
-    use std::sync::Arc;
 
     #[test]
     fn test_cucumber_error_display() {

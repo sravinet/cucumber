@@ -12,16 +12,13 @@
 
 use either::Either;
 
+// Forward declarations for circular dependencies
+use super::rules::RulesQueue;
+use super::{emitter::Emitter, queue::Queue, scenarios::ScenariosQueue};
 use crate::{
     Event, Writer,
     event::{self, Retries, Source},
 };
-
-use super::{emitter::Emitter, queue::Queue};
-
-// Forward declarations for circular dependencies
-use super::rules::RulesQueue;
-use super::scenarios::ScenariosQueue;
 
 /// [`Queue`] of all incoming events.
 pub type CucumberQueue<World> =
@@ -276,16 +273,15 @@ impl<'me, World> Emitter<World> for &'me mut FeatureQueue<World> {
 #[cfg(test)]
 #[allow(dead_code)]
 mod tests {
-    use super::super::FinishedState;
-    use super::*;
-    use crate::test_utils::common::{EmptyCli, TestWorld};
+    use std::{future::Future, sync::Arc};
+
+    use super::{super::FinishedState, *};
     use crate::{
         Event, Writer,
-        event::Source,
-        event::{Cucumber, Metadata, RetryableScenario},
+        event::{Cucumber, Metadata, RetryableScenario, Source},
         parser,
+        test_utils::common::{EmptyCli, TestWorld},
     };
-    use std::{future::Future, sync::Arc};
 
     // Using common TestWorld from test_utils
 

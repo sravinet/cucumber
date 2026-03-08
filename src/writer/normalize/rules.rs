@@ -10,15 +10,13 @@
 
 //! RulesQueue implementation for event normalization.
 
+// Forward declaration to avoid circular dependency
+use super::scenarios::ScenariosQueue;
+use super::{emitter::Emitter, queue::Queue};
 use crate::{
     Writer,
     event::{self, Retries, Source},
 };
-
-use super::{emitter::Emitter, queue::Queue};
-
-// Forward declaration to avoid circular dependency
-use super::scenarios::ScenariosQueue;
 
 /// [`Queue`] of all events of a single [`Rule`].
 ///
@@ -88,16 +86,15 @@ impl<'me, World> Emitter<World> for &'me mut RulesQueue<World> {
 #[cfg(test)]
 #[allow(dead_code)]
 mod tests {
-    use super::super::FinishedState;
-    use super::*;
-    use crate::test_utils::common::{EmptyCli, TestWorld};
+    use std::{future::Future, sync::Arc};
+
+    use super::{super::FinishedState, *};
     use crate::{
         Event, Writer,
-        event::Source,
-        event::{Cucumber, Metadata, RetryableScenario},
+        event::{Cucumber, Metadata, RetryableScenario, Source},
         parser,
+        test_utils::common::{EmptyCli, TestWorld},
     };
-    use std::{future::Future, sync::Arc};
 
     // Using common TestWorld from test_utils
 

@@ -201,9 +201,11 @@ impl PartialEq<gherkin::Feature> for Feature {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use gherkin::{Feature as GherkinFeature, LineCol, Rule, Scenario};
     use std::path::PathBuf;
+
+    use gherkin::{Feature as GherkinFeature, LineCol, Rule, Scenario};
+
+    use super::*;
 
     fn create_test_gherkin_feature() -> GherkinFeature {
         GherkinFeature {

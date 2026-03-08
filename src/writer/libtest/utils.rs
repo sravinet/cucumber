@@ -18,12 +18,11 @@ use std::{
 use either::Either;
 use itertools::Itertools as _;
 
+use super::{cli::Cli, writer::Libtest};
 use crate::{
     event::{self, Metadata, Retries},
     writer::basic::trim_path,
 };
-
-use super::{cli::Cli, writer::Libtest};
 
 /// Indicator, whether a [`Step`] is [`Background`] or not.
 ///
@@ -248,8 +247,9 @@ impl BackgroundUtils {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::PathBuf;
+
+    use super::*;
 
     #[derive(Debug)]
     struct MockWorld;

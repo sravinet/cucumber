@@ -26,7 +26,7 @@
 //! # Example
 //!
 //! ```rust
-//! use cucumber::error::{CucumberError, StepError, Result};
+//! use cucumber::error::{CucumberError, Result, StepError};
 //!
 //! fn example_function() -> Result<()> {
 //!     // This will automatically convert StepError to CucumberError
@@ -42,8 +42,9 @@ pub mod world;
 pub mod writer;
 
 // Re-export all error types for backward compatibility
-pub use config::{ConfigError, ConfigResult};
 pub use core::{CucumberError, Result};
+
+pub use config::{ConfigError, ConfigResult};
 pub use step::{PanicPayloadExt, StepError, StepResult};
 pub use utilities::{ResultConfigExt, ResultExt};
 pub use world::{WorldError, WorldResult};
@@ -55,8 +56,9 @@ pub type CucumberResult<T> = Result<T>;
 
 #[cfg(test)]
 mod integration_tests {
-    use super::*;
     use std::{error::Error, io, sync::Arc};
+
+    use super::*;
 
     #[test]
     fn test_error_conversions() {

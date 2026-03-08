@@ -42,8 +42,9 @@ impl Ext for TagOperation {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use gherkin::tagexpr::TagOperation;
+
+    use super::*;
 
     #[test]
     fn test_tag_evaluation_single_tag() {

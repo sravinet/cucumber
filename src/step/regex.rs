@@ -76,8 +76,9 @@ impl Ord for HashableRegex {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::{HashMap, HashSet};
+
+    use super::*;
 
     #[test]
     fn hashable_regex_new_creates_wrapper() {

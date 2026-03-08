@@ -13,7 +13,7 @@
 use std::{mem, time::SystemTime};
 
 use crate::{
-    event::{self, Scenario},
+    event::{self, Metadata, Scenario},
     writer::{
         basic::coerce_error,
         common::{StepContext, WriterStats},

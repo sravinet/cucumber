@@ -3,6 +3,8 @@
 //! This module has been refactored into focused submodules for better maintainability
 //! and testability. The main functionality remains available through re-exports.
 
+use std::borrow::Cow;
+
 // Import the modular implementation
 pub mod core;
 pub mod formatting;
@@ -18,7 +20,6 @@ pub use self::{
     stats::Stats,
     tracking::{HandledScenarios, Indicator},
 };
-
 // Also re-export the formatting functionality for Styles
 use crate::writer::out::Styles;
 
@@ -37,16 +38,16 @@ impl Styles {
 
     /// Formats [`Stats`] for a terminal output.
     #[must_use]
-    pub fn format_stats(&self, stats: Stats) -> std::borrow::Cow<'static, str> {
+    pub fn format_stats(&self, stats: Stats) -> Cow<'static, str> {
         SummaryFormatter::format_stats(self, stats)
     }
 
     /// Adds `s` to `singular` if the given `num` is not `1`.
     fn maybe_plural(
         &self,
-        singular: impl Into<std::borrow::Cow<'static, str>>,
+        singular: impl Into<Cow<'static, str>>,
         num: usize,
-    ) -> std::borrow::Cow<'static, str> {
+    ) -> Cow<'static, str> {
         SummaryFormatter::maybe_plural(self, singular, num)
     }
 }

@@ -76,8 +76,9 @@ impl WorldError {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io;
+
+    use super::*;
 
     #[derive(Debug)]
     struct CustomError(String);

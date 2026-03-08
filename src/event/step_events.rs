@@ -4,9 +4,8 @@ use std::sync::Arc;
 
 use derive_more::with_trait::{Display, Error, From};
 
-use crate::{step, writer::basic::coerce_error};
-
 use super::event_struct::Info;
+use crate::{step, writer::basic::coerce_error};
 
 /// Event specific to a particular [Step].
 ///

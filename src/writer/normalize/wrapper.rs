@@ -12,13 +12,12 @@
 
 use derive_more::with_trait::Deref;
 
+use super::{cucumber::CucumberQueue, emitter::Emitter};
 use crate::{
     Event, Writer,
     event::{self, Metadata},
     parser, writer,
 };
-
-use super::{cucumber::CucumberQueue, emitter::Emitter};
 
 /// Wrapper for a [`Writer`] implementation for outputting events corresponding
 /// to _order guarantees_ from the [`Runner`] in a [`Normalized`] readable
@@ -197,10 +196,10 @@ impl<W, Wr: writer::NonTransforming> writer::NonTransforming
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::common::EmptyCli;
     use crate::{
         Event,
         event::{Cucumber, Metadata},
+        test_utils::common::EmptyCli,
         writer,
     };
 

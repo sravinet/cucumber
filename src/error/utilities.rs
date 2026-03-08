@@ -114,8 +114,9 @@ pub mod formatting {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io;
+
+    use super::*;
 
     #[derive(Debug)]
     struct TestError(String);

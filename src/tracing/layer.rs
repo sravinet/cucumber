@@ -73,11 +73,15 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::collections::HashSet;
-    use std::sync::{Arc, Mutex};
+    use std::{
+        collections::HashSet,
+        sync::{Arc, Mutex},
+    };
+
     use tracing::{Event, Subscriber};
     use tracing_subscriber::{layer::Context, registry::Registry};
+
+    use super::*;
 
     #[derive(Debug)]
     struct TestSubscriber {

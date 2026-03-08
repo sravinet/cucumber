@@ -37,11 +37,10 @@ pub use builder::{StepBuilder, compose_step_builders};
 pub use collection::{Collection, WithContext};
 pub use context::{CaptureName, Context};
 pub use error::AmbiguousMatchError;
-pub use location::Location;
-pub use regex::HashableRegex;
-
 // Type aliases that depend on other modules
 use futures::future::LocalBoxFuture;
+pub use location::Location;
+pub use regex::HashableRegex;
 
 /// Alias for a [`gherkin::Step`] function that returns a [`LocalBoxFuture`].
 pub type Step<World> =

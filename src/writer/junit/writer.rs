@@ -4,14 +4,13 @@ use std::{fmt::Debug, io, time::SystemTime};
 
 use junit_report::Report;
 
-use crate::{
-    Event, World, Writer, event, parser,
-    writer::{self, Ext as _, Verbosity, discard},
-};
-
 use super::{
     cli::Cli, event_handlers::EventHandler,
     test_case_builder::JUnitTestCaseBuilder,
+};
+use crate::{
+    Event, World, Writer, event, parser,
+    writer::{self, Ext as _, Verbosity, discard},
 };
 
 /// [JUnit XML report][1] [`Writer`] implementation outputting XML to an
@@ -229,14 +228,13 @@ mod tests {
     use gherkin::{Feature, LineCol};
     use junit_report::Report;
 
+    use super::*;
     use crate::{
         Event,
         event::{self, Cucumber, Feature as FeatureEvent},
         parser,
         writer::Verbosity,
     };
-
-    use super::*;
 
     #[derive(Debug)]
     struct TestWorld;

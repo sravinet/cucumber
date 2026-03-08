@@ -2,9 +2,8 @@
 
 use std::{fmt::Debug, io};
 
-use crate::{event, writer::out::WriteStrExt as _};
-
 use super::basic_struct::Basic;
+use crate::{event, writer::out::WriteStrExt as _};
 
 impl<Out: io::Write> Basic<Out> {
     /// Outputs the [started] [`Feature`].

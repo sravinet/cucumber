@@ -15,6 +15,8 @@ pub(super) use core::Executor;
 
 #[cfg(test)]
 mod integration_tests {
+    use futures::{TryStreamExt as _, channel::mpsc, future::LocalBoxFuture};
+
     use super::*;
     use crate::{
         Event,
@@ -22,7 +24,6 @@ mod integration_tests {
         parser, step,
         test_utils::common::TestWorld,
     };
-    use futures::{TryStreamExt as _, channel::mpsc, future::LocalBoxFuture};
 
     type BeforeHook = for<'a> fn(
         &'a gherkin::Feature,

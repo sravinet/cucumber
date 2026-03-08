@@ -48,8 +48,9 @@ fn writer_stats_default_behavior() {
 
 #[test]
 fn error_consolidation_works() {
-    use cucumber::error::{CucumberError, WriterError};
     use std::io;
+
+    use cucumber::error::{CucumberError, WriterError};
 
     // Test error conversion chain
     let io_err =
@@ -159,8 +160,9 @@ fn world_formatter_handles_different_types() {
 
 #[test]
 fn error_formatter_handles_different_panic_types() {
-    use cucumber::writer::ErrorFormatter;
     use std::sync::Arc;
+
+    use cucumber::writer::ErrorFormatter;
 
     // Test with String panic
     let string_panic: Arc<dyn std::any::Any + Send> =

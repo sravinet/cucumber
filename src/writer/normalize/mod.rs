@@ -67,11 +67,11 @@ pub use self::{
 #[allow(dead_code)]
 mod integration_tests {
     use super::*;
-    use crate::test_utils::common::{EmptyCli, TestWorld};
     use crate::{
         Event, Writer,
         event::{self, Metadata, Source},
         parser,
+        test_utils::common::{EmptyCli, TestWorld},
     };
 
     // Using common TestWorld from test_utils

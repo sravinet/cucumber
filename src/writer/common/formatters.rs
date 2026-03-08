@@ -30,6 +30,12 @@ impl WorldFormatter {
             None
         }
     }
+    
+    /// Formats world object for debugging output.
+    #[must_use]
+    pub fn format_world<W: Debug>(world: &W) -> String {
+        format!("{world:#?}")
+    }
 
     /// Formats docstring output if verbosity allows it.
     pub fn format_docstring_if_needed(
@@ -66,6 +72,12 @@ impl ErrorFormatter {
         } else {
             "Unknown error".to_string()
         }
+    }
+    
+    /// Formats an error for display output.
+    #[must_use]
+    pub fn format_error(error: &dyn std::error::Error) -> String {
+        format!("{error}")
     }
 }
 

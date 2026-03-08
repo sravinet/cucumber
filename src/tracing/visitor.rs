@@ -7,7 +7,7 @@ use crate::runner::basic::ScenarioId;
 
 /// [`Visit`]or extracting a [`ScenarioId`] from a
 /// [`ScenarioId::SPAN_FIELD_NAME`]d [`Field`], in case it's present.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct GetScenarioId {
     scenario_id: Option<ScenarioId>,
 }
@@ -38,7 +38,7 @@ impl Visit for GetScenarioId {
 /// [`ScenarioId::SPAN_FIELD_NAME`].
 ///
 /// [`Span`]: tracing::Span
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct IsScenarioIdSpan {
     is_scenario_span: bool,
 }
@@ -65,8 +65,9 @@ impl Visit for IsScenarioIdSpan {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tracing::field::FieldSet;
+
+    use super::*;
 
     fn create_test_field(name: &'static str) -> Field {
         let fieldset =

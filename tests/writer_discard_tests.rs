@@ -1,11 +1,11 @@
 //! Unit tests for writer discard wrappers.
 
-use cucumber::writer::discard::*;
+use std::sync::{Arc, Mutex};
+
 use cucumber::{
     Event, Writer, cli,
-    writer::{Arbitrary as ArbitraryTrait, Stats as StatsTrait},
+    writer::{Arbitrary as ArbitraryTrait, Stats as StatsTrait, discard::*},
 };
-use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Default)]
 struct TestWorld;

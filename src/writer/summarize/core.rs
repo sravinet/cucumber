@@ -4,18 +4,17 @@ use std::collections::HashMap;
 
 use derive_more::with_trait::Deref;
 
+use super::{
+    state::State,
+    stats::Stats,
+    tracking::{HandledScenarios, Indicator, ScenarioTracker},
+};
 use crate::{
     Event, World, Writer,
     cli::Colored,
     event::{self, Retries, Source},
     parser,
     writer::{self, out::Styles},
-};
-
-use super::{
-    state::State,
-    stats::Stats,
-    tracking::{HandledScenarios, Indicator, ScenarioTracker},
 };
 
 /// Wrapper for a [`Writer`] for outputting an execution summary (number of
@@ -477,8 +476,10 @@ pub type SkipFn =
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::common::{EmptyCli, TestWorld};
-    use crate::{Event, Writer, parser};
+    use crate::{
+        Event, Writer, parser,
+        test_utils::common::{EmptyCli, TestWorld},
+    };
 
     #[derive(Debug, Clone)]
     struct MockWriter;

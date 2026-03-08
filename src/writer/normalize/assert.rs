@@ -139,11 +139,11 @@ impl<World, Writer> Normalized for super::wrapper::Normalize<World, Writer> {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::common::{EmptyCli, TestWorld};
-    use crate::writer::Stats;
     use crate::{
         Event,
         event::{Cucumber, Metadata},
+        test_utils::common::{EmptyCli, TestWorld},
+        writer::Stats,
     };
 
     // Mock writer for testing

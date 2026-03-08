@@ -4,12 +4,11 @@ use std::{marker::PhantomData, time::Duration};
 
 use gherkin::tagexpr::TagOperation;
 
+use super::core::Cucumber;
 use crate::{
     Parser, ScenarioType, World, Writer,
     runner::{self, basic::RetryOptions},
 };
-
-use super::core::Cucumber;
 
 impl<W, I, P, Wr, F, B, A, Cli>
     Cucumber<W, P, I, runner::Basic<W, F, B, A>, Wr, Cli>

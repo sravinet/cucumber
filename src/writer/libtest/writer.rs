@@ -12,6 +12,7 @@
 
 use std::{fmt::Debug, io, time::SystemTime};
 
+use super::cli::{Cli, Format};
 use crate::{
     Event, World, Writer, cli, event, parser,
     writer::{
@@ -21,8 +22,6 @@ use crate::{
         out::WriteStrExt as _,
     },
 };
-
-use super::cli::{Cli, Format};
 
 /// [`libtest`][1] compatible [`Writer`].
 ///
@@ -306,12 +305,19 @@ impl<W, Out: io::Write> OutputFormatter for Libtest<W, Out> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io;
+
+    use super::*;
 
     #[derive(Debug)]
     struct MockWorld;
-    impl World for MockWorld {}
+    impl World for MockWorld {
+        type Error = std::convert::Infallible;
+
+        async fn new() -> Result<Self, Self::Error> {
+            Ok(Self)
+        }
+    }
 
     mod libtest_struct_tests {
         use super::*;

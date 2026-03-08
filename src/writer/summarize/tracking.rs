@@ -103,9 +103,22 @@ pub struct ScenarioTracker;
 
 impl ScenarioTracker {
     /// Creates a new empty [`HandledScenarios`] map.
+    /// 
+    /// This initializes a fresh tracking map for scenario state management,
+    /// which is essential for accurate summary reporting.
     #[must_use]
-    pub fn new() -> HandledScenarios {
+    pub fn empty() -> HandledScenarios {
         HashMap::new()
+    }
+    
+    /// Creates a new empty [`HandledScenarios`] map.
+    /// 
+    /// Alias for `empty()` to maintain backward compatibility while
+    /// following proper naming conventions for type aliases.
+    #[must_use]
+    #[deprecated(since = "0.21.0", note = "use `empty()` instead for clearer intent")]
+    pub fn new() -> HandledScenarios {
+        Self::empty()
     }
 
     /// Creates a scenario path tuple from the given components.
@@ -113,7 +126,7 @@ impl ScenarioTracker {
     /// This is a convenience function for creating the complex key type used
     /// in [`HandledScenarios`].
     #[must_use]
-    pub fn create_path(
+    pub const fn create_path(
         feature: Source<gherkin::Feature>,
         rule: Option<Source<gherkin::Rule>>,
         scenario: Source<gherkin::Scenario>,

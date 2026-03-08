@@ -37,13 +37,20 @@ pub use writer::{Libtest, Or, OrBasic};
 
 #[cfg(test)]
 mod integration_tests {
+    use std::{io, time::SystemTime};
+
     use super::*;
     use crate::{Event, World, Writer, event};
-    use std::{io, time::SystemTime};
 
     #[derive(Debug)]
     struct MockWorld;
-    impl World for MockWorld {}
+    impl World for MockWorld {
+        type Error = std::convert::Infallible;
+
+        async fn new() -> Result<Self, Self::Error> {
+            Ok(Self)
+        }
+    }
 
     #[tokio::test]
     async fn libtest_writer_integration() {

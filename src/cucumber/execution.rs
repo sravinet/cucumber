@@ -4,9 +4,8 @@ use std::mem;
 
 use futures::StreamExt as _;
 
-use crate::{Parser, Runner, World, Writer, cli, tag::Ext as _, writer};
-
 use super::core::Cucumber;
+use crate::{Parser, Runner, World, Writer, cli, tag::Ext as _, writer};
 
 impl<W, P, I, R, Wr, Cli> Cucumber<W, P, I, R, Wr, Cli>
 where

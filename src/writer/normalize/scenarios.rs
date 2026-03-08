@@ -10,12 +10,11 @@
 
 //! ScenariosQueue implementation for event normalization.
 
+use super::emitter::Emitter;
 use crate::{
     Event, Writer,
     event::{self, Retries, Source},
 };
-
-use super::emitter::Emitter;
 
 /// [`Queue`] of all events of a single [`Scenario`].
 ///
@@ -84,15 +83,15 @@ impl<World> Emitter<World> for &mut ScenariosQueue<World> {
 #[cfg(test)]
 #[allow(dead_code)]
 mod tests {
+    use std::{future::Future, sync::Arc};
+
     use super::*;
-    use crate::test_utils::common::{EmptyCli, TestWorld};
     use crate::{
         Event, Writer,
-        event::Source,
-        event::{Cucumber, Metadata, Retries, RetryableScenario},
+        event::{Cucumber, Metadata, Retries, RetryableScenario, Source},
         parser,
+        test_utils::common::{EmptyCli, TestWorld},
     };
-    use std::{future::Future, sync::Arc};
 
     // Using common TestWorld from test_utils
 

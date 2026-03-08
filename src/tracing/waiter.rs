@@ -39,9 +39,11 @@ impl SpanCloseWaiter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use futures::{FutureExt, select};
     use std::time::Duration;
+
+    use futures::{FutureExt, select};
+
+    use super::*;
 
     #[test]
     fn test_span_close_waiter_creation() {

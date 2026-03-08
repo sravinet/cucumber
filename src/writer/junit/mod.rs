@@ -28,6 +28,7 @@ mod tests {
 
     use gherkin::{Feature, LineCol, Scenario};
 
+    use super::*;
     use crate::{
         Event, World,
         event::{
@@ -37,8 +38,6 @@ mod tests {
         parser,
         writer::Verbosity,
     };
-
-    use super::*;
 
     #[derive(Debug)]
     struct TestWorld;

@@ -13,8 +13,7 @@
 //! This module defines errors that can occur during step execution,
 //! including panics, matching failures, timeouts, and ambiguous matches.
 
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use derive_more::with_trait::{Display, Error};
 
@@ -141,8 +140,9 @@ impl PanicPayloadExt for Arc<dyn std::any::Any + Send + 'static> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[test]
     fn test_step_error_constructors() {

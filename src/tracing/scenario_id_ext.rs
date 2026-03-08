@@ -54,8 +54,9 @@ impl ScenarioId {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tracing::Level;
+
+    use super::*;
 
     #[test]
     fn test_span_field_name_constant() {

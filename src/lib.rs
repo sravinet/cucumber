@@ -116,7 +116,6 @@
     clippy::string_lit_as_bytes,
     clippy::string_lit_chars_any,
     clippy::string_slice,
-    clippy::string_to_string,
     clippy::suboptimal_flops,
     clippy::suspicious_operation_groupings,
     clippy::suspicious_xor_used_as_pow,
@@ -194,6 +193,10 @@ pub mod prelude;
 #[cfg(feature = "macros")]
 pub mod codegen;
 #[cfg(feature = "observability")]
+/// Observability infrastructure for test execution monitoring.
+/// 
+/// This module provides utilities for observing test execution events
+/// and integrating with external monitoring systems.
 pub mod observer;
 #[cfg(feature = "tracing")]
 pub mod tracing;
@@ -205,7 +208,6 @@ pub mod test_utils;
 // Re-export everything from the exports module for backward compatibility
 #[doc(inline)]
 pub use exports::*;
-
 // Re-export the World trait at the crate root for backward compatibility
 #[doc(inline)]
 pub use world::World;

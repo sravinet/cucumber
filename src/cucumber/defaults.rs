@@ -4,9 +4,8 @@ use std::path::Path;
 
 use derive_more::with_trait::Debug;
 
-use crate::{World, parser, runner, writer, writer::Ext as _};
-
 use super::core::Cucumber;
+use crate::{World, parser, runner, writer, writer::Ext as _};
 
 /// Shortcut for the [`Cucumber`] type returned by its [`Default`] impl.
 pub type DefaultCucumber<W, I> = Cucumber<

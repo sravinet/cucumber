@@ -2,12 +2,11 @@
 
 use std::{fmt::Debug, io};
 
+use super::{basic_struct::Basic, cli::Cli};
 use crate::{
     Event, World, Writer, event, parser,
     writer::{self, out::WriteStrExt as _},
 };
-
-use super::{basic_struct::Basic, cli::Cli};
 
 impl<W, Out> Writer<W> for Basic<Out>
 where

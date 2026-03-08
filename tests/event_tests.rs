@@ -1,6 +1,6 @@
-use cucumber::event::*;
-use cucumber::step;
 use std::sync::Arc;
+
+use cucumber::{event::*, step};
 
 #[derive(std::fmt::Debug, Clone, PartialEq, Eq)]
 struct TestWorld;

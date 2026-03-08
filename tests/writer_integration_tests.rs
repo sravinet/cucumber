@@ -1,5 +1,6 @@
-use cucumber::{Writer, cli, writer};
 use std::sync::{Arc, Mutex};
+
+use cucumber::{Writer, cli, writer};
 
 #[derive(Debug, Default)]
 struct TestWorld;

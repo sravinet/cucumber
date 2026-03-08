@@ -1,6 +1,7 @@
 //! Event and field formatters for tracing integration with scenario markers.
 
 use std::fmt;
+
 use tracing::{Event, Subscriber};
 use tracing_subscriber::{
     field::RecordFields,
@@ -95,10 +96,14 @@ pub mod suffix {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io::Write;
-    use tracing_subscriber::fmt::format::{DefaultFields, Format};
-    use tracing_subscriber::registry::Registry;
+
+    use tracing_subscriber::{
+        fmt::format::{DefaultFields, Format},
+        registry::Registry,
+    };
+
+    use super::*;
 
     struct TestWriter {
         buffer: Vec<u8>,

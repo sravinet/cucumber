@@ -2,9 +2,8 @@
 
 use std::marker::PhantomData;
 
-use crate::{Parser, Runner, World, Writer};
-
 use super::core::Cucumber;
+use crate::{Parser, Runner, World, Writer};
 
 // Implemented manually to omit redundant `W: Clone` and `I: Clone` trait
 // bounds, imposed by `#[derive(Clone)]`.

@@ -1,7 +1,8 @@
 //! Type definitions and aliases for the tracing integration.
 
-use futures::channel::{mpsc, oneshot};
 use std::collections::HashMap;
+
+use futures::channel::{mpsc, oneshot};
 use tracing::span;
 
 use crate::{
@@ -49,8 +50,9 @@ pub type SpanCloseReceiver = mpsc::UnboundedReceiver<span::Id>;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::HashMap;
+
+    use super::*;
 
     #[test]
     fn test_scenarios_type_alias() {
