@@ -146,7 +146,7 @@ impl Display for WorldError {
 impl Error for WorldError {}
 
 impl WorldError {
-    /// Creates a new WorldError with the given message.
+    /// Creates a new `WorldError` with the given message.
     #[must_use]
     pub fn new(message: impl Into<String>) -> Self {
         Self { message: message.into() }
@@ -160,6 +160,7 @@ pub trait AsyncWorldInit: World {
 }
 
 /// Helper trait for World implementations that need cleanup.
+#[expect(clippy::module_name_repetitions, reason = "Trait provides additional cleanup functionality for World")]
 pub trait WorldCleanup: World {
     /// Performs cleanup of the World state.
     fn cleanup(&mut self) -> impl Future<Output = Result<(), Self::Error>>;

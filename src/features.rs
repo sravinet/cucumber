@@ -91,20 +91,20 @@ mod tests {
     }
 
     #[test]
-    fn test_enabled_features_returns_slice() {
-        let features = enabled_features();
+    fn test_enabled_returns_slice() {
+        let features = enabled();
         // Test that we get a slice (may be empty)
         assert!(features.len() >= 0);
     }
 
     #[test]
     fn test_features_summary_format() {
-        let summary = features_summary();
+        let summary = summary();
         // Test that we get a non-empty string
         assert!(!summary.is_empty());
 
         // Test that it contains expected content
-        if enabled_features().is_empty() {
+        if enabled().is_empty() {
             assert_eq!(summary, "No optional features enabled");
         } else {
             assert!(summary.starts_with("Enabled features: "));
@@ -115,28 +115,28 @@ mod tests {
     #[test]
     fn test_macros_feature_enabled() {
         assert!(has_macros_feature());
-        assert!(enabled_features().contains(&"macros"));
+        assert!(enabled().contains(&"macros"));
     }
 
     #[cfg(feature = "tracing")]
     #[test]
     fn test_tracing_feature_enabled() {
         assert!(has_tracing_feature());
-        assert!(enabled_features().contains(&"tracing"));
+        assert!(enabled().contains(&"tracing"));
     }
 
     #[cfg(not(feature = "macros"))]
     #[test]
     fn test_macros_feature_disabled() {
         assert!(!has_macros_feature());
-        assert!(!enabled_features().contains(&"macros"));
+        assert!(!enabled().contains(&"macros"));
     }
 
     #[cfg(not(feature = "tracing"))]
     #[test]
     fn test_tracing_feature_disabled() {
         assert!(!has_tracing_feature());
-        assert!(!enabled_features().contains(&"tracing"));
+        assert!(!enabled().contains(&"tracing"));
     }
 
     #[test]
@@ -149,8 +149,8 @@ mod tests {
 
     #[test]
     fn test_features_consistency() {
-        // Test that enabled_features() is consistent with individual feature checks
-        let features = enabled_features();
+        // Test that enabled() is consistent with individual feature checks
+        let features = enabled();
 
         if has_macros_feature() {
             assert!(features.contains(&"macros"));

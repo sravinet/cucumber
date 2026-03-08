@@ -177,7 +177,7 @@ mod tests {
         assert!(!name().is_empty());
         assert!(!description().is_empty());
 
-        let version_str = version_string();
+        let version_str = display_string();
         assert!(version_str.contains(name()));
         assert!(version_str.contains(version()));
     }
