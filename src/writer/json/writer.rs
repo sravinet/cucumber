@@ -106,7 +106,20 @@ impl<Out: io::Write> Json<Out> {
     pub fn new<W: Debug + World>(output: Out) -> writer::Normalize<W, Self> {
         Self::raw(output).normalized()
     }
+}
 
+impl Json<io::Stdout> {
+    /// Creates a new [`Normalized`] [`Json`] [`Writer`] outputting to
+    /// [`io::Stdout`].
+    ///
+    /// [`Normalized`]: writer::Normalized
+    #[must_use]
+    pub fn stdout<W: Debug + World>() -> writer::Normalize<W, Self> {
+        Self::new(io::stdout())
+    }
+}
+
+impl<Out: io::Write> Json<Out> {
     /// Creates a new non-[`Normalized`] [`Json`] [`Writer`] outputting
     /// [JSON][1] into the given `output`, and suitable for feeding into
     /// [`tee()`].
@@ -178,18 +191,23 @@ impl<Out: io::Write> Json<Out> {
 
 #[cfg(test)]
 mod tests {
+    use std::{io::Cursor, time::SystemTime};
+
     use super::*;
     use crate::{
         event::{Cucumber, Metadata, Scenario},
         parser::Result as ParserResult,
     };
-    use std::{io::Cursor, time::SystemTime};
 
     #[derive(Debug)]
     struct TestWorld;
 
     impl World for TestWorld {
-        type Error = ();
+        type Error = std::convert::Infallible;
+
+        async fn new() -> Result<Self, Self::Error> {
+            Ok(Self)
+        }
     }
 
     fn create_test_json_writer() -> Json<Cursor<Vec<u8>>> {

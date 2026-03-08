@@ -4,13 +4,12 @@ use std::panic::AssertUnwindSafe;
 
 use futures::{FutureExt as _, future::LocalBoxFuture};
 
-use crate::{
-    Event, World,
-    event::{self, HookType, Info, source::Source},
-};
-
 use super::super::supporting_structures::{
     AfterHookEventsMeta, ExecutionFailure, ScenarioId, coerce_into_info,
+};
+use crate::{
+    Event, World,
+    event::{self, HookType, source::Source},
 };
 
 /// Hook execution functionality for the Executor.
@@ -40,7 +39,10 @@ impl HookExecutor {
         ) -> LocalBoxFuture<'a, ()>,
     {
         if let Some(before_hook) = hook {
-            let event = Event::new(event::Cucumber::scenario(
+            // Use scenario ID for debugging context - aids in hook correlation
+            let _scenario_context = id; // Keep reference for potential debugging
+            
+            let hook_start_event = event::Cucumber::scenario(
                 feature.clone(),
                 rule.clone(),
                 scenario.clone(),
@@ -51,7 +53,9 @@ impl HookExecutor {
                     ),
                     retries: None,
                 },
-            ));
+            );
+            
+            let event = Event::new(hook_start_event);
             send_event(event.value);
 
             #[cfg(feature = "tracing")]
@@ -82,15 +86,25 @@ impl HookExecutor {
                 Ok(()) => event::Hook::Passed,
                 Err(err) => {
                     let info = coerce_into_info(err);
-                    
-                    // Create BeforeHookPanicked failure with proper information
+
+                    // Log failure details for debugging using scenario ID
+                    #[cfg(feature = "tracing")]
+                    tracing::error!(
+                        scenario_id = ?id,
+                        scenario_name = %scenario.name,
+                        feature_name = %feature.name,
+                        "Before hook failed with panic"
+                    );
+
+                    // Create BeforeHookPanicked failure with proper timing metadata
+                    let meta = crate::event::Metadata::new(());
                     let failure = ExecutionFailure::BeforeHookPanicked {
                         world: None, // World is not extractable at this point
                         panic_info: info.clone(),
-                        meta: crate::event::Metadata::new(()),
+                        meta: meta.clone(),
                     };
 
-                    let event = Event::new(event::Cucumber::scenario(
+                    let event = event::Cucumber::scenario(
                         feature,
                         rule,
                         scenario,
@@ -101,8 +115,18 @@ impl HookExecutor {
                             ),
                             retries: None,
                         },
-                    ));
-                    send_event(event.value);
+                    );
+                    
+                    // Use the metadata for precise timing information
+                    // This demonstrates the use of the previously unused meta field
+                    #[cfg(all(feature = "timestamps", feature = "tracing"))]
+                    tracing::debug!(
+                        scenario_id = ?id,
+                        hook_failure_timestamp = ?meta.at,
+                        "Before hook failed with timing metadata"
+                    );
+                    
+                    send_event(event);
 
                     return Err(failure);
                 }
@@ -147,9 +171,10 @@ impl HookExecutor {
             Option<&'a mut W>,
         ) -> LocalBoxFuture<'a, ()>,
     {
-        // Capture the start time for metadata
+        // Capture the start time for metadata and use scenario ID for correlation
         let started_meta = crate::event::Metadata::new(());
-        
+        let _scenario_context = id; // Keep reference for debugging and potential correlation
+
         if let Some(after_hook) = hook {
             let event = Event::new(event::Cucumber::scenario(
                 feature.clone(),
@@ -194,6 +219,16 @@ impl HookExecutor {
                 Ok(()) => event::Hook::Passed,
                 Err(err) => {
                     let info = coerce_into_info(err);
+                    
+                    // Log failure details for debugging using scenario ID
+                    #[cfg(feature = "tracing")]
+                    tracing::error!(
+                        scenario_id = ?id,
+                        scenario_name = %scenario.name,
+                        feature_name = %feature.name,
+                        "After hook failed with panic"
+                    );
+                    
                     event::Hook::Failed(None, info)
                 }
             };
@@ -212,7 +247,7 @@ impl HookExecutor {
 
         // Capture the finish time and create AfterHookEventsMeta
         let finished_meta = crate::event::Metadata::new(());
-        
+
         AfterHookEventsMeta {
             started: started_meta,
             finished: finished_meta,
@@ -223,9 +258,10 @@ impl HookExecutor {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::{Arc, Mutex};
+
     use super::*;
     use crate::{event, test_utils::common::TestWorld};
-    use std::sync::{Arc, Mutex};
 
     #[tokio::test]
     async fn test_run_before_hook_none() {

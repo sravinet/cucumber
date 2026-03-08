@@ -1,8 +1,8 @@
 //! Extended tests for writer module Ext trait functionality.
 
-use cucumber::writer::*;
-use cucumber::{Event, Writer, cli, event, parser};
 use std::sync::{Arc, Mutex};
+
+use cucumber::{Event, Writer, cli, event, parser, writer::*};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 struct TestWorld;
@@ -228,7 +228,7 @@ fn test_conditional_exports_junit() {
 #[test]
 fn test_conditional_exports_libtest() {
     // Test that Libtest is available when feature is enabled
-    use cucumber::{World, writer::Normalize};
+    use cucumber::World;
 
     #[derive(Debug, Default, World)]
     struct TestWorld;
