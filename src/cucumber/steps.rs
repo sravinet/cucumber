@@ -1,9 +1,10 @@
 //! Step definition functionality for Cucumber executor.
 
 use regex::Regex;
+use futures::future::LocalBoxFuture;
 
 use super::core::Cucumber;
-use crate::{Parser, Step, World, Writer, runner, step};
+use crate::{Parser, Step, World, Writer, runner, step, event::ScenarioFinished};
 
 impl<W, I, P, Wr, F, B, A, Cli>
     Cucumber<W, P, I, runner::Basic<W, F, B, A>, Wr, Cli>
@@ -23,15 +24,15 @@ where
             Option<&'a gherkin::Rule>,
             &'a gherkin::Scenario,
             &'a mut W,
-        ) -> futures::future::LocalBoxFuture<'a, ()>
+        ) -> LocalBoxFuture<'a, ()>
         + 'static,
     A: for<'a> Fn(
             &'a gherkin::Feature,
             Option<&'a gherkin::Rule>,
             &'a gherkin::Scenario,
-            &'a crate::event::ScenarioFinished,
+            &'a ScenarioFinished,
             Option<&'a mut W>,
-        ) -> futures::future::LocalBoxFuture<'a, ()>
+        ) -> LocalBoxFuture<'a, ()>
         + 'static,
 {
     /// Replaces [`Collection`] of [`Step`]s.

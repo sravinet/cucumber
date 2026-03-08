@@ -17,6 +17,7 @@ use derive_more::with_trait::{Display, Error};
 
 /// Configuration and validation errors.
 #[derive(Debug, Display, Error)]
+#[expect(clippy::module_name_repetitions, reason = "Error suffix is conventional for error types")]
 pub enum ConfigError {
     /// Invalid retry configuration.
     #[display("Invalid retry configuration: {reason}")]

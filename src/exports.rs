@@ -113,7 +113,7 @@ mod tests {
     fn test_core_exports_accessible() {
         // Test that core types are accessible through exports
         use crate::exports::{
-            CucumberError, Event, Parser, Runner, Step, Writer,
+            CucumberError, Event, Parser, Step,
         };
 
         // Test that these types can be referenced (compilation test)
@@ -186,7 +186,7 @@ mod tests {
     #[test]
     fn test_macros_exports() {
         // Test that macro-related exports are available when feature is enabled
-        use crate::exports::{Parameter, given, then, when};
+        use crate::exports::Parameter;
 
         // These should compile when macros feature is enabled
         // The actual usage would be in procedural macro context

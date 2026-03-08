@@ -2,11 +2,13 @@
 
 use std::{marker::PhantomData, time::Duration};
 
+use futures::future::LocalBoxFuture;
 use gherkin::tagexpr::TagOperation;
 
 use super::core::Cucumber;
 use crate::{
     Parser, ScenarioType, World, Writer,
+    event::ScenarioFinished,
     runner::{self, basic::RetryOptions},
 };
 
@@ -28,15 +30,15 @@ where
             Option<&'a gherkin::Rule>,
             &'a gherkin::Scenario,
             &'a mut W,
-        ) -> futures::future::LocalBoxFuture<'a, ()>
+        ) -> LocalBoxFuture<'a, ()>
         + 'static,
     A: for<'a> Fn(
             &'a gherkin::Feature,
             Option<&'a gherkin::Rule>,
             &'a gherkin::Scenario,
-            &'a crate::event::ScenarioFinished,
+            &'a ScenarioFinished,
             Option<&'a mut W>,
-        ) -> futures::future::LocalBoxFuture<'a, ()>
+        ) -> LocalBoxFuture<'a, ()>
         + 'static,
 {
     /// If `max` is [`Some`] number of concurrently executed [`Scenario`]s will

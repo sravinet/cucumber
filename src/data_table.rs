@@ -38,7 +38,7 @@ use std::{collections::HashMap, fmt};
 /// let raw = table.raw();
 /// assert_eq!(raw[0], vec!["name", "age"]);
 /// ```
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DataTable {
     /// Raw table data as a 2D vector of strings
     /// 
@@ -274,7 +274,7 @@ impl DataTable {
 
     /// Returns the number of rows in the table (including header).
     #[must_use]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.rows.len()
     }
 
@@ -283,7 +283,7 @@ impl DataTable {
     /// Returns 0 if the table is empty.
     #[must_use]
     pub fn width(&self) -> usize {
-        self.rows.first().map_or(0, |row| row.len())
+        self.rows.first().map_or(0, std::vec::Vec::len)
     }
 }
 
