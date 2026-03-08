@@ -5,6 +5,7 @@ use junit_report::{Duration, Report, TestCase, TestSuiteBuilder};
 use crate::{parser, writer::basic::trim_path};
 
 /// Handles parser and expansion errors by converting them to JUnit test suites.
+#[derive(Debug, Copy, Clone)]
 pub struct ErrorHandler;
 
 impl ErrorHandler {

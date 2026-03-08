@@ -40,7 +40,7 @@ pub enum LibTestJsonEvent {
 }
 
 /// Test suite event.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
 pub enum SuiteEvent {
     /// Test suite started.
@@ -134,7 +134,6 @@ impl TestEvent {
     }
 
     /// Creates a new [`TestEvent::Timeout`].
-    #[expect(dead_code, reason = "API uniformity")]
     pub fn timeout(name: String, exec_time: Option<Duration>) -> Self {
         Self::Timeout(TestEventInner::new(name).with_exec_time(exec_time))
     }
@@ -200,7 +199,6 @@ impl TestEventInner {
     }
 
     /// Adds a [`TestEventInner::stderr`].
-    #[expect(dead_code, reason = "API completeness")]
     pub fn with_stderr(mut self, stderr: String) -> Self {
         self.stderr = Some(stderr);
         self
@@ -209,8 +207,9 @@ impl TestEventInner {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     mod suite_event_tests {
         use super::*;
