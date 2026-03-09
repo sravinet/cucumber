@@ -29,7 +29,7 @@ impl RecordScenarioId {
 
     /// Retrieves a [`ScenarioId`] from the given span, if present.
     pub fn get_scenario_id_from_span<S>(
-        span: &tracing_subscriber::registry::SpanRef<S>,
+        span: &tracing_subscriber::registry::SpanRef<'_, S>,
     ) -> Option<ScenarioId>
     where
         S: for<'a> LookupSpan<'a> + Subscriber,
@@ -39,7 +39,7 @@ impl RecordScenarioId {
 
     /// Checks if a span contains scenario-related tracing data.
     pub fn is_scenario_span<S>(
-        span: &tracing_subscriber::registry::SpanRef<S>,
+        span: &tracing_subscriber::registry::SpanRef<'_, S>,
     ) -> bool
     where
         S: for<'a> LookupSpan<'a> + Subscriber,

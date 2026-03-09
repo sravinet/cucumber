@@ -20,7 +20,7 @@ use itertools::Itertools as _;
 
 use super::{cli::{Cli, ReportTime}, writer::Libtest};
 use crate::{
-    event::{self, Event, Metadata, Retries},
+    event::{self, Metadata, Retries},
     writer::basic::trim_path,
 };
 
