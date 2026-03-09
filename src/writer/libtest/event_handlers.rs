@@ -419,7 +419,7 @@ mod tests {
             let cli = Cli::default();
 
             // Create a mock Started event
-            let meta = event::Metadata::new(SystemTime::now());
+            let meta = Event { value: (), at: SystemTime::now() };
             let event = Ok(meta.insert(event::Cucumber::Started));
 
             writer.handle_cucumber_event(event, &cli);
@@ -435,7 +435,7 @@ mod tests {
             let cli = Cli::default();
 
             let start_time = SystemTime::now();
-            let meta = event::Metadata::new(start_time);
+            let meta = Event { value: (), at: start_time };
             let event = Ok(meta.insert(event::Cucumber::Started));
 
             // Simulate parsing finished to trigger processing
@@ -450,15 +450,16 @@ mod tests {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli::default();
 
-            let meta = event::Metadata::new(SystemTime::now());
-            let event = Ok((
-                event::Cucumber::ParsingFinished {
+            let event = Ok(Event {
+                value: event::Cucumber::ParsingFinished {
+                    features: 3,
+                    rules: 0,
+                    scenarios: 1,
                     steps: 10,
                     parser_errors: 2,
-                    features: 3,
                 },
-                meta,
-            ));
+                at: SystemTime::now(),
+            });
 
             let events = writer.expand_cucumber_event(event, &cli);
 
@@ -489,8 +490,10 @@ mod tests {
             writer.started_at = Some(start_time);
             let finish_time = start_time + Duration::from_secs(1);
 
-            let meta = event::Metadata::new(finish_time);
-            let event = Ok((event::Cucumber::Finished, meta));
+            let event = Ok(Event {
+                value: event::Cucumber::Finished,
+                at: finish_time,
+            });
 
             let events = writer.expand_cucumber_event(event, &cli);
 
@@ -518,7 +521,7 @@ mod tests {
             writer.parsing_errors = 1;
             writer.hook_errors = 0;
 
-            let meta = event::Metadata::new(SystemTime::now());
+            let meta = Event { value: (), at: SystemTime::now() };
             let event = Ok((event::Cucumber::Finished, meta));
 
             let events = writer.expand_cucumber_event(event, &cli);
@@ -544,14 +547,13 @@ mod tests {
         fn handle_parsing_error_increments_counter() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
 
-            let error = parser::Error::ExampleExpansion(gherkin::ExampleExpansionError {
-                path: None,
-                position: gherkin::Position::new(1, 1),
-                kind: gherkin::ExampleExpansionErrorKind::MismatchedPlaceholders {
-                    expected: vec!["test".to_string()],
-                    actual: vec!["other".to_string()],
+            let error = parser::Error::ExampleExpansion(std::sync::Arc::new(
+                crate::feature::ExpandExamplesError {
+                    path: None,
+                    pos: gherkin::LineCol { line: 1, col: 1 },
+                    name: "mismatched_placeholder".to_string(),
                 },
-            });
+            ));
 
             let events = writer.handle_parsing_error(error);
 
@@ -563,14 +565,13 @@ mod tests {
         fn handle_parsing_error_creates_test_events() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
 
-            let error = parser::Error::ExampleExpansion(gherkin::ExampleExpansionError {
-                path: Some(std::path::PathBuf::from("test.feature")),
-                position: gherkin::Position::new(1, 1),
-                kind: gherkin::ExampleExpansionErrorKind::MismatchedPlaceholders {
-                    expected: vec!["test".to_string()],
-                    actual: vec!["other".to_string()],
+            let error = parser::Error::ExampleExpansion(std::sync::Arc::new(
+                crate::feature::ExpandExamplesError {
+                    path: Some(std::path::PathBuf::from("test.feature")),
+                    pos: gherkin::LineCol { line: 1, col: 1 },
+                    name: "mismatched_placeholder".to_string(),
                 },
-            });
+            ));
 
             let events = writer.handle_parsing_error(error);
 
@@ -605,7 +606,7 @@ mod tests {
             let cli = Cli::default();
 
             // Add some events before parsing is finished
-            let meta = event::Metadata::new(SystemTime::now());
+            let meta = Event { value: (), at: SystemTime::now() };
             let event1 = Ok(meta.insert(event::Cucumber::Started));
             let event2 = Ok(meta.insert(event::Cucumber::Started));
 
@@ -623,7 +624,7 @@ mod tests {
             let cli = Cli::default();
 
             // Add some events before parsing is finished
-            let meta = event::Metadata::new(SystemTime::now());
+            let meta = Event { value: (), at: SystemTime::now() };
             let started_event = Ok(meta.insert(event::Cucumber::Started));
             writer.handle_cucumber_event(started_event, &cli);
 
@@ -632,9 +633,11 @@ mod tests {
             // Now send parsing finished - this should flush all events
             let parsing_finished_event =
                 Ok(meta.insert(event::Cucumber::ParsingFinished {
+                    features: 1,
+                    rules: 0,
+                    scenarios: 1, 
                     steps: 5,
                     parser_errors: 0,
-                    features: 1,
                 }));
             writer.handle_cucumber_event(parsing_finished_event, &cli);
 

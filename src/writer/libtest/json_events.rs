@@ -333,7 +333,7 @@ mod tests {
         #[test]
         fn test_event_with_stdout() {
             let event = TestEvent::started("test".to_string())
-                .with_stdout("output without newline");
+                .with_stdout("output without newline".to_string());
 
             if let TestEvent::Started(inner) = event {
                 assert_eq!(
@@ -348,7 +348,7 @@ mod tests {
         #[test]
         fn test_event_with_stdout_already_has_newline() {
             let event = TestEvent::started("test".to_string())
-                .with_stdout("output with newline\n");
+                .with_stdout("output with newline\n".to_string());
 
             if let TestEvent::Started(inner) = event {
                 assert_eq!(
@@ -363,7 +363,7 @@ mod tests {
         #[test]
         fn test_event_serialization() {
             let event = TestEvent::started("my_test".to_string())
-                .with_stdout("test output");
+                .with_stdout("test output".to_string());
             let json = serde_json::to_string(&event).expect("should serialize");
 
             assert!(json.contains("\"event\":\"started\""));

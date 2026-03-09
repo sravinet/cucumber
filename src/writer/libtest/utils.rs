@@ -18,9 +18,9 @@ use std::{
 use either::Either;
 use itertools::Itertools as _;
 
-use super::{cli::Cli, writer::Libtest};
+use super::{cli::{Cli, ReportTime}, writer::Libtest};
 use crate::{
-    event::{self, Metadata, Retries},
+    event::{self, Event, Metadata, Retries},
     writer::basic::trim_path,
 };
 
@@ -210,6 +210,25 @@ impl TimingUtils {
     pub fn should_report_time(cli: &Cli) -> bool {
         cli.report_time.is_some()
     }
+
+    /// Formats duration for display based on ReportTime setting.
+    pub fn format_duration(duration: Duration, cli: &Cli) -> String {
+        let seconds = Self::duration_to_seconds(duration);
+        match cli.report_time {
+            Some(ReportTime::Plain) => format!("{:.3}s", seconds),
+            Some(ReportTime::Colored) => {
+                // Use ANSI color codes for colored output
+                if seconds < 0.1 {
+                    format!("\x1b[32m{:.3}s\x1b[0m", seconds)  // Green for fast
+                } else if seconds < 1.0 {
+                    format!("\x1b[33m{:.3}s\x1b[0m", seconds)  // Yellow for moderate
+                } else {
+                    format!("\x1b[31m{:.3}s\x1b[0m", seconds)  // Red for slow
+                }
+            }
+            None => format!("{:.3}s", seconds),  // Default plain format
+        }
+    }
 }
 
 /// Helper functions for working with background steps.
@@ -250,10 +269,17 @@ mod tests {
     use std::path::PathBuf;
 
     use super::*;
+    use crate::World;
 
     #[derive(Debug)]
     struct MockWorld;
-    impl World for MockWorld {}
+    impl World for MockWorld {
+        type Error = std::convert::Infallible;
+
+        async fn new() -> Result<Self, Self::Error> {
+            Ok(Self)
+        }
+    }
 
     // Helper function to create a mock feature
     fn mock_feature(name: &str, path: Option<&str>) -> gherkin::Feature {
@@ -264,10 +290,9 @@ mod tests {
             background: None,
             scenarios: vec![],
             rules: vec![],
-            examples: vec![],
             tags: vec![],
             span: gherkin::Span { start: 0, end: 0 },
-            position: gherkin::Position::new(1, 1),
+            position: gherkin::LineCol { line: 1, col: 1 },
             path: path.map(|p| PathBuf::from(p)),
         }
     }
@@ -282,7 +307,7 @@ mod tests {
             examples: vec![],
             tags: vec![],
             span: gherkin::Span { start: 0, end: 0 },
-            position: gherkin::Position::new(line, 1),
+            position: gherkin::LineCol { line: line as usize, col: 1 },
         }
     }
 
@@ -290,16 +315,18 @@ mod tests {
     fn mock_step(keyword: &str, value: &str, line: u32) -> gherkin::Step {
         gherkin::Step {
             keyword: keyword.to_string(),
+            ty: gherkin::StepType::Given, // Default to Given
             value: value.to_string(),
             docstring: None,
             table: None,
             span: gherkin::Span { start: 0, end: 0 },
-            position: gherkin::Position::new(line, 1),
+            position: gherkin::LineCol { line: line as usize, col: 1 },
         }
     }
 
     mod libtest_utils_tests {
         use super::*;
+        // ReportTime is now imported at module level
 
         #[test]
         fn test_case_name_generation_simple() {
@@ -369,10 +396,11 @@ mod tests {
                 mock_feature("Test Feature", Some("test.feature"));
             feature.background = Some(gherkin::Background {
                 keyword: "Background".to_string(),
+                name: "Background".to_string(),
                 description: None,
                 steps: vec![],
                 span: gherkin::Span { start: 0, end: 0 },
-                position: gherkin::Position::new(3, 1),
+                position: gherkin::LineCol { line: 3, col: 1 },
             });
             let scenario = mock_scenario("Test Scenario", 5);
             let step = mock_step("Given", "background condition", 4);
@@ -425,11 +453,11 @@ mod tests {
         fn step_started_at_with_timing() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli {
-                report_time: Some(super::super::cli::ReportTime::Plain),
+                report_time: Some(ReportTime::Plain),
                 ..Default::default()
             };
             let time = SystemTime::now();
-            let meta = Metadata::new(time);
+            let meta = Event { value: (), at: time };
 
             LibtestUtils::step_started_at(&mut writer, meta, &cli);
 
@@ -440,7 +468,7 @@ mod tests {
         fn step_started_at_without_timing() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli { report_time: None, ..Default::default() };
-            let meta = Metadata::new(SystemTime::now());
+            let meta = Event { value: (), at: SystemTime::now() };
 
             LibtestUtils::step_started_at(&mut writer, meta, &cli);
 
@@ -451,7 +479,7 @@ mod tests {
         fn step_exec_time_calculation() {
             let mut writer = Libtest::<MockWorld, Vec<u8>>::raw(Vec::new());
             let cli = Cli {
-                report_time: Some(super::super::cli::ReportTime::Plain),
+                report_time: Some(ReportTime::Plain),
                 ..Default::default()
             };
 
@@ -459,7 +487,7 @@ mod tests {
             writer.step_started_at = Some(start_time);
 
             let end_time = start_time + Duration::from_millis(500);
-            let meta = Metadata::new(end_time);
+            let meta = Event { value: (), at: end_time };
 
             let exec_time =
                 LibtestUtils::step_exec_time(&mut writer, meta, &cli);
@@ -579,7 +607,7 @@ mod tests {
         #[test]
         fn should_report_time_checks() {
             let cli_with_timing = Cli {
-                report_time: Some(super::super::cli::ReportTime::Plain),
+                report_time: Some(ReportTime::Plain),
                 ..Default::default()
             };
             let cli_without_timing =
@@ -587,6 +615,56 @@ mod tests {
 
             assert!(TimingUtils::should_report_time(&cli_with_timing));
             assert!(!TimingUtils::should_report_time(&cli_without_timing));
+        }
+
+        #[test]
+        fn format_duration_plain() {
+            let duration = Duration::from_millis(1500);
+            let cli = Cli {
+                report_time: Some(ReportTime::Plain),
+                ..Default::default()
+            };
+            
+            let formatted = TimingUtils::format_duration(duration, &cli);
+            assert_eq!(formatted, "1.500s");
+        }
+
+        #[test]
+        fn format_duration_colored() {
+            let cli = Cli {
+                report_time: Some(ReportTime::Colored),
+                ..Default::default()
+            };
+            
+            // Fast test (green)
+            let fast_duration = Duration::from_millis(50);
+            let formatted_fast = TimingUtils::format_duration(fast_duration, &cli);
+            assert!(formatted_fast.contains("\x1b[32m")); // Green
+            assert!(formatted_fast.contains("0.050s"));
+            
+            // Moderate test (yellow)
+            let moderate_duration = Duration::from_millis(500);
+            let formatted_moderate = TimingUtils::format_duration(moderate_duration, &cli);
+            assert!(formatted_moderate.contains("\x1b[33m")); // Yellow
+            assert!(formatted_moderate.contains("0.500s"));
+            
+            // Slow test (red)
+            let slow_duration = Duration::from_millis(2000);
+            let formatted_slow = TimingUtils::format_duration(slow_duration, &cli);
+            assert!(formatted_slow.contains("\x1b[31m")); // Red
+            assert!(formatted_slow.contains("2.000s"));
+        }
+
+        #[test]
+        fn format_duration_none() {
+            let duration = Duration::from_millis(750);
+            let cli = Cli {
+                report_time: None,
+                ..Default::default()
+            };
+            
+            let formatted = TimingUtils::format_duration(duration, &cli);
+            assert_eq!(formatted, "0.750s");
         }
     }
 
@@ -598,10 +676,11 @@ mod tests {
             let mut feature = mock_feature("Test", None);
             feature.background = Some(gherkin::Background {
                 keyword: "Предистория".to_string(), // Russian background keyword
+                name: "Background".to_string(),
                 description: None,
                 steps: vec![],
                 span: gherkin::Span { start: 0, end: 0 },
-                position: gherkin::Position::new(1, 1),
+                position: gherkin::LineCol { line: 1, col: 1 },
             });
 
             let keyword = BackgroundUtils::get_background_keyword(&feature);

@@ -134,7 +134,7 @@ mod integration_tests {
             examples: vec![],
             tags: vec![],
             span: gherkin::Span { start: 0, end: 0 },
-            position: gherkin::Position::new(1, 1),
+            position: gherkin::LineCol { line: 1, col: 1 },
             path: Some(PathBuf::from("test.feature")),
         };
 

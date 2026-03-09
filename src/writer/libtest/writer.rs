@@ -379,6 +379,7 @@ mod tests {
 
     mod stats_trait_tests {
         use super::*;
+        use crate::writer::traits::Stats;
 
         #[test]
         fn libtest_stats_trait_implementation() {
@@ -434,6 +435,7 @@ mod tests {
 
     mod arbitrary_trait_tests {
         use super::*;
+        use crate::writer::traits::Arbitrary;
 
         #[tokio::test]
         async fn libtest_arbitrary_write() {
