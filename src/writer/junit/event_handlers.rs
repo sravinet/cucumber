@@ -167,11 +167,13 @@ mod tests {
 
     fn create_test_feature() -> Feature {
         Feature {
+            keyword: "Feature".to_string(),
             name: "Test Feature".to_string(),
             description: None,
             background: None,
             scenarios: vec![],
             rules: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
             tags: vec![],
             position: LineCol { line: 1, col: 1 },
             path: Some(PathBuf::from("/test/features/example.feature")),
@@ -180,11 +182,13 @@ mod tests {
 
     fn create_test_scenario() -> Scenario {
         Scenario {
+            keyword: "Scenario".to_string(),
             name: "Test Scenario".to_string(),
             description: None,
             steps: vec![],
             tags: vec![],
             position: LineCol { line: 5, col: 3 },
+            span: gherkin::Span { start: 0, end: 0 },
             examples: vec![],
         }
     }
@@ -221,7 +225,7 @@ mod tests {
 
     #[test]
     fn handles_scenario_started_sets_timestamp() {
-        let handler = EventHandler::new(
+        let mut handler: EventHandler<TestWorld, Vec<u8>> = EventHandler::new(
             JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
         );
         let feature = create_test_feature();
@@ -256,7 +260,7 @@ mod tests {
 
     #[test]
     fn handles_scenario_step_adds_to_events() {
-        let handler = EventHandler::new(
+        let mut handler: EventHandler<TestWorld, Vec<u8>> = EventHandler::new(
             JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
         );
         let feature = create_test_feature();
@@ -264,14 +268,15 @@ mod tests {
         let meta = create_test_event();
         let step_event = event::RetryableScenario {
             event: event::Scenario::Step(
-                gherkin::Step {
+                event::Source::new(gherkin::Step {
                     keyword: "Given".to_string(),
                     ty: gherkin::StepType::Given,
                     value: "I have a step".to_string(),
                     docstring: None,
                     table: None,
                     position: LineCol { line: 6, col: 5 },
-                },
+                    span: gherkin::Span { start: 0, end: 0 },
+                }),
                 Step::Passed {
                     captures: regex::Regex::new("")
                         .unwrap()
@@ -306,7 +311,7 @@ mod tests {
 
     #[test]
     fn handles_scenario_finished_creates_test_case() {
-        let handler = EventHandler::new(
+        let mut handler: EventHandler<TestWorld, Vec<u8>> = EventHandler::new(
             JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
         );
         let feature = create_test_feature();
@@ -403,7 +408,7 @@ mod tests {
                 "File not found",
             ),
         };
-        let parser_error = parser::Error::Parsing(Box::new(parse_error));
+        let parser_error = parser::Error::Parsing(std::sync::Arc::new(parse_error));
 
         EventHandler::<TestWorld, Vec<u8>>::handle_parser_error(
             &mut report,
@@ -418,7 +423,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "no `Started` event for `Scenario`")]
     fn panics_on_finished_without_started() {
-        let handler = EventHandler::new(
+        let mut handler: EventHandler<TestWorld, Vec<u8>> = EventHandler::new(
             JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
         );
         let feature = create_test_feature();
@@ -451,7 +456,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "no `TestSuit` for `Scenario`")]
     fn panics_on_scenario_without_suite() {
-        let handler = EventHandler::new(
+        let mut handler: EventHandler<TestWorld, Vec<u8>> = EventHandler::new(
             JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default),
         );
         let feature = create_test_feature();
