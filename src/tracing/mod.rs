@@ -155,8 +155,8 @@ mod tests {
 
         // These should all be compatible types
         assert!(std::mem::size_of_val(&collector) > 0);
-        assert!(std::mem::size_of_val(&waiter) > 0);
-        assert!(std::mem::size_of_val(&writer) > 0);
-        assert!(std::mem::size_of_val(&layer) > 0);
+        assert!(std::mem::size_of_val(&_waiter) > 0);
+        assert!(std::mem::size_of_val(&_writer) > 0);
+        assert!(std::mem::size_of_val(&_layer) > 0);
     }
 }

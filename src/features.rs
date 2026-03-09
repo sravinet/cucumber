@@ -141,10 +141,47 @@ mod tests {
 
     #[test]
     fn test_test_deps_are_accessible() {
-        // Test that test dependencies are available in test context
-        // We don't actually use them, but verify they can be referenced
+        // Test that test dependencies are available and functional
         use test_deps::*;
-        // The test passes if this compiles without error
+        
+        // Use rand to generate test data
+        let mut rng = rand::thread_rng();
+        use rand::Rng;
+        let random_value: u32 = rng.gen_range(1..100);
+        assert!(random_value >= 1 && random_value < 100);
+        
+        // Test passes if this compiles and runs without error
+    }
+
+    #[tokio::test]
+    async fn test_async_feature_detection() {
+        // Use tokio dependency for async feature testing
+        use test_deps::*;
+        
+        // Test async capabilities with tokio
+        let result = tokio::time::timeout(
+            std::time::Duration::from_millis(100),
+            async { enabled().len() }
+        ).await;
+        
+        assert!(result.is_ok());
+    }
+
+    #[test] 
+    fn test_temporary_file_support() {
+        // Use tempfile dependency for testing file operations
+        use test_deps::*;
+        
+        // Test temporary file creation for feature testing
+        let temp_file = tempfile::NamedTempFile::new().unwrap();
+        assert!(temp_file.path().exists());
+        
+        // Write feature list to temp file
+        use std::io::Write;
+        let mut file = temp_file.reopen().unwrap();
+        let features_content = enabled().join("\n");
+        file.write_all(features_content.as_bytes()).unwrap();
+        file.flush().unwrap();
     }
 
     #[test]

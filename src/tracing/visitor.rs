@@ -67,13 +67,15 @@ impl Visit for IsScenarioIdSpan {
 mod tests {
     use super::*;
 
-    fn create_test_field(name: &str) -> tracing::field::Field {
-        // Create a minimal field for testing
-        let fieldset = tracing::field::FieldSet::new(
-            &[name],
-            tracing::callsite::Identifier { 0: std::ptr::null() },
+    fn create_test_field(_name: &str) -> tracing::field::Field {
+        // Create field using proper tracing API
+        use tracing_core::callsite::DefaultCallsite;
+        static CALLSITE: DefaultCallsite = DefaultCallsite::new("test");
+        static FIELDSET: tracing::field::FieldSet = tracing::field::FieldSet::new(
+            &["test_field"], 
+            tracing::callsite::Identifier(&CALLSITE),
         );
-        fieldset.field(name).unwrap()
+        FIELDSET.field("test_field").unwrap()
     }
 
     #[test]

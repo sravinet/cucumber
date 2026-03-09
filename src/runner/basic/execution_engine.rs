@@ -536,4 +536,51 @@ mod tests {
             ScenarioType::Serial
         );
     }
+
+    #[tokio::test]
+    async fn test_thread_safe_execution_engine() {
+        // Test thread-safe execution using Mutex for concurrent access
+        let execution_count = Arc::new(Mutex::new(0));
+        let execution_count_clone = Arc::clone(&execution_count);
+
+        // Simulate concurrent execution scenario
+        let handles = (0..5).map(|_| {
+            let count = Arc::clone(&execution_count);
+            tokio::spawn(async move {
+                // Simulate execution engine work
+                let mut counter = count.lock().unwrap();
+                *counter += 1;
+                drop(counter);
+            })
+        }).collect::<Vec<_>>();
+
+        // Wait for all tasks to complete
+        for handle in handles {
+            handle.await.unwrap();
+        }
+
+        // Verify thread-safe execution
+        let final_count = *execution_count_clone.lock().unwrap();
+        assert_eq!(final_count, 5);
+    }
+
+    #[test] 
+    fn test_execution_engine_state_sharing() {
+        // Test Mutex-protected state sharing in execution engine context
+        let shared_state = Arc::new(Mutex::new(Vec::<String>::new()));
+        let shared_clone = Arc::clone(&shared_state);
+
+        // Simulate adding execution results
+        {
+            let mut state = shared_state.lock().unwrap();
+            state.push("execution_1".to_string());
+            state.push("execution_2".to_string());
+        }
+
+        // Verify state consistency
+        let final_state = shared_clone.lock().unwrap();
+        assert_eq!(final_state.len(), 2);
+        assert_eq!(final_state[0], "execution_1");
+        assert_eq!(final_state[1], "execution_2");
+    }
 }

@@ -307,4 +307,39 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_stream_log_processing() {
+        use futures::stream;
+        
+        // Test TryStreamExt functionality for log stream processing
+        let log_entries = vec![
+            Ok("Log entry 1".to_string()),
+            Ok("Log entry 2".to_string()),
+            Err("Processing error".to_string()),
+        ];
+
+        let log_stream = stream::iter(log_entries);
+        
+        // Use TryStreamExt to collect successful log entries
+        let results: Result<Vec<_>, _> = log_stream.try_collect().await;
+        
+        // Should fail due to the error in stream
+        assert!(results.is_err());
+        
+        // Test successful log processing
+        let success_logs = vec![
+            Ok("Success log 1".to_string()),
+            Ok("Success log 2".to_string()),
+        ];
+        
+        let success_stream = stream::iter(success_logs);
+        let success_results: Result<Vec<_>, String> = success_stream.try_collect().await;
+        
+        assert!(success_results.is_ok());
+        let logs = success_results.unwrap();
+        assert_eq!(logs.len(), 2);
+        assert_eq!(logs[0], "Success log 1");
+        assert_eq!(logs[1], "Success log 2");
+    }
 }

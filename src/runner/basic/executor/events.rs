@@ -217,7 +217,7 @@ impl<W: World> EventSender<W> {
 
 #[cfg(test)]
 mod tests {
-    use futures::{TryStreamExt as _, channel::mpsc};
+    use futures::{TryStreamExt, channel::mpsc};
 
     use super::*;
     use crate::{event, test_utils::common::TestWorld};
@@ -352,5 +352,43 @@ mod tests {
 
         assert!(matches!(received1.value, event::Cucumber::Started));
         assert!(matches!(received2.value, event::Cucumber::Finished));
+    }
+
+    #[tokio::test]
+    async fn test_event_stream_processing() {
+        use futures::stream;
+        
+        // Test TryStreamExt functionality for event stream processing
+        let events = vec![
+            Ok(event::Cucumber::<TestWorld>::Started),
+            Ok(event::Cucumber::Finished),
+            Err(parser::Error::ExampleExpansion(std::sync::Arc::new(
+                crate::feature::ExpandExamplesError {
+                    path: None,
+                    pos: gherkin::LineCol { line: 1, col: 1 },
+                    name: "test".to_string(),
+                },
+            ))),
+        ];
+
+        let event_stream = stream::iter(events);
+        
+        // Use TryStreamExt to process successful events
+        let results: Result<Vec<_>, _> = event_stream.try_collect().await;
+        
+        // Should fail due to the error in stream
+        assert!(results.is_err());
+        
+        // Test successful stream
+        let success_events = vec![
+            Ok(event::Cucumber::<TestWorld>::Started),
+            Ok(event::Cucumber::Finished),
+        ];
+        
+        let success_stream = stream::iter(success_events);
+        let success_results: Result<Vec<_>, parser::Error> = success_stream.try_collect().await;
+        
+        assert!(success_results.is_ok());
+        assert_eq!(success_results.unwrap().len(), 2);
     }
 }

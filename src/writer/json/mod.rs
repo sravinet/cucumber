@@ -210,7 +210,7 @@ mod integration_tests {
                 FeatureEvent::Scenario(
                     crate::event::Source::new(scenario.clone()),
                     crate::event::RetryableScenario {
-                        event: Scenario::Finished,
+                        event: Scenario::<TestWorld>::Finished,
                         retries: None,
                     },
                 ),

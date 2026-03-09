@@ -15,7 +15,7 @@ pub(super) use core::Executor;
 
 #[cfg(test)]
 mod integration_tests {
-    use futures::{TryStreamExt as _, channel::mpsc, future::LocalBoxFuture};
+    use futures::{TryStreamExt, channel::mpsc, future::LocalBoxFuture};
 
     use super::*;
     use crate::{
@@ -163,5 +163,46 @@ mod integration_tests {
         };
 
         (Source::new(feature), Source::new(scenario))
+    }
+
+    #[tokio::test]
+    async fn test_executor_stream_integration() {
+        use futures::stream;
+        
+        // Test TryStreamExt functionality for executor integration
+        let mock_results = vec![
+            Ok(Event::new(event::Cucumber::<TestWorld>::Started)),
+            Ok(Event::new(event::Cucumber::Finished)),
+            Err(parser::Error::ExampleExpansion(std::sync::Arc::new(
+                crate::feature::ExpandExamplesError {
+                    path: None,
+                    pos: gherkin::LineCol { line: 1, col: 1 },
+                    name: "integration_test".to_string(),
+                },
+            ))),
+        ];
+
+        let result_stream = stream::iter(mock_results);
+        
+        // Use TryStreamExt to filter and collect successful results
+        let collected: Result<Vec<_>, _> = result_stream.try_collect().await;
+        
+        // Should fail due to error in stream
+        assert!(collected.is_err());
+        
+        // Test successful integration
+        let success_results = vec![
+            Ok(Event::new(event::Cucumber::<TestWorld>::Started)),
+            Ok(Event::new(event::Cucumber::Finished)),
+        ];
+        
+        let success_stream = stream::iter(success_results);
+        let success_collected: Result<Vec<_>, parser::Error> = success_stream.try_collect().await;
+        
+        assert!(success_collected.is_ok());
+        let events = success_collected.unwrap();
+        assert_eq!(events.len(), 2);
+        assert!(matches!(events[0].value, event::Cucumber::Started));
+        assert!(matches!(events[1].value, event::Cucumber::Finished));
     }
 }

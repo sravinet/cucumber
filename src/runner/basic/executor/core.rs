@@ -708,7 +708,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use futures::TryStreamExt as _;
+    use futures::TryStreamExt;
 
     use super::*;
     use crate::test_utils::common::TestWorld;
@@ -766,6 +766,39 @@ mod tests {
         assert!(first.is_some());
         let second = receiver.try_next().unwrap();
         assert!(second.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_stream_processing_functionality() {
+        use futures::stream;
+        use futures::TryStreamExt;
+
+        // Test that TryStreamExt functionality works for event stream processing
+        let events = vec![
+            Ok(event::Cucumber::<TestWorld>::Started),
+            Ok(event::Cucumber::Finished),
+            Err("Processing error".to_string()),
+        ];
+
+        let event_stream = stream::iter(events);
+
+        // Use TryStreamExt to collect successful events
+        let collected: Result<Vec<_>, _> = event_stream.try_collect().await;
+        
+        // Should fail due to the error in the stream
+        assert!(collected.is_err());
+
+        // Test successful stream processing
+        let success_events = vec![
+            Ok(event::Cucumber::<TestWorld>::Started),
+            Ok(event::Cucumber::Finished),
+        ];
+        
+        let success_stream = stream::iter(success_events);
+        let success_collected: Result<Vec<_>, String> = success_stream.try_collect().await;
+        
+        assert!(success_collected.is_ok());
+        assert_eq!(success_collected.unwrap().len(), 2);
     }
 
     #[test]
