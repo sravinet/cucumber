@@ -181,7 +181,7 @@ mod integration_tests {
                 FeatureEvent::Scenario(
                     crate::event::Source::new(scenario.clone()),
                     crate::event::RetryableScenario {
-                        event: Scenario::Hook(HookType::Before, Hook::Started),
+                        event: Scenario::<TestWorld>::Hook(HookType::Before, Hook::Started),
                         retries: None,
                     },
                 ),
@@ -195,7 +195,7 @@ mod integration_tests {
                 FeatureEvent::Scenario(
                     crate::event::Source::new(scenario.clone()),
                     crate::event::RetryableScenario {
-                        event: Scenario::Hook(HookType::Before, Hook::Passed),
+                        event: Scenario::<TestWorld>::Hook(HookType::Before, Hook::Passed),
                         retries: None,
                     },
                 ),

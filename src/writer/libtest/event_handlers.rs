@@ -521,8 +521,10 @@ mod tests {
             writer.parsing_errors = 1;
             writer.hook_errors = 0;
 
-            let meta = Event { value: (), at: SystemTime::now() };
-            let event = Ok((event::Cucumber::Finished, meta));
+            let event = Ok(Event {
+                value: event::Cucumber::Finished,
+                at: SystemTime::now(),
+            });
 
             let events = writer.expand_cucumber_event(event, &cli);
 

@@ -58,7 +58,7 @@ mod integration_tests {
         let cli = Cli::default();
 
         // Test basic event handling
-        let meta = event::Metadata::new(SystemTime::now());
+        let meta = Event { value: (), at: SystemTime::now() };
         let started_event = Ok(meta.insert(event::Cucumber::Started));
 
         writer.handle_event(started_event, &cli).await;
@@ -131,7 +131,6 @@ mod integration_tests {
             background: None,
             scenarios: vec![],
             rules: vec![],
-            examples: vec![],
             tags: vec![],
             span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 1, col: 1 },
@@ -189,16 +188,18 @@ mod integration_tests {
         // Simulate a complete workflow
 
         // 1. Start cucumber
-        let meta = event::Metadata::new(SystemTime::now());
+        let meta = Event { value: (), at: SystemTime::now() };
         let started_event = Ok(meta.insert(event::Cucumber::Started));
         writer.handle_event(started_event, &cli).await;
 
         // 2. Parsing finished
         let parsing_finished =
             Ok(meta.insert(event::Cucumber::ParsingFinished {
+                features: 1,
+                rules: 0,
+                scenarios: 1,
                 steps: 5,
                 parser_errors: 0,
-                features: 1,
             }));
         writer.handle_event(parsing_finished, &cli).await;
 

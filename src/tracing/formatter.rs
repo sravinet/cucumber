@@ -213,7 +213,7 @@ mod tests {
         let formatter = AppendScenarioMsg(inner_formatter);
 
         let subscriber = Registry::default();
-        let ctx = FmtContext::new(&subscriber, &DefaultFields::new());
+        let ctx = FmtContext::new(&DefaultFields::new(), &subscriber);
 
         let mut writer = TestWriter::new();
         let fmt_writer = format::Writer::new(&mut writer);
@@ -228,7 +228,7 @@ mod tests {
             None,
             tracing::field::FieldSet::new(
                 &[],
-                tracing::callsite::Identifier::new(()),
+                tracing::callsite::Identifier { 0: std::ptr::null() },
             ),
             tracing::metadata::Kind::EVENT,
         );
@@ -264,7 +264,7 @@ mod tests {
 
         let formatter = AppendScenarioMsg(FailingFormatter);
         let subscriber = Registry::default();
-        let ctx = FmtContext::new(&subscriber, &DefaultFields::new());
+        let ctx = FmtContext::new(&DefaultFields::new(), &subscriber);
 
         let mut writer = TestWriter::new();
         let fmt_writer = format::Writer::new(&mut writer);
@@ -278,7 +278,7 @@ mod tests {
             None,
             tracing::field::FieldSet::new(
                 &[],
-                tracing::callsite::Identifier::new(()),
+                tracing::callsite::Identifier { 0: std::ptr::null() },
             ),
             tracing::metadata::Kind::EVENT,
         );

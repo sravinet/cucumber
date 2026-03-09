@@ -142,21 +142,16 @@ mod tests {
         let (span_sender, span_receiver) = mpsc::unbounded();
         
         // Test ScenarioId integration with tracing
-        let scenario_id = ScenarioId::new(42);
-        let _waiter = waiter::SpanCloseWaiter::new(
-            log_sender, 
-            span_sender, 
-            log_receiver, 
-            span_receiver
-        );
+        let scenario_id = ScenarioId(42);
+        let _waiter = waiter::SpanCloseWaiter::new(mpsc::unbounded().0);
         
         // Validate ScenarioId can be used for span identification
-        assert_eq!(scenario_id.get(), 42);
+        assert_eq!(scenario_id.0, 42);
 
         let collector = Collector::new(log_receiver, span_receiver);
-        let waiter = collector.scenario_span_event_waiter();
-        let writer = CollectorWriter::new(log_sender);
-        let layer = RecordScenarioId::new(span_sender);
+        let _waiter = collector.scenario_span_event_waiter();
+        let _writer = CollectorWriter::new(log_sender);
+        let _layer = RecordScenarioId::new(span_sender);
 
         // These should all be compatible types
         assert!(std::mem::size_of_val(&collector) > 0);

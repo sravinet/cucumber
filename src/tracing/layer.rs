@@ -152,7 +152,7 @@ mod tests {
 
         let span_id = span::Id::from_u64(42);
         let subscriber = Registry::default();
-        let ctx = Context::new(&subscriber);
+        let ctx = layer::Context::default();
 
         // Simulate span close
         layer.on_close(span_id.clone(), ctx);
@@ -168,7 +168,7 @@ mod tests {
         let layer = RecordScenarioId::new(sender);
 
         let subscriber = Registry::default();
-        let ctx = Context::new(&subscriber);
+        let ctx = layer::Context::default();
 
         let span_ids = vec![
             span::Id::from_u64(1),
@@ -178,7 +178,7 @@ mod tests {
 
         // Send multiple span close events
         for span_id in &span_ids {
-            layer.on_close(span_id.clone(), ctx.clone());
+            layer.on_close(span_id.clone(), ctx);
         }
 
         // Verify all events were received
@@ -206,14 +206,14 @@ mod tests {
             None,
             tracing::field::FieldSet::new(
                 &[],
-                tracing::callsite::Identifier::new(()),
+                tracing::callsite::Identifier { 0: std::ptr::null() },
             ),
             tracing::metadata::Kind::SPAN,
         );
 
         let values = metadata.fields().value_set(&[]);
         let attrs = span::Attributes::new(&metadata, &values);
-        let ctx = Context::new(&subscriber);
+        let ctx = layer::Context::default();
 
         // This should not panic even with no scenario ID
         layer.on_new_span(&attrs, &span_id, ctx);
@@ -236,14 +236,14 @@ mod tests {
             None,
             tracing::field::FieldSet::new(
                 &[],
-                tracing::callsite::Identifier::new(()),
+                tracing::callsite::Identifier { 0: std::ptr::null() },
             ),
             tracing::metadata::Kind::SPAN,
         );
 
         let values = metadata.fields().value_set(&[]);
         let record = span::Record::new(&values);
-        let ctx = Context::new(&subscriber);
+        let ctx = layer::Context::default();
 
         // This should not panic even with no scenario ID
         layer.on_record(&span_id, &record, ctx);
@@ -256,7 +256,7 @@ mod tests {
 
         let layer = RecordScenarioId::new(sender);
         let subscriber = Registry::default();
-        let ctx = Context::new(&subscriber);
+        let ctx = layer::Context::default();
         let span_id = span::Id::from_u64(42);
 
         // This should handle the closed sender gracefully

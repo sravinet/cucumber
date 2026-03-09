@@ -201,12 +201,26 @@ mod tests {
         let mut collector = Collector::new(logs_receiver, span_receiver);
 
         let feature = gherkin::Feature {
+            keyword: "Feature".to_string(),
             name: "Test Feature".to_string(),
-            ..Default::default()
+            description: None,
+            background: None,
+            scenarios: vec![],
+            rules: vec![],
+            tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
+            position: gherkin::LineCol { line: 1, col: 1 },
+            path: None,
         };
         let scenario = gherkin::Scenario {
+            keyword: "Scenario".to_string(),
             name: "Test Scenario".to_string(),
-            ..Default::default()
+            description: None,
+            steps: vec![],
+            tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
+            position: gherkin::LineCol { line: 5, col: 1 },
+            examples: vec![],
         };
 
         let runnable = vec![(
@@ -233,12 +247,26 @@ mod tests {
         let mut collector = Collector::new(logs_receiver, span_receiver);
 
         let feature = gherkin::Feature {
+            keyword: "Feature".to_string(),
             name: "Test Feature".to_string(),
-            ..Default::default()
+            description: None,
+            background: None,
+            scenarios: vec![],
+            rules: vec![],
+            tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
+            position: gherkin::LineCol { line: 1, col: 1 },
+            path: None,
         };
         let scenario = gherkin::Scenario {
+            keyword: "Scenario".to_string(),
             name: "Test Scenario".to_string(),
-            ..Default::default()
+            description: None,
+            steps: vec![],
+            tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
+            position: gherkin::LineCol { line: 5, col: 1 },
+            examples: vec![],
         };
 
         let runnable = vec![(
