@@ -219,7 +219,7 @@ mod integration_tests {
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // 7. Finish and output JSON
-        let event = Event::new(Cucumber::Finished);
+        let event = Event::new(Cucumber::<TestWorld>::Finished);
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // JSON writer processed all events successfully without panic

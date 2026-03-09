@@ -225,10 +225,10 @@ mod tests {
 
         let runnable = vec![(
             ScenarioId(1),
-            Source::new(feature, None),
+            Source::new(feature),
             None,
-            Source::new(scenario, None),
-            ScenarioType::Normal,
+            Source::new(scenario),
+            ScenarioType::Concurrent,
             None,
         )];
 
@@ -271,10 +271,10 @@ mod tests {
 
         let runnable = vec![(
             ScenarioId(1),
-            Source::new(feature, None),
+            Source::new(feature),
             None,
-            Source::new(scenario, None),
-            ScenarioType::Normal,
+            Source::new(scenario),
+            ScenarioType::Concurrent,
             None,
         )];
 
@@ -313,8 +313,8 @@ mod tests {
     async fn test_stream_processing() {
         use futures::stream;
         
-        let (logs_sender, logs_receiver) = mpsc::unbounded();
-        let (span_sender, span_receiver) = mpsc::unbounded();
+        let (logs_sender, logs_receiver) = mpsc::unbounded::<(Option<ScenarioId>, String)>();
+        let (span_sender, span_receiver) = mpsc::unbounded::<span::Id>();
 
         // Create a test stream and use TryStreamExt functionality
         let test_stream = stream::iter(vec![

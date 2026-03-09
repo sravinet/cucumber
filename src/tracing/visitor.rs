@@ -68,14 +68,12 @@ mod tests {
     use super::*;
 
     fn create_test_field(_name: &str) -> tracing::field::Field {
-        // Create field using proper tracing API
-        use tracing_core::callsite::DefaultCallsite;
-        static CALLSITE: DefaultCallsite = DefaultCallsite::new("test");
-        static FIELDSET: tracing::field::FieldSet = tracing::field::FieldSet::new(
-            &["test_field"], 
-            tracing::callsite::Identifier(&CALLSITE),
-        );
-        FIELDSET.field("test_field").unwrap()
+        // Simplified test field creation for production readiness  
+        use crate::runner::basic::ScenarioId;
+        let _scenario_id = ScenarioId(42);
+        
+        // Create basic field for testing without complex tracing internals
+        tracing::field::Field::new("test_field", tracing::field::DebugValue::new(&"test"))
     }
 
     #[test]
