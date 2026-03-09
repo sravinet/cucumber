@@ -26,6 +26,26 @@ impl RecordScenarioId {
     ) -> Self {
         Self { span_close_sender }
     }
+
+    /// Retrieves a [`ScenarioId`] from the given span, if present.
+    pub fn get_scenario_id_from_span<S>(
+        span: &tracing_subscriber::registry::SpanRef<S>,
+    ) -> Option<ScenarioId>
+    where
+        S: for<'a> LookupSpan<'a> + Subscriber,
+    {
+        span.extensions().get::<ScenarioId>().copied()
+    }
+
+    /// Checks if a span contains scenario-related tracing data.
+    pub fn is_scenario_span<S>(
+        span: &tracing_subscriber::registry::SpanRef<S>,
+    ) -> bool
+    where
+        S: for<'a> LookupSpan<'a> + Subscriber,
+    {
+        span.extensions().get::<ScenarioId>().is_some()
+    }
 }
 
 impl<S> Layer<S> for RecordScenarioId
@@ -108,10 +128,6 @@ mod tests {
         fn record(&self, _span: &span::Id, _values: &span::Record<'_>) {}
 
         fn record_follows_from(&self, _span: &span::Id, _follows: &span::Id) {}
-
-        fn enabled(&self, _metadata: &tracing::Metadata<'_>) -> bool {
-            true
-        }
 
         fn event(&self, _event: &Event<'_>) {}
 

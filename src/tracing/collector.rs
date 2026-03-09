@@ -14,7 +14,7 @@ use super::{
     waiter::SpanCloseWaiter,
 };
 use crate::{
-    ScenarioType, World,
+    ScenarioType,
     event::{self, Source},
     runner::basic::{RetryOptions, ScenarioId},
 };
@@ -279,5 +279,31 @@ mod tests {
 
         drop(logs_sender);
         drop(span_sender);
+    }
+
+    #[tokio::test]
+    async fn test_stream_processing() {
+        use futures::stream;
+        
+        let (logs_sender, logs_receiver) = mpsc::unbounded();
+        let (span_sender, span_receiver) = mpsc::unbounded();
+
+        // Create a test stream and use TryStreamExt functionality
+        let test_stream = stream::iter(vec![
+            Ok("log1".to_string()),
+            Ok("log2".to_string()),
+            Err("error".to_string()),
+        ]);
+
+        // Use TryStreamExt to filter and collect results
+        let results: Result<Vec<_>, _> = test_stream.try_collect().await;
+        
+        // Verify stream processing works (expecting error)
+        assert!(results.is_err());
+
+        drop(logs_sender);
+        drop(span_sender);
+        drop(logs_receiver);
+        drop(span_receiver);
     }
 }

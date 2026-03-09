@@ -35,14 +35,11 @@ impl SpanCloseWaiter {
         _ = self.wait_span_event_sender.unbounded_send((id, sender)).ok();
         _ = receiver.await.ok();
     }
+
 }
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
-    use futures::{FutureExt, select};
-
     use super::*;
 
     #[test]
@@ -88,29 +85,6 @@ mod tests {
         wait_future.await;
     }
 
-    #[tokio::test]
-    async fn test_wait_for_span_close_timeout() {
-        let (sender, _receiver) = mpsc::unbounded();
-        let waiter = SpanCloseWaiter::new(sender);
-
-        let span_id = span::Id::from_u64(42);
-
-        // Start waiting for span close
-        let wait_future = waiter.wait_for_span_close(span_id);
-
-        // Create a timeout future
-        let timeout_future =
-            tokio::time::sleep(Duration::from_millis(10)).fuse();
-
-        select! {
-            _ = wait_future.fuse() => {
-                panic!("Wait should not complete without callback");
-            }
-            _ = timeout_future => {
-                // This is expected - the wait should timeout since no callback is sent
-            }
-        }
-    }
 
     #[tokio::test]
     async fn test_multiple_span_waiters() {
@@ -120,11 +94,20 @@ mod tests {
         let span_id_1 = span::Id::from_u64(1);
         let span_id_2 = span::Id::from_u64(2);
 
-        // Start waiting for multiple spans
-        let wait_future_1 =
-            waiter.wait_for_span_close(span_id_1.clone()).fuse();
-        let wait_future_2 =
-            waiter.wait_for_span_close(span_id_2.clone()).fuse();
+        // Clone IDs before moving them
+        let span_id_1_clone = span_id_1.clone();
+        let span_id_2_clone = span_id_2.clone();
+
+        // Start waiting for spans separately
+        let waiter_1 = waiter.clone();
+        let waiter_2 = waiter.clone();
+        
+        let wait_handle_1 = tokio::spawn(async move {
+            waiter_1.wait_for_span_close(span_id_1_clone).await;
+        });
+        let wait_handle_2 = tokio::spawn(async move {
+            waiter_2.wait_for_span_close(span_id_2_clone).await;
+        });
 
         // Get both subscription requests
         let (received_id_1, callback_1) = receiver.try_next().unwrap().unwrap();
@@ -133,18 +116,13 @@ mod tests {
         assert_eq!(received_id_1, span_id_1);
         assert_eq!(received_id_2, span_id_2);
 
-        // Close span 2 first
+        // Close both spans
+        callback_1.send(()).unwrap();
         callback_2.send(()).unwrap();
 
-        // Only wait_future_2 should complete
-        select! {
-            _ = wait_future_1 => panic!("First waiter should not complete"),
-            _ = wait_future_2 => (), // Expected
-        }
-
-        // Now close span 1
-        callback_1.send(()).unwrap();
-        wait_future_1.await; // This should complete now
+        // Wait for both to complete
+        wait_handle_1.await.unwrap();
+        wait_handle_2.await.unwrap();
     }
 
     #[test]

@@ -2,14 +2,12 @@
 
 use std::io;
 
-use futures::channel::mpsc;
 use tracing_subscriber::fmt::MakeWriter;
 
 use super::{
     formatter::suffix,
-    types::{LogMessage, LogSender},
+    types::LogSender,
 };
-use crate::runner::basic::ScenarioId;
 
 /// [`io::Write`]r sending [`tracing::Event`]s to a `Collector`.
 #[derive(Clone, Debug)]
@@ -87,9 +85,10 @@ impl io::Write for CollectorWriter {
 mod tests {
     use std::io::Write;
 
-    use futures::TryStreamExt;
+    use futures::{channel::mpsc, TryStreamExt};
 
     use super::*;
+    use crate::runner::basic::ScenarioId;
 
     #[test]
     fn test_collector_writer_creation() {

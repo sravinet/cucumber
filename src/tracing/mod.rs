@@ -114,6 +114,10 @@ mod tests {
         let (_callback_sender, _callback_receiver): (Callback, _) =
             futures::channel::oneshot::channel();
         let _log_msg: LogMessage = (None, String::new());
+        
+        // Test span creation functionality
+        let test_span = span!(tracing::Level::INFO, "test_scenario", scenario_id = 42);
+        let _span_id = test_span.id();
     }
 
     #[test]
@@ -136,6 +140,18 @@ mod tests {
         // Test that types work together as expected
         let (log_sender, log_receiver) = mpsc::unbounded();
         let (span_sender, span_receiver) = mpsc::unbounded();
+        
+        // Test ScenarioId integration with tracing
+        let scenario_id = ScenarioId::new(42);
+        let _waiter = waiter::SpanCloseWaiter::new(
+            log_sender, 
+            span_sender, 
+            log_receiver, 
+            span_receiver
+        );
+        
+        // Validate ScenarioId can be used for span identification
+        assert_eq!(scenario_id.get(), 42);
 
         let collector = Collector::new(log_receiver, span_receiver);
         let waiter = collector.scenario_span_event_waiter();

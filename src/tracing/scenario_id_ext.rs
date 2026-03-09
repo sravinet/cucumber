@@ -68,8 +68,8 @@ mod tests {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.scenario_span();
 
-        assert_eq!(span.metadata().name(), "scenario");
-        assert_eq!(span.metadata().level(), &Level::ERROR);
+        assert_eq!(span.metadata().unwrap().name(), "scenario");
+        assert_eq!(span.metadata().unwrap().level(), &Level::ERROR);
     }
 
     #[test]
@@ -77,8 +77,8 @@ mod tests {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.step_span(false);
 
-        assert_eq!(span.metadata().name(), "step");
-        assert_eq!(span.metadata().level(), &Level::ERROR);
+        assert_eq!(span.metadata().unwrap().name(), "step");
+        assert_eq!(span.metadata().unwrap().level(), &Level::ERROR);
     }
 
     #[test]
@@ -86,8 +86,8 @@ mod tests {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.step_span(true);
 
-        assert_eq!(span.metadata().name(), "background step");
-        assert_eq!(span.metadata().level(), &Level::ERROR);
+        assert_eq!(span.metadata().unwrap().name(), "background step");
+        assert_eq!(span.metadata().unwrap().level(), &Level::ERROR);
     }
 
     #[test]
@@ -95,8 +95,8 @@ mod tests {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.hook_span(HookType::Before);
 
-        assert_eq!(span.metadata().name(), "before hook");
-        assert_eq!(span.metadata().level(), &Level::ERROR);
+        assert_eq!(span.metadata().unwrap().name(), "before hook");
+        assert_eq!(span.metadata().unwrap().level(), &Level::ERROR);
     }
 
     #[test]
@@ -104,8 +104,8 @@ mod tests {
         let scenario_id = ScenarioId(42);
         let span = scenario_id.hook_span(HookType::After);
 
-        assert_eq!(span.metadata().name(), "after hook");
-        assert_eq!(span.metadata().level(), &Level::ERROR);
+        assert_eq!(span.metadata().unwrap().name(), "after hook");
+        assert_eq!(span.metadata().unwrap().level(), &Level::ERROR);
     }
 
     #[test]
@@ -116,7 +116,7 @@ mod tests {
         // Verify the span contains the scenario ID field
         span.in_scope(|| {
             // The span should be active and contain the field
-            assert_eq!(span.metadata().name(), "scenario");
+            assert_eq!(span.metadata().unwrap().name(), "scenario");
         });
     }
 
@@ -125,23 +125,23 @@ mod tests {
         let scenario_id = ScenarioId(1);
 
         assert_eq!(
-            scenario_id.scenario_span().metadata().level(),
+            scenario_id.scenario_span().metadata().unwrap().level(),
             &Level::ERROR
         );
         assert_eq!(
-            scenario_id.step_span(false).metadata().level(),
+            scenario_id.step_span(false).metadata().unwrap().level(),
             &Level::ERROR
         );
         assert_eq!(
-            scenario_id.step_span(true).metadata().level(),
+            scenario_id.step_span(true).metadata().unwrap().level(),
             &Level::ERROR
         );
         assert_eq!(
-            scenario_id.hook_span(HookType::Before).metadata().level(),
+            scenario_id.hook_span(HookType::Before).metadata().unwrap().level(),
             &Level::ERROR
         );
         assert_eq!(
-            scenario_id.hook_span(HookType::After).metadata().level(),
+            scenario_id.hook_span(HookType::After).metadata().unwrap().level(),
             &Level::ERROR
         );
     }
@@ -159,7 +159,7 @@ mod tests {
         ];
 
         for (span, expected_name) in spans {
-            assert_eq!(span.metadata().name(), expected_name);
+            assert_eq!(span.metadata().unwrap().name(), expected_name);
         }
     }
 }

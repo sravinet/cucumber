@@ -146,20 +146,7 @@ mod tests {
 
     #[test]
     fn test_init_tracing_returns_self() {
-        use crate::{
-            cucumber::{DefaultCli, DefaultParser},
-            runner::Basic,
-            writer,
-        };
-
-        let cucumber: Cucumber<
-            TestWorld,
-            DefaultParser,
-            _,
-            Basic<TestWorld, _, _, _>,
-            writer::Basic<TestWorld>,
-            DefaultCli,
-        > = TestWorld::cucumber();
+        let cucumber = TestWorld::cucumber();
 
         // This should compile and return Self
         let _result = cucumber.init_tracing();
@@ -167,20 +154,7 @@ mod tests {
 
     #[test]
     fn test_configure_and_init_tracing_accepts_custom_format() {
-        use crate::{
-            cucumber::{DefaultCli, DefaultParser},
-            runner::Basic,
-            writer,
-        };
-
-        let cucumber: Cucumber<
-            TestWorld,
-            DefaultParser,
-            _,
-            Basic<TestWorld, _, _, _>,
-            writer::Basic<TestWorld>,
-            DefaultCli,
-        > = TestWorld::cucumber();
+        let cucumber = TestWorld::cucumber();
 
         let _result = cucumber.configure_and_init_tracing(
             format::DefaultFields::new(),
