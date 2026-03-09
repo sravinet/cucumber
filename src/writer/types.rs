@@ -110,7 +110,7 @@ pub trait NonTransforming {}
 /// Standard verbosity levels of a [`Writer`].
 ///
 /// [`Writer`]: super::Writer
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(u8)]
 pub enum Verbosity {
     /// None additional info.

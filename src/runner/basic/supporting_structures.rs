@@ -315,8 +315,8 @@ mod tests {
         {
             let started_time = meta.started.at;
             let finished_time = meta.finished.at;
-            assert!(started_time.elapsed().as_nanos() > 0);
-            assert!(finished_time.elapsed().as_nanos() > 0);
+            assert!(started_time.elapsed().unwrap().as_nanos() > 0);
+            assert!(finished_time.elapsed().unwrap().as_nanos() > 0);
         }
     }
 
@@ -388,7 +388,7 @@ mod tests {
                 #[cfg(feature = "timestamps")]
                 {
                     let timestamp = meta.at;
-                    assert!(timestamp.elapsed().as_nanos() > 0);
+                    assert!(timestamp.elapsed().unwrap().as_nanos() > 0);
                 }
             }
             _ => panic!("Expected StepPanicked variant"),
@@ -417,7 +417,7 @@ mod tests {
                 #[cfg(feature = "timestamps")]
                 {
                     let timestamp = hook_meta.at;
-                    assert!(timestamp.elapsed().as_nanos() > 0);
+                    assert!(timestamp.elapsed().unwrap().as_nanos() > 0);
                 }
                 
                 // Test that metadata can be used for failure analysis
@@ -557,7 +557,7 @@ mod tests {
             #[cfg(feature = "timestamps")]
             {
                 let timestamp = failure_meta.at;
-                assert!(timestamp.elapsed().as_nanos() > 0);
+                assert!(timestamp.elapsed().unwrap().as_nanos() > 0);
             }
         } else {
             panic!("Expected metadata to be available");

@@ -329,7 +329,7 @@ mod tests {
         #[cfg(feature = "timestamps")]
         {
             let event_timestamp = received.at;
-            assert!(event_timestamp.elapsed().as_nanos() > 0);
+            assert!(event_timestamp.elapsed().unwrap().as_nanos() > 0);
         }
     }
 
