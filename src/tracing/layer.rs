@@ -186,7 +186,8 @@ mod tests {
         let _layer = RecordScenarioId::new(sender);
         
         // Test that the channel is properly configured
-        assert!(receiver.try_next().is_ok()); // Should not have any messages yet
+        // An empty receiver should return an error (no messages available)
+        assert!(receiver.try_next().is_err());
     }
 
     #[test]

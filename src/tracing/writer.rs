@@ -46,6 +46,9 @@ impl io::Write for CollectorWriter {
         // unreadable.
         let msgs = String::from_utf8_lossy(buf);
         for msg in msgs.split_terminator(suffix::END) {
+            if msg.is_empty() {
+                continue; // Skip empty parts from split_terminator
+            }
             if let Some((before, after)) =
                 msg.rsplit_once(suffix::NO_SCENARIO_ID)
             {

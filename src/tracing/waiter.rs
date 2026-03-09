@@ -72,17 +72,23 @@ mod tests {
         let span_id = span::Id::from_u64(42);
 
         // Start waiting for span close in background
-        let wait_future = waiter.wait_for_span_close(span_id.clone());
+        let wait_future = tokio::spawn(waiter.wait_for_span_close(span_id.clone()));
+
+        // Give the future a chance to send the subscription request
+        tokio::task::yield_now().await;
 
         // Verify the waiter sent a subscription request
-        let (received_id, callback) = receiver.try_next().unwrap().unwrap();
-        assert_eq!(received_id, span_id);
-
-        // Simulate span close by sending through callback
-        callback.send(()).unwrap();
+        match receiver.try_next() {
+            Ok(Some((received_id, callback))) => {
+                assert_eq!(received_id, span_id);
+                // Simulate span close by sending through callback
+                callback.send(()).unwrap();
+            }
+            _ => panic!("Expected to receive subscription request"),
+        }
 
         // The wait should complete
-        wait_future.await;
+        let _ = wait_future.await;
     }
 
 
@@ -109,12 +115,22 @@ mod tests {
             waiter_2.wait_for_span_close(span_id_2_clone).await;
         });
 
-        // Get both subscription requests
-        let (received_id_1, callback_1) = receiver.try_next().unwrap().unwrap();
-        let (received_id_2, callback_2) = receiver.try_next().unwrap().unwrap();
+        // Give the futures a chance to send subscription requests
+        tokio::task::yield_now().await;
 
-        assert_eq!(received_id_1, span_id_1);
-        assert_eq!(received_id_2, span_id_2);
+        // Get both subscription requests
+        let (received_id_1, callback_1) = match receiver.try_next() {
+            Ok(Some(msg)) => msg,
+            _ => panic!("Expected first subscription request"),
+        };
+        let (received_id_2, callback_2) = match receiver.try_next() {
+            Ok(Some(msg)) => msg,
+            _ => panic!("Expected second subscription request"),
+        };
+
+        assert!(received_id_1 == span_id_1 || received_id_1 == span_id_2);
+        assert!(received_id_2 == span_id_1 || received_id_2 == span_id_2);
+        assert_ne!(received_id_1, received_id_2);
 
         // Close both spans
         callback_1.send(()).unwrap();

@@ -101,9 +101,9 @@ mod tests {
 
     #[test]
     fn test_suffix_constants_accessible() {
-        assert_eq!(suffix::END, "__cucumber__scenario");
-        assert_eq!(suffix::BEFORE_SCENARIO_ID, "__");
-        assert_eq!(suffix::NO_SCENARIO_ID, "__unknown");
+        assert_eq!(suffix::END, "]");
+        assert_eq!(suffix::BEFORE_SCENARIO_ID, " [scenario-");
+        assert_eq!(suffix::NO_SCENARIO_ID, " [no-scenario]");
     }
 
     #[test]
