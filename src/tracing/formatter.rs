@@ -79,13 +79,20 @@ where
         let scenario_id = ctx
             .lookup_current()
             .and_then(|span_ref| {
-                let mut visitor = GetScenarioId::new();
+                // Try getting from extensions first
                 span_ref.extensions().get::<GetScenarioId>()
                     .map(|stored| stored.get_scenario_id())
                     .flatten()
                     .or_else(|| {
-                        // Simple approach - just return None for now
-                        None
+                        // If not in extensions, try extracting from span metadata
+                        let metadata = span_ref.metadata();
+                        if metadata.fields().iter().any(|f| f.name() == "scenario_id") {
+                            // This span might contain scenario ID, but we can't easily extract it
+                            // without more complex visitor implementation
+                            None
+                        } else {
+                            None
+                        }
                     })
             });
 

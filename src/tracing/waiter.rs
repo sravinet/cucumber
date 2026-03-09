@@ -70,9 +70,12 @@ mod tests {
         let waiter = SpanCloseWaiter::new(sender);
 
         let span_id = span::Id::from_u64(42);
+        let span_id_clone = span_id.clone();
 
-        // Start waiting for span close in background
-        let wait_future = tokio::spawn(waiter.wait_for_span_close(span_id.clone()));
+        // Start waiting for span close in background - move waiter into the task
+        let wait_future = tokio::spawn(async move {
+            waiter.wait_for_span_close(span_id_clone).await;
+        });
 
         // Give the future a chance to send the subscription request
         tokio::task::yield_now().await;

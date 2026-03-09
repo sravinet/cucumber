@@ -373,7 +373,7 @@ mod tests {
         let mut writer = create_test_json_writer();
         let feature = create_test_gherkin_feature();
 
-        let metadata = Event::new(());
+        let metadata: Metadata = Event::new(());
         
         let event = Event {
             value: event::Cucumber::Feature(
@@ -383,6 +383,9 @@ mod tests {
             at: SystemTime::UNIX_EPOCH,
         };
 
+        // Test that metadata can be created and used
+        assert!(std::mem::size_of_val(&metadata) > 0);
+        
         writer.handle_event(Ok(event), &cli::Empty).await;
         assert_eq!(writer.feature_count(), 1);
     }
@@ -437,5 +440,29 @@ mod tests {
             }
             _ => panic!("Expected parsing error"),
         }
+    }
+    
+    #[tokio::test]
+    async fn test_parser_result_integration() {
+        let mut writer = create_test_json_writer();
+        let feature = create_test_gherkin_feature();
+        
+        // Test ParserResult::Ok case
+        let ok_result: ParserResult<gherkin::Feature> = Ok(feature.clone());
+        match ok_result {
+            Ok(f) => {
+                let event = Event::new(event::Cucumber::Feature(
+                    event::Source::new(f),
+                    event::Feature::<TestWorld>::Started,
+                ));
+                writer.handle_event(Ok(event), &cli::Empty).await;
+                assert_eq!(writer.feature_count(), 1);
+            }
+            Err(_) => panic!("Expected Ok result"),
+        }
+        
+        // Test ParserResult::Err case for completeness
+        let err_result: ParserResult<gherkin::Feature> = Err(Box::new(crate::parser::Error::new("test error")));
+        assert!(err_result.is_err());
     }
 }

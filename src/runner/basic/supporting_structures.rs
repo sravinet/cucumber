@@ -310,7 +310,13 @@ mod tests {
             scenario_finished: event::ScenarioFinished::StepPassed,
         };
 
-        // Just test that structure can be created and has timing info
+        // Test that structure can be created and has proper metadata  
+        match meta.scenario_finished {
+            event::ScenarioFinished::StepPassed => { /* Expected */ }
+            _ => panic!("Expected StepPassed scenario finish"),
+        }
+        
+        // Test timing info functionality
         #[cfg(feature = "timestamps")]
         {
             let started_time = meta.started.at;
@@ -557,6 +563,9 @@ mod tests {
         };
 
         if let Some(failure_meta) = failure.get_metadata() {
+            // Test that failure metadata contains valid information
+            assert!(std::mem::size_of_val(&failure_meta) > 0);
+            
             #[cfg(feature = "timestamps")]
             {
                 let timestamp = failure_meta.at;

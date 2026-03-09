@@ -205,9 +205,9 @@ mod tests {
 
         // This may fail if global tracing is already set (which is fine for parallel tests)
         // Just test that the method exists and compiles
-        let _result = std::panic::catch_unwind(|| {
+        let _result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             cucumber.init_tracing()
-        });
+        }));
         // Test passes as long as it compiles
     }
 
