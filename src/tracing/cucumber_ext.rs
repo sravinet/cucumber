@@ -144,6 +144,46 @@ mod tests {
         }
     }
 
+    // Empty inventory step types for testing
+    #[derive(Debug)]
+    struct EmptyGiven;
+
+    impl inventory::Collect for EmptyGiven {}
+
+    impl crate::codegen::StepConstructor<TestWorld> for EmptyGiven {
+        fn inner(&self) -> (crate::step::Location, crate::codegen::LazyRegex, crate::step::Step<TestWorld>) {
+            unreachable!("Test-only type")
+        }
+    }
+
+    #[derive(Debug)]
+    struct EmptyWhen;
+
+    impl inventory::Collect for EmptyWhen {}
+
+    impl crate::codegen::StepConstructor<TestWorld> for EmptyWhen {
+        fn inner(&self) -> (crate::step::Location, crate::codegen::LazyRegex, crate::step::Step<TestWorld>) {
+            unreachable!("Test-only type")
+        }
+    }
+
+    #[derive(Debug)]
+    struct EmptyThen;
+
+    impl inventory::Collect for EmptyThen {}
+
+    impl crate::codegen::StepConstructor<TestWorld> for EmptyThen {
+        fn inner(&self) -> (crate::step::Location, crate::codegen::LazyRegex, crate::step::Step<TestWorld>) {
+            unreachable!("Test-only type")
+        }
+    }
+
+    impl crate::codegen::WorldInventory for TestWorld {
+        type Given = EmptyGiven;
+        type When = EmptyWhen;
+        type Then = EmptyThen;
+    }
+
     #[test]
     fn test_init_tracing_returns_self() {
         let cucumber = TestWorld::cucumber();
@@ -172,7 +212,7 @@ mod tests {
         let (span_close_sender, _span_close_receiver) = mpsc::unbounded();
 
         // Test that channels can be created
-        assert!(logs_sender.unbounded_send((None, "test".to_string())).is_ok());
+        assert!(logs_sender.unbounded_send((None::<crate::runner::basic::ScenarioId>, "test".to_string())).is_ok());
         assert!(
             span_close_sender
                 .unbounded_send(tracing::span::Id::from_u64(1))

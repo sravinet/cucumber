@@ -68,12 +68,23 @@ mod tests {
     use super::*;
 
     fn create_test_field(_name: &str) -> tracing::field::Field {
-        // Simplified test field creation for production readiness  
+        // Use scenario ID field from the actual span
         use crate::runner::basic::ScenarioId;
+        
+        // Create a basic test scenario for field testing
         let _scenario_id = ScenarioId(42);
         
-        // Create basic field for testing without complex tracing internals
-        tracing::field::Field::new("test_field", tracing::field::DebugValue::new(&"test"))
+        // Use a static fieldset for testing
+        static FIELDSET: std::sync::OnceLock<tracing::field::FieldSet> = std::sync::OnceLock::new();
+        let fieldset = FIELDSET.get_or_init(|| {
+            tracing::field::FieldSet::new(&["test_field"], tracing::callsite::Identifier::current())
+        });
+        
+        fieldset.field("test_field").unwrap_or_else(|| {
+            // Fallback for testing - create from scenario ID constant
+            tracing::field::FieldSet::new(&[ScenarioId::SPAN_FIELD_NAME], tracing::callsite::Identifier::current())
+                .field(ScenarioId::SPAN_FIELD_NAME).unwrap()
+        })
     }
 
     #[test]
