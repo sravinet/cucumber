@@ -148,7 +148,12 @@ mod tests {
     #[derive(Debug)]
     struct EmptyGiven;
 
-    impl inventory::Collect for EmptyGiven {}
+    impl inventory::Collect for EmptyGiven {
+        fn registry() -> &'static inventory::Registry {
+            static REGISTRY: inventory::Registry = inventory::Registry::new();
+            &REGISTRY
+        }
+    }
 
     impl crate::codegen::StepConstructor<TestWorld> for EmptyGiven {
         fn inner(&self) -> (crate::step::Location, crate::codegen::LazyRegex, crate::step::Step<TestWorld>) {
@@ -159,7 +164,12 @@ mod tests {
     #[derive(Debug)]
     struct EmptyWhen;
 
-    impl inventory::Collect for EmptyWhen {}
+    impl inventory::Collect for EmptyWhen {
+        fn registry() -> &'static inventory::Registry {
+            static REGISTRY: inventory::Registry = inventory::Registry::new();
+            &REGISTRY
+        }
+    }
 
     impl crate::codegen::StepConstructor<TestWorld> for EmptyWhen {
         fn inner(&self) -> (crate::step::Location, crate::codegen::LazyRegex, crate::step::Step<TestWorld>) {
@@ -170,7 +180,12 @@ mod tests {
     #[derive(Debug)]
     struct EmptyThen;
 
-    impl inventory::Collect for EmptyThen {}
+    impl inventory::Collect for EmptyThen {
+        fn registry() -> &'static inventory::Registry {
+            static REGISTRY: inventory::Registry = inventory::Registry::new();
+            &REGISTRY
+        }
+    }
 
     impl crate::codegen::StepConstructor<TestWorld> for EmptyThen {
         fn inner(&self) -> (crate::step::Location, crate::codegen::LazyRegex, crate::step::Step<TestWorld>) {
@@ -186,7 +201,7 @@ mod tests {
 
     #[test]
     fn test_init_tracing_returns_self() {
-        let cucumber = TestWorld::cucumber();
+        let cucumber = TestWorld::cucumber::<std::path::PathBuf>();
 
         // This should compile and return Self
         let _result = cucumber.init_tracing();
@@ -194,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_configure_and_init_tracing_accepts_custom_format() {
-        let cucumber = TestWorld::cucumber();
+        let cucumber = TestWorld::cucumber::<std::path::PathBuf>();
 
         let _result = cucumber.configure_and_init_tracing(
             format::DefaultFields::new(),
