@@ -216,6 +216,7 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
             tags: vec!["@feature-tag".to_string()],
+            span: gherkin::Span { start: 0, end: 0 },
             position: LineCol { line: 1, col: 1 },
             path: Some(PathBuf::from("features/test.feature")),
         }
@@ -227,6 +228,7 @@ mod tests {
             name: "Test Scenario".to_string(),
             description: None,
             tags: vec!["@scenario-tag".to_string()],
+            span: gherkin::Span { start: 0, end: 0 },
             position: LineCol { line: 5, col: 1 },
             steps: vec![],
             examples: vec![],
@@ -252,6 +254,7 @@ mod tests {
         let error = ExpandExamplesError {
             path: Some(PathBuf::from("features/error.feature")),
             pos: LineCol { line: 10, col: 5 },
+            name: "missing_placeholder".to_string(),
         };
 
         let feature = Feature::example_expansion_err(&error);

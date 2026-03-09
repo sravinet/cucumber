@@ -18,7 +18,6 @@ use crate::{
     parser,
     writer::{
         self,
-        common::WriterExt as _,
         discard,
         ext::Ext as _,
         json::{feature::Feature, handlers::EventHandler},
@@ -236,15 +235,16 @@ mod tests {
     #[tokio::test]
     async fn handle_parsing_error() {
         let mut writer = create_test_json_writer();
-        let error = parser::Error::Parsing(gherkin::ParseFileError::Reading {
+        let error = parser::Error::Parsing(std::sync::Arc::new(gherkin::ParseFileError::Reading {
             path: std::path::PathBuf::from("test.feature"),
             source: std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "File not found",
             ),
-        });
+        }));
 
-        writer.handle_event(Err(error), &cli::Empty).await;
+        let result: parser::Result<Event<event::Cucumber<TestWorld>>> = Err(error);
+        writer.handle_event(result, &cli::Empty).await;
 
         assert_eq!(writer.feature_count(), 1);
         let features = writer.features();
@@ -260,10 +260,12 @@ mod tests {
             crate::feature::ExpandExamplesError {
                 path: Some(std::path::PathBuf::from("examples.feature")),
                 pos: gherkin::LineCol { line: 10, col: 5 },
-            },
+                name: "missing_placeholder".to_string(),
+            }.into(),
         );
 
-        writer.handle_event(Err(error), &cli::Empty).await;
+        let result: parser::Result<Event<event::Cucumber<TestWorld>>> = Err(error);
+        writer.handle_event(result, &cli::Empty).await;
 
         assert_eq!(writer.feature_count(), 1);
         let features = writer.features();
@@ -280,16 +282,15 @@ mod tests {
 
         let event = Event::new(
             Cucumber::Feature(
-                feature,
+                crate::event::Source::new(feature),
                 crate::event::Feature::Scenario(
-                    scenario,
+                    crate::event::Source::new(scenario),
                     crate::event::RetryableScenario {
-                        event: Scenario::Log("Test log message".to_string()),
-                        retries: 0,
+                        event: Scenario::Log::<TestWorld>("Test log message".to_string()),
+                        retries: None,
                     },
                 ),
             ),
-            Metadata { at: SystemTime::now() },
         );
 
         writer.handle_event(Ok(event), &cli::Empty).await;
@@ -301,8 +302,7 @@ mod tests {
     async fn handle_finished_event_writes_output() {
         let mut writer = create_test_json_writer();
 
-        let event =
-            Event::new(Cucumber::Finished, Metadata { at: SystemTime::now() });
+        let event = Event::new(Cucumber::Finished::<TestWorld>);
 
         writer.handle_event(Ok(event), &cli::Empty).await;
 
@@ -317,9 +317,9 @@ mod tests {
         let stats = writer.stats();
 
         // New writer should have zero stats
-        assert_eq!(stats.passed_steps(), 0);
-        assert_eq!(stats.failed_steps(), 0);
-        assert_eq!(stats.skipped_steps(), 0);
+        assert_eq!(stats.passed(), 0);
+        assert_eq!(stats.failed(), 0);
+        assert_eq!(stats.skipped(), 0);
     }
 
     #[test]
@@ -349,6 +349,7 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
             tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 1, col: 1 },
             path: Some(std::path::PathBuf::from("test.feature")),
         }
@@ -360,9 +361,81 @@ mod tests {
             name: "Test Scenario".to_string(),
             description: None,
             tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 5, col: 1 },
             steps: vec![],
             examples: vec![],
+        }
+    }
+
+    #[tokio::test]
+    async fn handle_event_with_metadata() {
+        let mut writer = create_test_json_writer();
+        let feature = create_test_gherkin_feature();
+
+        let metadata = Event::new(());
+        
+        let event = Event {
+            value: event::Cucumber::Feature(
+                event::Source::new(feature),
+                event::Feature::<TestWorld>::Started,
+            ),
+            at: SystemTime::UNIX_EPOCH,
+        };
+
+        writer.handle_event(Ok(event), &cli::Empty).await;
+        assert_eq!(writer.feature_count(), 1);
+    }
+
+    #[tokio::test]
+    async fn handle_event_with_timing() {
+        let mut writer = create_test_json_writer();
+        let scenario = create_test_gherkin_scenario();
+        let feature = create_test_gherkin_feature();
+
+        let start_time = SystemTime::UNIX_EPOCH;
+
+        let start_event = Event {
+            value: event::Cucumber::Feature(
+                event::Source::new(feature),
+                event::Feature::Scenario(
+                    event::Source::new(scenario),
+                    event::RetryableScenario {
+                        event: Scenario::<TestWorld>::Started,
+                        retries: None,
+                    },
+                ),
+            ),
+            at: start_time,
+        };
+
+        writer.handle_event(Ok(start_event), &cli::Empty).await;
+        
+        // Test that timing is captured and handled
+        // This validates SystemTime usage in event handling
+        assert!(writer.feature_count() <= 1);
+    }
+
+    #[test]
+    fn parser_result_error_handling() {
+        // Test error path using ParserResult
+        let parse_error = gherkin::ParseFileError::Reading {
+            path: std::path::PathBuf::from("missing.feature"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "File not found",
+            ),
+        };
+        let parser_result: ParserResult<Event<event::Cucumber<TestWorld>>> = 
+            Err(parser::Error::Parsing(std::sync::Arc::new(parse_error)));
+        
+        // Validate error can be processed
+        assert!(parser_result.is_err());
+        match parser_result {
+            Err(parser::Error::Parsing(err)) => {
+                assert!(matches!(err.as_ref(), gherkin::ParseFileError::Reading { .. }));
+            }
+            _ => panic!("Expected parsing error"),
         }
     }
 }

@@ -154,6 +154,7 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
             tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 1, col: 1 },
             path: None,
         }
@@ -165,6 +166,7 @@ mod tests {
             name: "Test Scenario".to_string(),
             description: None,
             tags: vec!["@tag1".to_string(), "@tag2".to_string()],
+            span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 5, col: 1 },
             steps: vec![],
             examples: vec![],
@@ -178,6 +180,8 @@ mod tests {
             description: None,
             background: None,
             scenarios: vec![],
+            tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 3, col: 1 },
         }
     }
@@ -220,8 +224,10 @@ mod tests {
         let mut feature = create_test_feature();
         feature.background = Some(gherkin::Background {
             keyword: "Background".to_string(),
+            name: "Test Background".to_string(),
             description: None,
             steps: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
             position: gherkin::LineCol { line: 2, col: 1 },
         });
         let scenario = create_test_scenario();

@@ -13,7 +13,7 @@
 use std::{mem, time::SystemTime};
 
 use crate::{
-    event::{self, Metadata, Scenario},
+    event::{self, Scenario},
     writer::{
         basic::coerce_error,
         common::{StepContext, WriterStats},
@@ -328,7 +328,10 @@ mod tests {
     };
 
     use super::*;
-    use crate::event::{Hook, HookType, Step};
+    use crate::event::{Hook, HookType, Step, Metadata};
+
+    #[derive(Debug, Default)]
+    struct TestWorld;
 
     fn create_test_feature() -> GherkinFeature {
         GherkinFeature {
@@ -339,6 +342,7 @@ mod tests {
             scenarios: vec![],
             rules: vec![],
             tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
             position: LineCol { line: 1, col: 1 },
             path: Some(PathBuf::from("test.feature")),
         }
@@ -350,6 +354,7 @@ mod tests {
             name: "Test Scenario".to_string(),
             description: None,
             tags: vec![],
+            span: gherkin::Span { start: 0, end: 0 },
             position: LineCol { line: 5, col: 1 },
             steps: vec![],
             examples: vec![],
@@ -362,6 +367,8 @@ mod tests {
             value: "a test step".to_string(),
             docstring: None,
             table: None,
+            span: gherkin::Span { start: 0, end: 0 },
+            ty: gherkin::StepType::Given,
             position: LineCol { line: 6, col: 1 },
         }
     }
@@ -386,13 +393,13 @@ mod tests {
         let mut handler = EventHandler::new();
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        let meta = Metadata { at: SystemTime::now() };
+        let meta = Metadata::new(());
 
         handler.handle_scenario_event(
             &feature,
             None,
             &scenario,
-            Scenario::Log("Test log message".to_string()),
+            Scenario::Log::<TestWorld>("Test log message".to_string()),
             meta,
         );
 
@@ -406,7 +413,7 @@ mod tests {
         let mut handler = EventHandler::new();
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        let meta = Metadata { at: SystemTime::now() };
+        let meta = Metadata::new(());
 
         handler.logs.push("Test log".to_string());
 
@@ -414,7 +421,7 @@ mod tests {
             &feature,
             None,
             &scenario,
-            Scenario::Finished,
+            Scenario::Finished::<TestWorld>,
             meta,
         );
 
@@ -427,14 +434,14 @@ mod tests {
         let mut handler = EventHandler::new();
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        let meta = Metadata { at: SystemTime::now() };
+        let meta = Metadata::new(());
 
         handler.handle_hook_event(
             &feature,
             None,
             &scenario,
             HookType::Before,
-            Hook::Started,
+            Hook::Started::<TestWorld>,
             meta,
         );
 
@@ -458,8 +465,8 @@ mod tests {
             None,
             &scenario,
             HookType::Before,
-            Hook::Passed,
-            Metadata { at: end_time },
+            Hook::Passed::<TestWorld>,
+            Metadata { at: end_time, value: () },
         );
 
         assert_eq!(handler.features.len(), 1);
@@ -536,6 +543,6 @@ mod tests {
         handler.stats.record_passed_step();
 
         let stats = handler.stats();
-        assert_eq!(stats.passed_steps(), 1);
+        assert_eq!(stats.passed(), 1);
     }
 }

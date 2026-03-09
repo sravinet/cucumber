@@ -96,7 +96,7 @@ pub struct Tag {
 }
 
 /// Possible statuses of running [`gherkin::Step`].
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Status {
     /// [`event::Step::Passed`].
