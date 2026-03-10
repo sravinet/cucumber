@@ -922,7 +922,7 @@ mod tests {
             }
         }
 
-        let (executor, _) = create_test_executor();
+        let (executor, mut receiver) = create_test_executor();
         let observer = MockObserver::new();
         let observer_clone = observer.clone();
         
@@ -932,6 +932,9 @@ mod tests {
         // Send an event to trigger the observer pipeline
         let test_event = event::Cucumber::<TestWorld>::Started;
         executor.send_event(test_event);
+        
+        // Keep receiver alive during test by consuming events
+        let _event = receiver.try_next().ok();
         
         // Verify observer functionality works (may receive events through observer registry)
         let _events_count = observer_clone.get_events_count();

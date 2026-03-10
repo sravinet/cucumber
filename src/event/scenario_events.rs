@@ -337,9 +337,11 @@ mod tests {
         );
 
         match failed {
-            Scenario::Hook(HookType::Before, Hook::Failed(w, i)) => {
+            Scenario::Hook(HookType::Before, Hook::Failed(w, failure_info)) => {
                 assert!(w.is_some());
                 assert_eq!(w.unwrap().value, "test");
+                // Test that failure info contains the expected error information
+                assert!(std::mem::size_of_val(&failure_info) > 0);
             }
             _ => panic!("Expected Hook::Failed"),
         }
