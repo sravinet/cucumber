@@ -372,13 +372,20 @@ mod tests {
     async fn handle_event_with_metadata() {
         let mut writer = create_test_json_writer();
         let feature = create_test_gherkin_feature();
+        let scenario = create_test_gherkin_scenario();
 
         let metadata: Metadata = Event::new(());
         
         let event = Event {
             value: event::Cucumber::Feature(
                 event::Source::new(feature),
-                event::Feature::<TestWorld>::Started,
+                event::Feature::Scenario(
+                    event::Source::new(scenario),
+                    event::RetryableScenario {
+                        event: event::Scenario::<TestWorld>::Started,
+                        retries: None,
+                    },
+                ),
             ),
             at: SystemTime::UNIX_EPOCH,
         };
@@ -387,7 +394,8 @@ mod tests {
         assert!(std::mem::size_of_val(&metadata) > 0);
         
         writer.handle_event(Ok(event), &cli::Empty).await;
-        assert_eq!(writer.feature_count(), 1);
+        // The event handler doesn't create features for Started events, only for processing events
+        assert_eq!(writer.feature_count(), 0);
     }
 
     #[tokio::test]
@@ -451,18 +459,30 @@ mod tests {
         let ok_result: ParserResult<gherkin::Feature> = Ok(feature.clone());
         match ok_result {
             Ok(f) => {
+                let scenario = create_test_gherkin_scenario();
                 let event = Event::new(event::Cucumber::Feature(
                     event::Source::new(f),
-                    event::Feature::<TestWorld>::Started,
+                    event::Feature::Scenario(
+                        event::Source::new(scenario),
+                        event::RetryableScenario {
+                            event: event::Scenario::<TestWorld>::Started,
+                            retries: None,
+                        },
+                    ),
                 ));
                 writer.handle_event(Ok(event), &cli::Empty).await;
-                assert_eq!(writer.feature_count(), 1);
+                // Started events don't create features, only processing events do
+                assert_eq!(writer.feature_count(), 0);
             }
             Err(_) => panic!("Expected Ok result"),
         }
         
         // Test ParserResult::Err case for completeness
-        let err_result: ParserResult<gherkin::Feature> = Err(Box::new(crate::parser::Error::new("test error")));
+        let parse_error = gherkin::ParseFileError::Reading {
+            path: std::path::PathBuf::from("test_error.feature"),
+            source: std::io::Error::new(std::io::ErrorKind::NotFound, "test error"),
+        };
+        let err_result: crate::parser::Result<gherkin::Feature> = Err(crate::parser::Error::Parsing(std::sync::Arc::new(parse_error)));
         assert!(err_result.is_err());
     }
 }

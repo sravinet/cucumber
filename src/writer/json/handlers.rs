@@ -504,12 +504,20 @@ mod tests {
         // First call creates the element
         let element1 = handler
             .mut_or_insert_element(&feature, None, &scenario, "scenario");
-        element1.name = "Modified".to_string();
+        // Instead of modifying name (which affects matching), modify a field that doesn't affect matching
+        element1.before.push(crate::writer::json::types::HookResult {
+            result: crate::writer::json::types::RunResult {
+                status: crate::writer::json::types::Status::Passed,
+                duration: 1000,
+                error_message: None,
+            },
+            embeddings: vec![],
+        });
 
         // Second call should return the same element
         let element2 = handler
             .mut_or_insert_element(&feature, None, &scenario, "scenario");
-        assert_eq!(element2.name, "Modified");
+        assert_eq!(element2.before.len(), 1);
 
         assert_eq!(handler.features.len(), 1);
         assert_eq!(handler.features[0].elements.len(), 1);

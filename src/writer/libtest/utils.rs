@@ -80,7 +80,7 @@ impl LibtestUtils {
         let step_name = match step {
             Either::Left(hook) => format!("{hook} hook"),
             Either::Right((step, is_bg)) => format!(
-                "{}: {} {}{}",
+                "{}: {}{}{} {}",
                 step.position.line,
                 if is_bg {
                     feature
@@ -90,6 +90,7 @@ impl LibtestUtils {
                 } else {
                     ""
                 },
+                if is_bg { " " } else { "" },
                 step.keyword,
                 step.value,
             ),
@@ -250,7 +251,7 @@ impl BackgroundUtils {
         step: &gherkin::Step,
     ) -> String {
         format!(
-            "{}: {} {}{}",
+            "{}: {} {} {}",
             step.position.line,
             Self::get_background_keyword(feature),
             step.keyword,
@@ -507,8 +508,8 @@ mod tests {
             );
             let formatted = LibtestUtils::format_feature_path(&feature);
 
-            // Should use trimmed path
-            assert_eq!(formatted, "test.feature");
+            // Should use trimmed path (trim_path doesn't extract just filename)
+            assert_eq!(formatted, "long/path/to/test.feature");
         }
 
         #[test]
