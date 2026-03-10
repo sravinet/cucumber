@@ -150,6 +150,8 @@ format!("{}: {}{}{} {}",
   - Channel lifecycle issues (1 fix)
   - Span metadata handling (1 fix)
 
+**Note**: Additional critical tracing fixes were required post-production and are documented in ADR-0027.
+
 ### Quality Improvements
 1. **Format Consistency**: All message formatting uses established suffix constants
 2. **Defensive Testing**: Tests handle edge cases and missing dependencies
@@ -167,3 +169,4 @@ format!("{}: {}{}{} {}",
 - Extends ADR-0024 (Event Metadata Integration) with proper testing
 - Validates ADR-0023 (Step Event Output Standardization)
 - Supports ADR-0001 (Consolidate Observability Features) testing
+- Followed by ADR-0027 (Tracing Span Lifecycle Management Fixes) for critical post-production issues
