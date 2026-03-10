@@ -192,7 +192,7 @@ mod tests {
 
     #[test]
     fn test_layer_with_closed_channel() {
-        let (sender, receiver) = mpsc::unbounded::<span::Id>();
+        let (sender, mut receiver) = mpsc::unbounded::<span::Id>();
         
         // Test that receiver exists and can receive initial state
         assert!(receiver.try_next().is_err()); // Empty receiver

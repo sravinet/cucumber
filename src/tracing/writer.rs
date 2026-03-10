@@ -116,11 +116,8 @@ mod tests {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
 
-        let message = format!(
-            "test log message{}{}",
-            suffix::NO_SCENARIO_ID,
-            suffix::END
-        );
+        // Manually construct expected format using suffix constants  
+        let message = format!("test log message{}", suffix::NO_SCENARIO_ID);
         let written = writer.write(message.as_bytes())?;
 
         assert_eq!(written, message.len());
@@ -138,12 +135,8 @@ mod tests {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
 
-        let message = format!(
-            "test log message{}{}{}",
-            suffix::BEFORE_SCENARIO_ID,
-            "42",
-            suffix::END
-        );
+        // Manually construct expected format using suffix constants
+        let message = format!("test log message{}{}{}", suffix::BEFORE_SCENARIO_ID, 42, suffix::END);
         let written = writer.write(message.as_bytes())?;
 
         assert_eq!(written, message.len());
@@ -161,15 +154,10 @@ mod tests {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
 
-        let message1 =
-            format!("message1{}{}", suffix::NO_SCENARIO_ID, suffix::END);
-        let message2 = format!(
-            "message2{}{}{}",
-            suffix::BEFORE_SCENARIO_ID,
-            "123",
-            suffix::END
-        );
-        let combined = format!("{}{}", message1, message2);
+        // Manually construct expected formats using suffix constants
+        let combined = format!("message1{}{}message2{}{}{}", 
+            suffix::NO_SCENARIO_ID, suffix::END,
+            suffix::BEFORE_SCENARIO_ID, 123, suffix::END);
 
         let written = writer.write(combined.as_bytes())?;
         assert_eq!(written, combined.len());
@@ -244,7 +232,7 @@ mod tests {
 
         let mut writer = CollectorWriter::new(sender);
 
-        let message = format!("test{}{}", suffix::NO_SCENARIO_ID, suffix::END);
+        let message = format!("test{}", suffix::NO_SCENARIO_ID);
         // This should still succeed even with closed receiver
         let written = writer.write(message.as_bytes())?;
         assert_eq!(written, message.len());
@@ -268,8 +256,7 @@ mod tests {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
 
-        let unicode_message =
-            format!("тест 🎯 message{}{}", suffix::NO_SCENARIO_ID, suffix::END);
+        let unicode_message = format!("тест 🎯 message{}", suffix::NO_SCENARIO_ID);
         let written = writer.write(unicode_message.as_bytes())?;
 
         assert_eq!(written, unicode_message.as_bytes().len());
