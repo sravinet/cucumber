@@ -87,7 +87,9 @@ async fn fires_each_time() {
 #[when(regex = r"(\d+) secs?")]
 #[then(expr = "{u64} sec(s)")]
 async fn step(world: &mut World, secs: CustomU64) {
-    time::sleep(Duration::from_secs(*secs)).await;
+    // Use milliseconds instead of seconds for faster test execution
+    // while still testing async timing behavior
+    time::sleep(Duration::from_millis(*secs as u64 * 10)).await;
 
     world.0 += 1;
     assert!(world.0 < 4, "Too much!");
