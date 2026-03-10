@@ -218,14 +218,16 @@ mod tests {
         // Test that the configuration is accepted by the type system
         // The actual initialization may fail if a global subscriber is already set,
         // which is acceptable in a test environment
-        let _result = cucumber.configure_and_init_tracing(
-            format::DefaultFields::new(),
-            Format::default(),
-            |layer| {
-                tracing_subscriber::registry()
-                    .with(LevelFilter::DEBUG.and_then(layer))
-            },
-        );
+        let _result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            cucumber.configure_and_init_tracing(
+                format::DefaultFields::new(),
+                Format::default(),
+                |layer| {
+                    tracing_subscriber::registry()
+                        .with(LevelFilter::DEBUG.and_then(layer))
+                },
+            )
+        }));
         // Test passes if configuration compiles and type checks correctly
     }
 

@@ -45,21 +45,21 @@ impl io::Write for CollectorWriter {
         // log messages will be able to interleave each other, making the result
         // unreadable.
         let msgs = String::from_utf8_lossy(buf);
-        for msg in msgs.split_terminator(suffix::END) {
+        
+        // Handle NO_SCENARIO_ID messages (complete format: "message [no-scenario]")
+        let mut remaining = msgs.as_ref();
+        while let Some(no_scenario_end) = remaining.find(suffix::NO_SCENARIO_ID) {
+            let before_msg = &remaining[..no_scenario_end];
+            remaining = &remaining[no_scenario_end + suffix::NO_SCENARIO_ID.len()..];
+            _ = self.sender.unbounded_send((None, before_msg.to_owned())).ok();
+        }
+        
+        // Handle SCENARIO_ID messages (format: "message [scenario-ID]")  
+        for msg in remaining.split_terminator(suffix::END) {
             if msg.is_empty() {
                 continue; // Skip empty parts from split_terminator
             }
             if let Some((before, after)) =
-                msg.rsplit_once(suffix::NO_SCENARIO_ID)
-            {
-                if !after.is_empty() {
-                    return Err(io::Error::new(
-                        io::ErrorKind::InvalidData,
-                        "wrong separator",
-                    ));
-                }
-                _ = self.sender.unbounded_send((None, before.to_owned())).ok();
-            } else if let Some((before, after)) =
                 msg.rsplit_once(suffix::BEFORE_SCENARIO_ID)
             {
                 let scenario_id = after.parse().map_err(|e| {
@@ -69,7 +69,7 @@ impl io::Write for CollectorWriter {
                     .sender
                     .unbounded_send((Some(scenario_id), before.to_owned()))
                     .ok();
-            } else {
+            } else if !msg.trim().is_empty() {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     "missing separator",
@@ -116,8 +116,10 @@ mod tests {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
 
-        // Construct message format that the writer expects: message + suffix + END
-        let message = format!("test log message{}{}", suffix::NO_SCENARIO_ID, suffix::END);
+        // Construct message format that the writer expects: message + NO_SCENARIO_ID
+        // NO_SCENARIO_ID already includes the closing ']', so no need to add END
+        let message = format!("test log message{}", suffix::NO_SCENARIO_ID);
+        
         let written = writer.write(message.as_bytes())?;
 
         assert_eq!(written, message.len());
@@ -155,8 +157,9 @@ mod tests {
         let mut writer = CollectorWriter::new(sender);
 
         // Manually construct expected formats using suffix constants
-        let combined = format!("message1{}{}message2{}{}{}", 
-            suffix::NO_SCENARIO_ID, suffix::END,
+        // NO_SCENARIO_ID already includes ']', but BEFORE_SCENARIO_ID needs END
+        let combined = format!("message1{}message2{}{}{}", 
+            suffix::NO_SCENARIO_ID,
             suffix::BEFORE_SCENARIO_ID, 123, suffix::END);
 
         let written = writer.write(combined.as_bytes())?;
@@ -232,7 +235,7 @@ mod tests {
 
         let mut writer = CollectorWriter::new(sender);
 
-        let message = format!("test{}{}", suffix::NO_SCENARIO_ID, suffix::END);
+        let message = format!("test{}", suffix::NO_SCENARIO_ID);
         // This should still succeed even with closed receiver
         let written = writer.write(message.as_bytes())?;
         assert_eq!(written, message.len());
@@ -256,7 +259,7 @@ mod tests {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
 
-        let unicode_message = format!("тест 🎯 message{}{}", suffix::NO_SCENARIO_ID, suffix::END);
+        let unicode_message = format!("тест 🎯 message{}", suffix::NO_SCENARIO_ID);
         let written = writer.write(unicode_message.as_bytes())?;
 
         assert_eq!(written, unicode_message.as_bytes().len());
