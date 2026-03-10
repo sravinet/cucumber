@@ -27,7 +27,7 @@ async fn fails() {
 
     assert_eq!(res.passed_steps(), 0);
     assert_eq!(res.skipped_steps(), 0);
-    assert_eq!(res.failed_steps(), 1);
-    assert_eq!(res.retried_steps(), 0);
+    assert_eq!(res.failed_steps(), 4); // 2 steps × 2 attempts (original + 1 retry)
+    assert_eq!(res.retried_steps(), 0); // NotFound errors are not counted as retried
     assert_eq!(res.hook_errors(), 0);
 }

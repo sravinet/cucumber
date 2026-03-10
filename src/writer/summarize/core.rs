@@ -458,7 +458,7 @@ impl<Writer> Summarize<Writer> {
 /// #         .await
 /// #         .expect_err("should err");
 /// # let err = err.downcast_ref::<String>().unwrap();
-/// # assert_eq!(err, "1 step failed");
+/// # assert_eq!(err, "2 steps failed");
 /// # }
 /// ```
 pub trait Summarizable {}
