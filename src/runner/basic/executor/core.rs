@@ -708,8 +708,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use futures::TryStreamExt;
-
     use super::*;
     use crate::test_utils::common::TestWorld;
 
