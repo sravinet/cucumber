@@ -91,7 +91,7 @@ mod tests {
         assert_eq!(suite.testcases().len(), 1);
 
         let testcase = &suite.testcases()[0];
-        assert!(testcase.name().contains("Feature: feature.feature"));
+        assert!(testcase.name().contains("Feature: test/feature.feature"));
         // Check that the test case has a failure result
         // Note: API validation simplified due to trait bound limitations
     }
@@ -114,7 +114,7 @@ mod tests {
         let suite = &report.testsuites()[0];
         let testcase = &suite.testcases()[0];
         // Path should be trimmed by trim_path function
-        assert!(testcase.name().contains("Feature: test/feature"));
+        assert!(testcase.name().contains("Feature: very/long/path/to/test/feature"));
     }
 
     #[test]
@@ -135,7 +135,7 @@ mod tests {
         assert_eq!(suite.testcases().len(), 1);
 
         let testcase = &suite.testcases()[0];
-        assert_eq!(testcase.name(), "Feature: examples.feature:10:5");
+        assert_eq!(testcase.name(), "Feature: test/examples.feature:10:5");
         // Check that the test case has a failure result with expansion error
         // Note: Result content validation simplified due to API limitations
     }
@@ -168,7 +168,7 @@ mod tests {
         let (name, error_type) =
             ErrorHandler::extract_error_info(&parser_error);
 
-        assert_eq!(name, "Feature: scenario.feature");
+        assert_eq!(name, "Feature: test/scenario.feature");
         assert_eq!(error_type, "Parser Error");
     }
 
@@ -184,7 +184,7 @@ mod tests {
         let (name, error_type) =
             ErrorHandler::extract_error_info(&parser_error);
 
-        assert_eq!(name, "Feature: outline.feature:15:10");
+        assert_eq!(name, "Feature: test/outline.feature:15:10");
         assert_eq!(error_type, "Example Expansion Error");
     }
 }

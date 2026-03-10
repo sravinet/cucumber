@@ -234,7 +234,7 @@ mod tests {
             tags: vec![],
             span: gherkin::Span { start: 0, end: 0 },
             position: LineCol { line: 1, col: 1 },
-            path: Some(PathBuf::from("/test/features/example.feature")),
+            path: Some(PathBuf::from("example.feature")),
         }
     }
 
