@@ -27,27 +27,25 @@ impl ScenarioId {
     /// Creates a new [`Span`] for a running [`Step`].
     ///
     /// [`Step`]: gherkin::Step
-    #[expect(clippy::unused_self, reason = "API uniformity")]
     pub(crate) fn step_span(self, is_background: bool) -> Span {
         // `Level::ERROR` is used to minimize the chance of the user-provided
         // filter to skip it.
         if is_background {
-            tracing::error_span!("background step")
+            tracing::error_span!("background step", __cucumber_scenario_id = self.0)
         } else {
-            tracing::error_span!("step")
+            tracing::error_span!("step", __cucumber_scenario_id = self.0)
         }
     }
 
     /// Creates a new [`Span`] for running a [`Hook`].
     ///
     /// [`Hook`]: crate::event::Hook
-    #[expect(clippy::unused_self, reason = "API uniformity")]
     pub(crate) fn hook_span(self, hook_ty: HookType) -> Span {
         // `Level::ERROR` is used to minimize the chance of the user-provided
         // filter to skip it.
         match hook_ty {
-            HookType::Before => tracing::error_span!("before hook"),
-            HookType::After => tracing::error_span!("after hook"),
+            HookType::Before => tracing::error_span!("before hook", __cucumber_scenario_id = self.0),
+            HookType::After => tracing::error_span!("after hook", __cucumber_scenario_id = self.0),
         }
     }
 }
