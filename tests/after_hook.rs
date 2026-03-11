@@ -24,7 +24,7 @@ async fn fires_each_time() {
             async move {
                 let before =
                     NUMBER_OF_BEFORE_WORLDS.fetch_add(1, Ordering::SeqCst);
-                // We have 14 scenarios that run, so allow up to 14
+                // We have 14 scenarios that create worlds, so allow up to 14
                 assert!(before < 14, "Too much before `World`s!");
             }
             .boxed()
@@ -45,7 +45,7 @@ async fn fires_each_time() {
             if w.is_some() {
                 let after =
                     NUMBER_OF_AFTER_WORLDS.fetch_add(1, Ordering::SeqCst);
-                // We have 14 scenarios that run, so allow up to 14
+                // We have 14 scenarios that create worlds, so allow up to 14
                 assert!(after < 14, "too much after `World`s!");
             } else {
                 panic!("no `World` received");
@@ -71,7 +71,7 @@ async fn fires_each_time() {
         err
     );
 
-    // We have 14 scenarios that actually run (2 are skipped due to parsing/step errors)
+    // We have 16 scenarios total but only 14 create World instances (2 are skipped)
     assert_eq!(NUMBER_OF_BEFORE_WORLDS.load(Ordering::SeqCst), 14);
     assert_eq!(NUMBER_OF_AFTER_WORLDS.load(Ordering::SeqCst), 14);
 
@@ -85,7 +85,7 @@ async fn fires_each_time() {
 
 #[given(regex = r"(\d+) secs?")]
 #[when(regex = r"(\d+) secs?")]
-#[then(expr = "{u64} sec(s)")]
+#[then(regex = r"(\d+) secs?")]
 async fn step(world: &mut World, secs: CustomU64) {
     // Use milliseconds instead of seconds for faster test execution
     // while still testing async timing behavior
