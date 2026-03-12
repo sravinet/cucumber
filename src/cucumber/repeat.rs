@@ -182,10 +182,10 @@ where
     ///                     Rule::Scenario(
     ///                         _,
     ///                         RetryableScenario {
-    ///                             event: Scenario::Step(_, Step::Failed(..))
+    ///                             event: Scenario::Step(_, Step::Failed { .. })
     ///                                 | Scenario::Background(
     ///                                     _,
-    ///                                     Step::Failed(_, _, _, _),
+    ///                                     Step::Failed { .. },
     ///                                 ),
     ///                             retries: _
     ///                         }
@@ -193,8 +193,8 @@ where
     ///                 ) | Feature::Scenario(
     ///                     _,
     ///                     RetryableScenario {
-    ///                         event: Scenario::Step(_, Step::Failed(..))
-    ///                             | Scenario::Background(_, Step::Failed(..)),
+    ///                         event: Scenario::Step(_, Step::Failed { .. })
+    ///                             | Scenario::Background(_, Step::Failed { .. }),
     ///                         retries: _
     ///                     }
     ///                 )
