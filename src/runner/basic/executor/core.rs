@@ -294,12 +294,11 @@ where
         #[cfg(feature = "tracing")]
         {
             drop(_scenario_guard);
-            // TODO: Fix span waiting race condition - disabling for now
-            // if let Some(waiter) = waiter {
-            //     if let Some(span_id) = scenario_span.id() {
-            //         waiter.wait_for_span_close(span_id).await;
-            //     }
-            // }
+            if let Some(waiter) = waiter {
+                if let Some(span_id) = scenario_span.id() {
+                    waiter.wait_for_span_close(span_id).await;
+                }
+            }
         }
 
         // Handle the scenario completion

@@ -75,12 +75,11 @@ impl HookExecutor {
             #[cfg(feature = "tracing")]
             {
                 drop(_guard);
-                // TODO: Fix span waiting race condition - disabling for now
-                // if let Some(waiter) = waiter {
-                //     if let Some(span_id) = span.id() {
-                //         waiter.wait_for_span_close(span_id).await;
-                //     }
-                // }
+                if let Some(waiter) = waiter {
+                    if let Some(span_id) = span.id() {
+                        waiter.wait_for_span_close(span_id).await;
+                    }
+                }
             }
 
             let hook_event = match result {
@@ -209,12 +208,11 @@ impl HookExecutor {
             #[cfg(feature = "tracing")]
             {
                 drop(_guard);
-                // TODO: Fix span waiting race condition - disabling for now
-                // if let Some(waiter) = waiter {
-                //     if let Some(span_id) = span.id() {
-                //         waiter.wait_for_span_close(span_id).await;
-                //     }
-                // }
+                if let Some(waiter) = waiter {
+                    if let Some(span_id) = span.id() {
+                        waiter.wait_for_span_close(span_id).await;
+                    }
+                }
             }
 
             let hook_event = match result {
