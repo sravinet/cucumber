@@ -26,6 +26,7 @@ include = [
     "/tests/libtest.rs",
     "/tests/tracing.rs",
     "/tests/wait.rs",
+    "/tests/feature_matrix.rs",
     "/CHANGELOG.md",
     "/LICENSE-*",
     "/README.md",
@@ -132,6 +133,10 @@ harness = false
 name = "wait"
 required-features = ["libtest"]
 harness = false
+
+[[test]]
+name = "feature_matrix"
+harness = true
 
 [workspace]
 members = ["codegen"]
