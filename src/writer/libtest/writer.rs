@@ -289,9 +289,10 @@ where
     Out: io::Write,
 {
     async fn write(&mut self, val: Val) {
-        self.output
-            .write_line(val.as_ref())
-            .unwrap_or_else(|e| panic!("failed to write: {e}"));
+        if let Err(e) = self.output.write_line(val.as_ref()) {
+            eprintln!("Warning: Failed to write output: {}", e);
+            // Continue gracefully instead of panicking
+        }
     }
 }
 

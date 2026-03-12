@@ -103,26 +103,40 @@ impl<World, Wr: Writer<World>> Writer<World> for Normalize<World, Wr> {
             Ok((Cucumber::Feature(f, ev), meta)) => match ev {
                 Feature::Started => self.queue.new_feature(meta.wrap(f)),
                 Feature::Scenario(s, ev) => {
-                    self.queue.insert_scenario_event(
+                    if let Err(e) = self.queue.insert_scenario_event(
                         &f,
                         None,
                         s,
                         meta.wrap(ev),
-                    );
+                    ) {
+                        eprintln!("Warning: Failed to insert scenario event: {}", e);
+                    }
                 }
-                Feature::Finished => self.queue.feature_finished(meta.wrap(&f)),
+                Feature::Finished => {
+                    if let Err(e) = self.queue.feature_finished(meta.wrap(&f)) {
+                        eprintln!("Warning: Failed to finish feature: {}", e);
+                    }
+                }
                 Feature::Rule(r, ev) => match ev {
-                    Rule::Started => self.queue.new_rule(&f, meta.wrap(r)),
+                    Rule::Started => {
+                        if let Err(e) = self.queue.new_rule(&f, meta.wrap(r)) {
+                            eprintln!("Warning: Failed to create new rule: {}", e);
+                        }
+                    }
                     Rule::Scenario(s, ev) => {
-                        self.queue.insert_scenario_event(
+                        if let Err(e) = self.queue.insert_scenario_event(
                             &f,
                             Some(r),
                             s,
                             meta.wrap(ev),
-                        );
+                        ) {
+                            eprintln!("Warning: Failed to insert scenario event in rule: {}", e);
+                        }
                     }
                     Rule::Finished => {
-                        self.queue.rule_finished(&f, meta.wrap(r));
+                        if let Err(e) = self.queue.rule_finished(&f, meta.wrap(r)) {
+                            eprintln!("Warning: Failed to finish rule: {}", e);
+                        }
                     }
                 },
             },

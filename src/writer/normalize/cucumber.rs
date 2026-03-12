@@ -12,6 +12,8 @@
 
 use either::Either;
 
+use crate::error::{ExecutionError, ExecutionResult};
+
 // Forward declarations for circular dependencies
 use super::rules::RulesQueue;
 use super::{emitter::Emitter, queue::Queue, scenarios::ScenariosQueue};
@@ -39,12 +41,13 @@ impl<World> CucumberQueue<World> {
     /// [`Feature`]s holding the output.
     ///
     /// [`Feature`]: gherkin::Feature
-    pub fn feature_finished(&mut self, feat: Event<&Source<gherkin::Feature>>) {
+    pub fn feature_finished(&mut self, feat: Event<&Source<gherkin::Feature>>) -> ExecutionResult<()> {
         let (feat, meta) = feat.split();
         self.fifo
             .get_mut(feat)
-            .unwrap_or_else(|| panic!("no `Feature: {}`", feat.name))
+            .ok_or_else(|| ExecutionError::feature_not_found(&feat.name))?
             .finished(meta);
+        Ok(())
     }
 
     /// Inserts a new [`Rule`] on [`event::Rule::Started`].
@@ -54,11 +57,12 @@ impl<World> CucumberQueue<World> {
         &mut self,
         feat: &Source<gherkin::Feature>,
         rule: Event<Source<gherkin::Rule>>,
-    ) {
+    ) -> ExecutionResult<()> {
         self.fifo
             .get_mut(feat)
-            .unwrap_or_else(|| panic!("no `Feature: {}`", feat.name))
+            .ok_or_else(|| ExecutionError::feature_not_found(&feat.name))?
             .new_rule(rule);
+        Ok(())
     }
 
     /// Marks a [`Rule`] as finished on [`event::Rule::Finished`].
@@ -71,11 +75,12 @@ impl<World> CucumberQueue<World> {
         &mut self,
         feat: &Source<gherkin::Feature>,
         rule: Event<Source<gherkin::Rule>>,
-    ) {
+    ) -> ExecutionResult<()> {
         self.fifo
             .get_mut(feat)
-            .unwrap_or_else(|| panic!("no `Feature: {}`", feat.name))
+            .ok_or_else(|| ExecutionError::feature_not_found(&feat.name))?
             .rule_finished(rule);
+        Ok(())
     }
 
     /// Inserts a new [`event::Scenario::Started`].
@@ -85,11 +90,12 @@ impl<World> CucumberQueue<World> {
         rule: Option<Source<gherkin::Rule>>,
         scenario: Source<gherkin::Scenario>,
         event: Event<event::RetryableScenario<World>>,
-    ) {
+    ) -> ExecutionResult<()> {
         self.fifo
             .get_mut(feat)
-            .unwrap_or_else(|| panic!("no `Feature: {}`", feat.name))
-            .insert_scenario_event(rule, scenario, event.retries, event);
+            .ok_or_else(|| ExecutionError::feature_not_found(&feat.name))?
+            .insert_scenario_event(rule, scenario, event.retries, event)?;
+        Ok(())
     }
 }
 
@@ -207,19 +213,21 @@ impl<World> FeatureQueue<World> {
         scenario: Source<gherkin::Scenario>,
         retries: Option<Retries>,
         ev: Event<event::RetryableScenario<World>>,
-    ) {
+    ) -> ExecutionResult<()> {
         if let Some(r) = rule {
             match self
                 .fifo
                 .get_mut(&Either::Left(r.clone()))
-                .unwrap_or_else(|| panic!("no `Rule: {}`", r.name))
+                .ok_or_else(|| ExecutionError::rule_not_found(&r.name, "unknown feature"))?
             {
-                Either::Left(rules) => rules
-                    .fifo
-                    .entry((scenario, retries))
-                    .or_insert_with(ScenariosQueue::new)
-                    .0
-                    .push(ev),
+                Either::Left(rules) => {
+                    rules
+                        .fifo
+                        .entry((scenario, retries))
+                        .or_insert_with(ScenariosQueue::new)
+                        .0
+                        .push(ev);
+                }
                 Either::Right(_) => unreachable!(),
             }
         } else {
@@ -232,6 +240,7 @@ impl<World> FeatureQueue<World> {
                 Either::Left(_) => unreachable!(),
             }
         }
+        Ok(())
     }
 }
 
@@ -387,7 +396,7 @@ mod tests {
 
         // Then mark it as finished
         let finish_event = Event::new(&feature);
-        queue.feature_finished(finish_event);
+        queue.feature_finished(finish_event).unwrap();
 
         // Check that the feature queue is marked as finished
         let feature_queue: &FeatureQueue<TestWorld> =
@@ -408,7 +417,7 @@ mod tests {
         queue.new_feature(Event::new(feature.clone()));
 
         // Then add a rule to it
-        queue.new_rule(&feature, Event::new(rule.clone()));
+        queue.new_rule(&feature, Event::new(rule.clone())).unwrap();
 
         let feature_queue: &FeatureQueue<TestWorld> =
             queue.fifo.get(&feature).unwrap();
@@ -423,10 +432,10 @@ mod tests {
 
         // Setup feature and rule
         queue.new_feature(Event::new(feature.clone()));
-        queue.new_rule(&feature, Event::new(rule.clone()));
+        queue.new_rule(&feature, Event::new(rule.clone())).unwrap();
 
         // Mark rule as finished
-        queue.rule_finished(&feature, Event::new(rule.clone()));
+        queue.rule_finished(&feature, Event::new(rule.clone())).unwrap();
 
         let feature_queue: &FeatureQueue<TestWorld> =
             queue.fifo.get(&feature).unwrap();
@@ -466,7 +475,7 @@ mod tests {
             None,
             scenario.clone(),
             scenario_event,
-        );
+        ).unwrap();
 
         let feature_queue = queue.fifo.get(&feature).unwrap();
         assert!(
@@ -482,7 +491,7 @@ mod tests {
 
         // Add and finish a feature
         queue.new_feature(Event::new(feature.clone()));
-        queue.feature_finished(Event::new(&feature));
+        queue.feature_finished(Event::new(&feature)).unwrap();
 
         // Emit should handle the feature
         let result = (&mut queue).emit((), &mut writer, &EmptyCli).await;
@@ -552,7 +561,7 @@ mod tests {
             scenario.clone(),
             None,
             scenario_event,
-        );
+        ).unwrap();
 
         // Check that scenario was added to the rule
         let rule_queue = feature_queue.fifo.get(&Either::Left(rule)).unwrap();
@@ -577,7 +586,7 @@ mod tests {
             scenario.clone(),
             None,
             scenario_event,
-        );
+        ).unwrap();
 
         // Check that scenario was added directly to feature
         assert!(

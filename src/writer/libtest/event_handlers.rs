@@ -22,6 +22,7 @@ use super::{
 };
 use crate::{
     Event, World,
+    error::{WriterError, WriterResult},
     event::{self, Retries},
     parser,
     writer::{
@@ -58,11 +59,19 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
                 let all_events =
                     iter::once(unite(event)).chain(mem::take(&mut self.events));
                 for ev in all_events {
-                    self.output_event(ev, cli);
+                    if let Err(e) = self.output_event(ev, cli) {
+                        eprintln!("Warning: Failed to output event: {}", e);
+                        // Continue processing remaining events
+                    }
                 }
             }
             (event, false) => self.events.push(unite(event)),
-            (event, true) => self.output_event(unite(event), cli),
+            (event, true) => {
+                if let Err(e) = self.output_event(unite(event), cli) {
+                    eprintln!("Warning: Failed to output event: {}", e);
+                    // Continue gracefully - don't panic
+                }
+            }
         }
     }
 
@@ -71,14 +80,15 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
         &mut self,
         event: parser::Result<Event<event::Cucumber<W>>>,
         cli: &Cli,
-    ) {
+    ) -> WriterResult<()> {
         for ev in self.expand_cucumber_event(event, cli) {
+            let json_str = serde_json::to_string(&ev)
+                .map_err(WriterError::from)?;
             self.output
-                .write_line(serde_json::to_string(&ev).unwrap_or_else(|e| {
-                    panic!("Failed to serialize `LibTestJsonEvent`: {e}")
-                }))
-                .unwrap_or_else(|e| panic!("Failed to write: {e}"));
+                .write_line(json_str)
+                .map_err(WriterError::from)?;
         }
+        Ok(())
     }
 
     /// Converts the provided [`event::Cucumber`] into [`LibTestJsonEvent`]s.

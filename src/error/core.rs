@@ -17,7 +17,7 @@ use std::io;
 
 use derive_more::with_trait::{Display, Error};
 
-use super::{ConfigError, StepError, WorldError, WriterError};
+use super::{ConfigError, ExecutionError, StepError, WorldError, WriterError};
 
 /// Top-level error type for all Cucumber operations.
 ///
@@ -48,6 +48,10 @@ pub enum CucumberError {
     /// Configuration or validation errors.
     #[display("Configuration error: {_0}")]
     Config(ConfigError),
+
+    /// Execution-specific errors.
+    #[display("Execution error: {_0}")]
+    Execution(ExecutionError),
 }
 
 /// Result type alias using [`CucumberError`].
@@ -132,6 +136,12 @@ impl From<WorldError> for CucumberError {
 impl From<ConfigError> for CucumberError {
     fn from(err: ConfigError) -> Self {
         Self::Config(err)
+    }
+}
+
+impl From<ExecutionError> for CucumberError {
+    fn from(err: ExecutionError) -> Self {
+        Self::Execution(err)
     }
 }
 

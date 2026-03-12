@@ -36,6 +36,7 @@
 
 pub mod config;
 pub mod core;
+pub mod execution;
 pub mod step;
 pub mod utilities;
 pub mod world;
@@ -45,6 +46,7 @@ pub mod writer;
 pub use core::{CucumberError, Result};
 
 pub use config::{ConfigError, ConfigResult};
+pub use execution::{ExecutionError, ExecutionResult};
 pub use step::{PanicPayloadExt, StepError, StepResult};
 pub use utilities::{ResultConfigExt, ResultExt};
 pub use world::{WorldError, WorldResult};
@@ -81,6 +83,11 @@ mod integration_tests {
         let config_err = ConfigError::invalid_retry("negative count");
         let cucumber_err: CucumberError = config_err.into();
         assert!(matches!(cucumber_err, CucumberError::Config(_)));
+
+        // Test ExecutionError to CucumberError conversion
+        let execution_err = ExecutionError::feature_not_found("missing_feature");
+        let cucumber_err: CucumberError = execution_err.into();
+        assert!(matches!(cucumber_err, CucumberError::Execution(_)));
 
         // Test io::Error to CucumberError conversion
         let io_err = io::Error::new(io::ErrorKind::NotFound, "file not found");
@@ -164,6 +171,7 @@ mod integration_tests {
         let _world_result: WorldResult<()> = Ok(());
         let _writer_result: WriterResult<()> = Ok(());
         let _config_result: ConfigResult<()> = Ok(());
+        let _execution_result: ExecutionResult<()> = Ok(());
     }
 
     #[test]
