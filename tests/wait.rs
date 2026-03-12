@@ -38,12 +38,11 @@ async fn main() {
         AssertUnwindSafe(res).catch_unwind().await.expect_err("should err");
     let err = err.downcast_ref::<String>().unwrap();
 
-    assert_eq!(err, "4 steps failed, 1 parsing error");
+    assert_eq!(err, "10 steps failed, 1 parsing error");
 }
 
 #[given(regex = r"(\d+) secs?")]
 #[when(regex = r"(\d+) secs?")]
-#[then(expr = "{u64} sec(s)")]
 async fn step(world: &mut World, secs: CustomU64) {
     time::sleep(Duration::from_secs(*secs)).await;
 
@@ -51,8 +50,23 @@ async fn step(world: &mut World, secs: CustomU64) {
     assert!(world.0 < 4, "Too much!");
 }
 
+#[then(regex = r"(\d+) secs?")]
+async fn then_step(world: &mut World, secs: CustomU64) {
+    time::sleep(Duration::from_secs(*secs)).await;
+
+    world.0 += 1;
+    assert!(world.0 < 4, "Too much!");
+}
+
+#[then("unknown")]
+async fn unknown(_world: &mut World) {
+    // This step is meant to cause failures
+    panic!("Unknown step executed");
+}
+
+
 #[derive(Deref, FromStr, Parameter)]
-#[param(regex = "\\d+", name = "u64")]
+#[param(regex = r"\d+", name = "u64")]
 struct CustomU64(u64);
 
 #[derive(Clone, Copy, Debug, Default, cucumber::World)]
