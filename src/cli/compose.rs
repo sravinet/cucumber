@@ -28,14 +28,14 @@ use crate::writer::Coloring;
 /// # Example
 ///
 /// ```rust
-/// use cucumber::{Cucumber, cli::Empty};
+/// use cucumber::{Cucumber, cli::Empty, World};
 ///
 /// # #[derive(cucumber::World, Debug, Default)]
 /// # struct MyWorld;
 /// #
 /// # async fn example() {
 /// MyWorld::cucumber()
-///     .with_cli(cucumber::cli::Opts::<Empty, Empty, Empty, Empty>::default())
+///     .with_cli(cucumber::cli::Opts::<_, _, _, Empty>::default())
 ///     .run("tests/features")
 ///     .await;
 /// # }

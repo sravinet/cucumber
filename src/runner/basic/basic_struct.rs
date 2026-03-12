@@ -510,9 +510,18 @@ impl<World, Which, Before, After> Basic<World, Which, Before, After> {
     /// # Example
     /// ```
     /// # use cucumber::runner::Basic;
+    /// # use cucumber::observer::{TestObserver, ObservationContext};
+    /// # use cucumber::{Event, World};
+    /// # #[derive(Debug, Default, World)]
+    /// # struct TestWorld;
+    /// # struct MyObserver;
+    /// # impl TestObserver<TestWorld> for MyObserver {
+    /// #     fn on_event(&mut self, _event: &Event<cucumber::event::Cucumber<TestWorld>>, _ctx: &ObservationContext) {}
+    /// # }
     /// # #[cfg(feature = "observability")]
-    /// # fn example<W: cucumber::World>() {
-    /// let runner = Basic::<W>::default().register_observer(Box::new(my_observer));
+    /// # fn example() {
+    /// # let my_observer = MyObserver;
+    /// let runner = Basic::<TestWorld>::default().register_observer(Box::new(my_observer));
     /// # }
     /// ```
     #[cfg(feature = "observability")]

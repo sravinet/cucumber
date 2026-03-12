@@ -21,8 +21,15 @@ where
     /// # struct TestWorld;
     /// # #[cfg(feature = "observability")]
     /// # async fn example() {
+    /// # use cucumber::observer::{TestObserver, ObservationContext};
+    /// # use cucumber::Event;
+    /// # struct MyObserver;
+    /// # impl TestObserver<TestWorld> for MyObserver {
+    /// #     fn on_event(&mut self, _event: &Event<cucumber::event::Cucumber<TestWorld>>, _ctx: &ObservationContext) {}
+    /// # }
+    /// # let my_observer = MyObserver;
     /// let cucumber =
-    ///     TestWorld::cucumber().register_observer(Box::new(my_observer));
+    ///     TestWorld::cucumber::<&str>().register_observer(Box::new(my_observer));
     /// # }
     /// ```
     #[cfg(feature = "observability")]

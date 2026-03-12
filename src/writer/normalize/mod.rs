@@ -33,9 +33,14 @@
 //!
 //! ```rust,no_run
 //! use cucumber::writer::{Basic, Normalize};
+//! use cucumber::World;
+//! use std::io;
 //!
-//! let writer = Basic::stdout();
-//! let normalized_writer = Normalize::new(writer);
+//! #[derive(World, Debug, Default)]
+//! struct MyWorld;
+//!
+//! let writer = Basic::raw(io::stdout(), cucumber::writer::Coloring::Auto, 0);
+//! let normalized_writer: Normalize<MyWorld, _> = Normalize::new(writer);
 //! ```
 //!
 //! [`Cucumber`]: crate::event::Cucumber

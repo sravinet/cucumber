@@ -107,11 +107,11 @@ struct Product {
 
 #[given("the following products:")]
 fn load_products(world: &mut MyWorld, table: DataTable) {
-    // Access rows with headers
-    for row in table.rows_with_header().skip(1) {
+    // Access rows as key-value pairs using headers
+    for row in table.hashes() {
         world.products.push(Product {
-            name: row["name"].to_string(),
-            price: row["price"].parse().unwrap(),
+            name: row.get("name").unwrap().clone(),
+            price: row.get("price").unwrap().parse().unwrap(),
         });
     }
 }
@@ -122,11 +122,17 @@ fn load_products(world: &mut MyWorld, table: DataTable) {
 DataTables can also be optional in your steps:
 
 ```rust
+# use cucumber::{given, DataTable, World};
+# use std::collections::HashMap;
+# #[derive(Debug, Default, World)]
+# struct MyWorld { products: Vec<Product> }
+# #[derive(Debug)]
+# struct Product { name: String, price: f64 }
 #[given("a product")]
 fn create_product(world: &mut MyWorld, table: Option<DataTable>) {
     if let Some(table) = table {
         // Use provided data
-        let row = table.rows().nth(1).unwrap();
+        let row = &table.rows()[0];
         world.products.push(Product {
             name: row[0].to_string(),
             price: row[1].parse().unwrap(),
@@ -146,27 +152,37 @@ fn create_product(world: &mut MyWorld, table: Option<DataTable>) {
 The `DataTable` type provides multiple ways to access your data:
 
 ```rust
+# use cucumber::DataTable;
+# let table = DataTable::from(vec![
+#     vec!["name", "price"],
+#     vec!["apple", "1.50"],
+#     vec!["banana", "0.75"],
+# ]);
 // Access as rows
 for row in table.rows() {
     println!("{:?}", row);
 }
 
 // Access with headers as HashMap
-for row in table.rows_with_header().skip(1) {
-    println!("{} costs {}", row["name"], row["price"]);
+for row in table.hashes() {
+    println!("{} costs {}", row.get("name").unwrap(), row.get("price").unwrap());
 }
 
 // Transpose the table
 let transposed = table.transpose();
 
-// Access specific cells
-if let Some(cell) = table.cell(1, 0) {
-    println!("Cell value: {}", cell);
+// Access specific cells via raw data
+let rows = table.raw();
+if let Some(row) = rows.get(1) {
+    if let Some(cell) = row.get(0) {
+        println!("Cell value: {}", cell);
+    }
 }
 
-// Get column values
-let names: Vec<String> = table.column(0)
-    .map(|s| s.to_string())
+// Get all data from first column (excluding header)
+let names: Vec<String> = table.rows()
+    .into_iter()
+    .map(|row| row[0].to_string())
     .collect();
 ```
 
