@@ -260,7 +260,8 @@ where
                 ));
             }
 
-            panic!("{}", msg.join(", "));
+            eprintln!("{}", msg.join(", "));
+            std::process::exit(1);
         }
     }
 }

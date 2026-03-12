@@ -391,10 +391,16 @@ impl FinishedRulesAndFeatures {
             return None;
         }
 
-        let finished_scenarios = self
+        let finished_scenarios = match self
             .rule_scenarios_count
             .get_mut(&(feature.clone(), rule.clone()))
-            .unwrap_or_else(|| panic!("no `Rule: {}`", rule.name));
+        {
+            Some(count) => count,
+            None => {
+                eprintln!("Warning: Rule '{}' not found in scenario storage, skipping finish tracking", rule.name);
+                return None;
+            }
+        };
         *finished_scenarios += 1;
         (rule.scenarios.len() == *finished_scenarios).then(|| {
             _ = self
@@ -419,10 +425,16 @@ impl FinishedRulesAndFeatures {
             return None;
         }
 
-        let finished_scenarios = self
+        let finished_scenarios = match self
             .features_scenarios_count
             .get_mut(&feature)
-            .unwrap_or_else(|| panic!("no `Feature: {}`", feature.name));
+        {
+            Some(count) => count,
+            None => {
+                eprintln!("Warning: Feature '{}' not found in scenario storage, skipping finish tracking", feature.name);
+                return None;
+            }
+        };
         *finished_scenarios += 1;
         let scenarios = feature.count_scenarios();
         (scenarios == *finished_scenarios).then(|| {

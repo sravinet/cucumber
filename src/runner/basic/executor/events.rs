@@ -114,9 +114,12 @@ impl<W: World> EventSender<W> {
     pub(super) fn send_event(&self, event: event::Cucumber<W>) {
         // Send the event through the channel
         let event_wrapper = Event::new(event.clone());
-        self.sender
+        if let Err(e) = self.sender
             .unbounded_send(Ok(event_wrapper.clone()))
-            .unwrap_or_else(|e| panic!("Failed to send `Cucumber` event: {e}"));
+        {
+            eprintln!("Warning: Failed to send Cucumber event, receiver may have been dropped: {e}");
+            return;
+        }
 
         // Notify observers if enabled
         #[cfg(feature = "observability")]
@@ -205,9 +208,12 @@ impl<W: World> EventSender<W> {
         let event_with_meta = meta.wrap(event.clone());
 
         // Send through normal channel with metadata
-        self.sender
+        if let Err(e) = self.sender
             .unbounded_send(Ok(event_with_meta.clone()))
-            .unwrap_or_else(|e| panic!("Failed to send `Cucumber` event with metadata: {e}"));
+        {
+            eprintln!("Warning: Failed to send Cucumber event with metadata, receiver may have been dropped: {e}");
+            return;
+        }
 
         // Notify observers if enabled - observers receive events with timing metadata
         #[cfg(feature = "observability")]
@@ -280,8 +286,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Failed to send `Cucumber` event")]
-    fn test_send_event_panics_on_closed_channel() {
+    fn test_send_event_gracefully_handles_closed_channel() {
         let (sender, receiver) = mpsc::unbounded();
         let event_sender = EventSender::<TestWorld>::new_with_sender(sender);
 
@@ -289,7 +294,9 @@ mod tests {
         drop(receiver);
 
         let event = event::Cucumber::<TestWorld>::Started;
-        event_sender.send_event(event); // Should panic
+        // Should handle gracefully without panicking
+        event_sender.send_event(event); 
+        // Test passes if no panic occurs
     }
 
     #[test]
