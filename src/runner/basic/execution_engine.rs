@@ -200,10 +200,6 @@ pub(super) async fn execute<W, Before, After>(
                     coll.start_scenarios(&runnable);
                 }
                 async {
-                    #[expect( // intentional
-                        clippy::infinite_loop,
-                        reason = "cannot annotate `async` block with `-> !`"
-                    )]
                     loop {
                         while let Some(logs) = logs_collector
                             .as_mut()

@@ -6,7 +6,7 @@ use tracing::field::{Field, Visit};
 use crate::runner::basic::ScenarioId;
 
 /// [`Visit`]or extracting a [`ScenarioId`] from a
-/// [`ScenarioId::SPAN_FIELD_NAME`]d [`Field`], in case it's present.
+/// span field, in case it's present.
 #[derive(Clone, Copy, Debug)]
 pub struct GetScenarioId {
     scenario_id: Option<ScenarioId>,
@@ -34,8 +34,7 @@ impl Visit for GetScenarioId {
     fn record_debug(&mut self, _: &Field, _: &dyn Debug) {}
 }
 
-/// [`Visit`]or checking whether a [`Span`] has a [`Field`] with the
-/// [`ScenarioId::SPAN_FIELD_NAME`].
+/// [`Visit`]or checking whether a [`Span`] has a scenario ID field.
 ///
 /// [`Span`]: tracing::Span
 #[derive(Clone, Copy, Debug)]
@@ -43,13 +42,21 @@ pub struct IsScenarioIdSpan {
     is_scenario_span: bool,
 }
 
+impl Default for IsScenarioIdSpan {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IsScenarioIdSpan {
     /// Creates a new [`IsScenarioIdSpan`] visitor.
+    #[must_use]
     pub const fn new() -> Self {
         Self { is_scenario_span: false }
     }
 
     /// Returns whether the span contains a scenario ID field.
+    #[must_use]
     pub const fn is_scenario_span(&self) -> bool {
         self.is_scenario_span
     }

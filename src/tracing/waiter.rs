@@ -1,41 +1,44 @@
 //! Span close waiter for managing asynchronous span lifecycle events.
 
-use futures::channel::{mpsc, oneshot};
+use futures::channel::mpsc;
 use tracing::span;
 
 use super::types::Callback;
 
-/// Waiter for a particular [`Span`] to be closed, which is required because a
-/// [`CollectorWriter`] can notify about an [`event::Scenario::Log`] after a
-/// [`Scenario`]/[`Step`] is considered [`Finished`] already, due to
+/// Waiter for a particular [`tracing::Span`] to be closed, which is required because a
+/// [`CollectorWriter`] can notify about an [`crate::event::Scenario::Log`] after a
+/// [`gherkin::Scenario`]/[`crate::step::Step`] is considered [`Finished`] already, due to
 /// implementation details of a [`Subscriber`].
 ///
 /// [`CollectorWriter`]: super::writer::CollectorWriter
 /// [`Finished`]: crate::event::Scenario::Finished
-/// [`Scenario`]: gherkin::Scenario
-/// [`Step`]: gherkin::Step
+/// [`gherkin::Scenario`]: gherkin::Scenario
+/// [`crate::step::Step`]: gherkin::Step
 /// [`Subscriber`]: tracing::Subscriber
 #[derive(Clone, Debug)]
 pub struct SpanCloseWaiter {
     /// Sender for subscribing to the [`Span`] closing.
+    #[allow(dead_code)] // Used in collector, false positive warning
     wait_span_event_sender: mpsc::UnboundedSender<(span::Id, Callback)>,
 }
 
 impl SpanCloseWaiter {
     /// Creates a new [`SpanCloseWaiter`].
+    #[must_use]
     pub const fn new(
         wait_span_event_sender: mpsc::UnboundedSender<(span::Id, Callback)>,
     ) -> Self {
         Self { wait_span_event_sender }
     }
 
-    /// Waits for the [`Span`] being closed.
+    /// Waits for the [`tracing::Span`] being closed.
     /// 
     /// ARCHITECTURAL DECISION: Use non-blocking approach that prioritizes 
     /// test execution flow over strict span synchronization.
     /// 
     /// The tracing system is designed to be eventually consistent rather than 
     /// strictly synchronous, preventing deadlocks in serial execution mode.
+    #[allow(clippy::unused_async)]
     pub async fn wait_for_span_close(&self, _id: span::Id) {
         // Strategic architectural decision: Don't block test execution.
         // 

@@ -20,9 +20,12 @@ use itertools::Itertools as _;
 
 use super::{cli::{Cli, ReportTime}, writer::Libtest};
 use crate::{
-    event::{self, Metadata, Retries}, Event,
+    event::{self, Metadata, Retries},
     writer::basic::trim_path,
 };
+
+#[cfg(test)]
+use crate::Event;
 
 /// Indicator, whether a [`crate::step::Step`] is [`Background`] or not.
 ///
