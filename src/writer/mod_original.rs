@@ -74,29 +74,29 @@ use crate::{Event, event, parser};
 
 /// Writer of [`Cucumber`] events to some output.
 ///
-/// As [`Runner`] produces events in a [happened-before] order (see
-/// [its order guarantees][1]), [`Writer`]s are required to be [`Normalized`].
+/// As [`crate::runner::Runner`] produces events in a [happened-before] order (see
+/// [its order guarantees][1]), [`crate::Writer`]s are required to be [`Normalized`].
 ///
-/// As [`Cucumber::run()`] returns [`Writer`], it can hold some state inside for
+/// As [`Cucumber::run()`] returns [`crate::Writer`], it can hold some state inside for
 /// inspection after execution. See [`Summarize`] and
 /// [`Cucumber::run_and_exit()`] for examples.
 ///
 /// [`Cucumber`]: crate::event::Cucumber
 /// [`Cucumber::run()`]: crate::Cucumber::run
 /// [`Cucumber::run_and_exit()`]: crate::Cucumber::run_and_exit
-/// [`Runner`]: crate::Runner
+/// [`crate::runner::Runner`]: crate::Runner
 /// [1]: crate::Runner#order-guarantees
 /// [happened-before]: https://en.wikipedia.org/wiki/Happened-before
 pub trait Writer<World> {
-    /// CLI options of this [`Writer`]. In case no options should be introduced,
+    /// CLI options of this [`crate::Writer`]. In case no options should be introduced,
     /// just use [`cli::Empty`].
     ///
-    /// All CLI options from [`Parser`], [`Runner`] and [`Writer`] will be
+    /// All CLI options from [`Parser`], [`crate::runner::Runner`] and [`crate::Writer`] will be
     /// merged together, so overlapping arguments will cause a runtime panic.
     ///
     /// [`cli::Empty`]: crate::cli::Empty
     /// [`Parser`]: crate::Parser
-    /// [`Runner`]: crate::Runner
+    /// [`crate::runner::Runner`]: crate::Runner
     type Cli: clap::Args;
 
     /// Handles the given [`Cucumber`] event.
@@ -109,47 +109,47 @@ pub trait Writer<World> {
     ) -> impl Future<Output = ()>;
 }
 
-/// [`Writer`] that also can output an arbitrary `Value` in addition to
+/// [`crate::Writer`] that also can output an arbitrary `Value` in addition to
 /// regular [`Cucumber`] events.
 ///
 /// [`Cucumber`]: event::Cucumber
 pub trait Arbitrary<World, Value>: Writer<World> {
-    /// Writes `val` to the [`Writer`]'s output.
+    /// Writes `val` to the [`crate::Writer`]'s output.
     fn write(&mut self, val: Value) -> impl Future<Output = ()>;
 }
 
-/// [`Writer`] tracking a number of [`Passed`], [`Skipped`], [`Failed`]
-/// [`Step`]s and parsing errors.
+/// [`crate::Writer`] tracking a number of [`Passed`], [`Skipped`], [`Failed`]
+/// [`crate::step::Step`]s and parsing errors.
 ///
 /// [`Failed`]: event::Step::Failed
 /// [`Passed`]: event::Step::Passed
 /// [`Skipped`]: event::Step::Skipped
-/// [`Step`]: gherkin::Step
+/// [`crate::step::Step`]: gherkin::Step
 pub trait Stats<World>: Writer<World> {
-    /// Returns number of [`Passed`] [`Step`]s.
+    /// Returns number of [`Passed`] [`crate::step::Step`]s.
     ///
     /// [`Passed`]: event::Step::Passed
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn passed_steps(&self) -> usize;
 
-    /// Returns number of [`Skipped`] [`Step`]s.
+    /// Returns number of [`Skipped`] [`crate::step::Step`]s.
     ///
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn skipped_steps(&self) -> usize;
 
-    /// Returns number of [`Failed`] [`Step`]s.
+    /// Returns number of [`Failed`] [`crate::step::Step`]s.
     ///
     /// [`Failed`]: event::Step::Failed
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn failed_steps(&self) -> usize;
 
-    /// Returns number of retried [`Step`]s.
+    /// Returns number of retried [`crate::step::Step`]s.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn retried_steps(&self) -> usize;
 
@@ -157,9 +157,9 @@ pub trait Stats<World>: Writer<World> {
     #[must_use]
     fn parsing_errors(&self) -> usize;
 
-    /// Returns number of failed [`Scenario`] hooks.
+    /// Returns number of failed [`gherkin::Scenario`] hooks.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     fn hook_errors(&self) -> usize;
 
@@ -172,12 +172,12 @@ pub trait Stats<World>: Writer<World> {
     }
 }
 
-/// Extension of [`Writer`] allowing its normalization and summarization.
+/// Extension of [`crate::Writer`] allowing its normalization and summarization.
 #[sealed]
 pub trait Ext: Sized {
-    /// Asserts this [`Writer`] being [`Normalized`].
+    /// Asserts this [`crate::Writer`] being [`Normalized`].
     ///
-    /// Technically is no-op, only forcing the [`Writer`] to become
+    /// Technically is no-op, only forcing the [`crate::Writer`] to become
     /// [`Normalized`] despite it actually doesn't represent the one.
     ///
     /// If you need a real normalization, use [`normalized()`] instead.
@@ -193,37 +193,37 @@ pub trait Ext: Sized {
     #[must_use]
     fn assert_normalized(self) -> AssertNormalized<Self>;
 
-    /// Wraps this [`Writer`] into a [`Normalize`]d version.
+    /// Wraps this [`crate::Writer`] into a [`Normalize`]d version.
     ///
     /// See [`Normalize`] for more information.
     #[must_use]
     fn normalized<W>(self) -> Normalize<W, Self>;
 
-    /// Wraps this [`Writer`] to print a summary at the end of an output.
+    /// Wraps this [`crate::Writer`] to print a summary at the end of an output.
     ///
     /// See [`Summarize`] for more information.
     #[must_use]
     fn summarized(self) -> Summarize<Self>;
 
-    /// Wraps this [`Writer`] to fail on [`Skipped`] [`Step`]s if their
-    /// [`Scenario`] isn't marked with `@allow.skipped` tag.
+    /// Wraps this [`crate::Writer`] to fail on [`Skipped`] [`crate::step::Step`]s if their
+    /// [`gherkin::Scenario`] isn't marked with `@allow.skipped` tag.
     ///
     /// See [`FailOnSkipped`] for more information.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn fail_on_skipped(self) -> FailOnSkipped<Self>;
 
-    /// Wraps this [`Writer`] to fail on [`Skipped`] [`Step`]s if the given
+    /// Wraps this [`crate::Writer`] to fail on [`Skipped`] [`crate::step::Step`]s if the given
     /// `with` predicate returns `true`.
     ///
     /// See [`FailOnSkipped`] for more information.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn fail_on_skipped_with<F>(self, with: F) -> FailOnSkipped<Self, F>
     where
@@ -233,39 +233,39 @@ pub trait Ext: Sized {
             &gherkin::Scenario,
         ) -> bool;
 
-    /// Wraps this [`Writer`] to re-output [`Skipped`] [`Step`]s at the end of
+    /// Wraps this [`crate::Writer`] to re-output [`Skipped`] [`crate::step::Step`]s at the end of
     /// an output.
     ///
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn repeat_skipped<W>(self) -> Repeat<W, Self>;
 
-    /// Wraps this [`Writer`] to re-output [`Failed`] [`Step`]s or [`Parser`]
+    /// Wraps this [`crate::Writer`] to re-output [`Failed`] [`crate::step::Step`]s or [`Parser`]
     /// errors at the end of an output.
     ///
     /// [`Failed`]: event::Step::Failed
     /// [`Parser`]: crate::Parser
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn repeat_failed<W>(self) -> Repeat<W, Self>;
 
-    /// Wraps this [`Writer`] to re-output `filter`ed events at the end of an
+    /// Wraps this [`crate::Writer`] to re-output `filter`ed events at the end of an
     /// output.
     #[must_use]
     fn repeat_if<W, F>(self, filter: F) -> Repeat<W, Self, F>
     where
         F: Fn(&parser::Result<Event<event::Cucumber<W>>>) -> bool;
 
-    /// Attaches the provided `other` [`Writer`] to the current one for passing
+    /// Attaches the provided `other` [`crate::Writer`] to the current one for passing
     /// events to both of them simultaneously.
     #[must_use]
     fn tee<W, Wr: Writer<W>>(self, other: Wr) -> Tee<Self, Wr>;
 
-    /// Wraps this [`Writer`] into a [`discard::Arbitrary`] one, providing a
+    /// Wraps this [`crate::Writer`] into a [`discard::Arbitrary`] one, providing a
     /// no-op [`ArbitraryWriter`] implementation.
     ///
-    /// Intended to be used for feeding a non-[`ArbitraryWriter`] [`Writer`]
+    /// Intended to be used for feeding a non-[`ArbitraryWriter`] [`crate::Writer`]
     /// into a [`tee()`], as the later accepts only [`ArbitraryWriter`]s.
     ///
     /// [`tee()`]: Ext::tee
@@ -273,10 +273,10 @@ pub trait Ext: Sized {
     #[must_use]
     fn discard_arbitrary_writes(self) -> discard::Arbitrary<Self>;
 
-    /// Wraps this [`Writer`] into a [`discard::Stats`] one, providing a no-op
+    /// Wraps this [`crate::Writer`] into a [`discard::Stats`] one, providing a no-op
     /// [`StatsWriter`] implementation returning only `0`.
     ///
-    /// Intended to be used for feeding a non-[`StatsWriter`] [`Writer`] into a
+    /// Intended to be used for feeding a non-[`StatsWriter`] [`crate::Writer`] into a
     /// [`tee()`], as the later accepts only [`StatsWriter`]s.
     ///
     /// [`tee()`]: Ext::tee
@@ -342,16 +342,16 @@ impl<T> Ext for T {
     }
 }
 
-/// Marker indicating that a [`Writer`] doesn't transform or rearrange events.
+/// Marker indicating that a [`crate::Writer`] doesn't transform or rearrange events.
 ///
-/// It's used to ensure that a [`Writer`]s pipeline is built in the right order,
+/// It's used to ensure that a [`crate::Writer`]s pipeline is built in the right order,
 /// avoiding situations like an event transformation isn't done before it's
 /// [`Repeat`]ed.
 ///
 /// # Example
 ///
 /// If you want to pipeline [`FailOnSkipped`], [`Summarize`] and [`Repeat`]
-/// [`Writer`]s, the code won't compile because of the wrong pipelining order.
+/// [`crate::Writer`]s, the code won't compile because of the wrong pipelining order.
 ///
 /// ```rust,compile_fail
 /// # use cucumber::{writer, World, WriterExt as _};
@@ -431,7 +431,7 @@ impl<T> Ext for T {
 /// [`Skipped`]: event::Step::Skipped
 pub trait NonTransforming {}
 
-/// Standard verbosity levels of a [`Writer`].
+/// Standard verbosity levels of a [`crate::Writer`].
 #[derive(Clone, Copy, Debug, Default)]
 #[repr(u8)]
 pub enum Verbosity {
@@ -439,12 +439,12 @@ pub enum Verbosity {
     #[default]
     Default = 0,
 
-    /// Outputs the whole [`World`] on [`Failed`] [`Step`]s whenever is
+    /// Outputs the whole [`crate::World`] on [`Failed`] [`crate::step::Step`]s whenever is
     /// possible.
     ///
     /// [`Failed`]: event::Step::Failed
-    /// [`Step`]: gherkin::Step
-    /// [`World`]: crate::World
+    /// [`crate::step::Step`]: gherkin::Step
+    /// [`crate::World`]: crate::World
     ShowWorld = 1,
 
     /// Additionally to [`Verbosity::ShowWorld`] outputs [Doc Strings].
@@ -474,12 +474,12 @@ impl From<Verbosity> for u8 {
 }
 
 impl Verbosity {
-    /// Indicates whether [`World`] should be outputted on [`Failed`] [`Step`]s
+    /// Indicates whether [`crate::World`] should be outputted on [`Failed`] [`crate::step::Step`]s
     /// implying this [`Verbosity`].
     ///
     /// [`Failed`]: event::Step::Failed
-    /// [`Step`]: gherkin::Step
-    /// [`World`]: crate::World
+    /// [`crate::step::Step`]: gherkin::Step
+    /// [`crate::World`]: crate::World
     #[must_use]
     pub const fn shows_world(&self) -> bool {
         matches!(self, Self::ShowWorld | Self::ShowWorldAndDocString)

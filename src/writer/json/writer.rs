@@ -24,12 +24,12 @@ use crate::{
     },
 };
 
-/// [Cucumber JSON format][1] [`Writer`] implementation outputting JSON to an
+/// [Cucumber JSON format][1] [`crate::Writer`] implementation outputting JSON to an
 /// [`io::Write`] implementor.
 ///
 /// # Ordering
 ///
-/// This [`Writer`] isn't [`Normalized`] by itself, so should be wrapped into
+/// This [`crate::Writer`] isn't [`Normalized`] by itself, so should be wrapped into
 /// a [`writer::Normalize`], otherwise will panic in runtime as won't be able to
 /// form [correct JSON][1].
 ///
@@ -96,7 +96,7 @@ impl<W: World + Debug, Out: io::Write> Writer<W> for Json<Out> {
 impl<O: io::Write> writer::NonTransforming for Json<O> {}
 
 impl<Out: io::Write> Json<Out> {
-    /// Creates a new [`Normalized`] [`Json`] [`Writer`] outputting [JSON][1]
+    /// Creates a new [`Normalized`] [`Json`] [`crate::Writer`] outputting [JSON][1]
     /// into the given `output`.
     ///
     /// [`Normalized`]: writer::Normalized
@@ -108,7 +108,7 @@ impl<Out: io::Write> Json<Out> {
 }
 
 impl Json<io::Stdout> {
-    /// Creates a new [`Normalized`] [`Json`] [`Writer`] outputting to
+    /// Creates a new [`Normalized`] [`Json`] [`crate::Writer`] outputting to
     /// [`io::Stdout`].
     ///
     /// [`Normalized`]: writer::Normalized
@@ -119,7 +119,7 @@ impl Json<io::Stdout> {
 }
 
 impl<Out: io::Write> Json<Out> {
-    /// Creates a new non-[`Normalized`] [`Json`] [`Writer`] outputting
+    /// Creates a new non-[`Normalized`] [`Json`] [`crate::Writer`] outputting
     /// [JSON][1] into the given `output`, and suitable for feeding into
     /// [`tee()`].
     ///
@@ -132,12 +132,12 @@ impl<Out: io::Write> Json<Out> {
         Self::raw(output).discard_stats_writes().discard_arbitrary_writes()
     }
 
-    /// Creates a new raw and non-[`Normalized`] [`Json`] [`Writer`] outputting
+    /// Creates a new raw and non-[`Normalized`] [`Json`] [`crate::Writer`] outputting
     /// [JSON][1] into the given `output`.
     ///
     /// Use it only if you know what you're doing. Otherwise, consider using
     /// [`Json::new()`] which creates an already [`Normalized`] version of
-    /// [`Json`] [`Writer`].
+    /// [`Json`] [`crate::Writer`].
     ///
     /// [`Normalized`]: writer::Normalized
     /// [1]: https://github.com/cucumber/cucumber-json-schema

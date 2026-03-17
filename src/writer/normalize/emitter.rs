@@ -15,13 +15,13 @@ use std::future::Future;
 use crate::Writer;
 
 /// [`Queue`] which can remember its current item ([`Feature`], [`Rule`],
-/// [`Scenario`] or [`Step`]) and pass events connected to it to the provided
-/// [`Writer`].
+/// [`gherkin::Scenario`] or [`crate::step::Step`]) and pass events connected to it to the provided
+/// [`crate::Writer`].
 ///
 /// [`Feature`]: gherkin::Feature
 /// [`Rule`]: gherkin::Rule
-/// [`Scenario`]: gherkin::Scenario
-/// [`Step`]: gherkin::Step
+/// [`gherkin::Scenario`]: gherkin::Scenario
+/// [`crate::step::Step`]: gherkin::Step
 /// [`Queue`]: super::queue::Queue
 pub trait Emitter<World> {
     /// Currently outputted key and value from this [`Queue`].
@@ -29,27 +29,27 @@ pub trait Emitter<World> {
     /// [`Queue`]: super::queue::Queue
     type Current;
 
-    /// Currently outputted item ([`Feature`], [`Rule`], [`Scenario`] or
-    /// [`Step`]). If returned from [`Self::emit()`], means that all events
-    /// associated with that item were passed to the underlying [`Writer`], so
+    /// Currently outputted item ([`Feature`], [`Rule`], [`gherkin::Scenario`] or
+    /// [`crate::step::Step`]). If returned from [`Self::emit()`], means that all events
+    /// associated with that item were passed to the underlying [`crate::Writer`], so
     /// should be removed from the [`Queue`].
     ///
     /// [`Feature`]: gherkin::Feature
     /// [`Rule`]: gherkin::Rule
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     /// [`Queue`]: super::queue::Queue
     type Emitted;
 
     /// Path to the [`Self::Emitted`] item. For [`Feature`] its `()`, as it's
-    /// top-level item. For [`Scenario`] it's
-    /// `(`[`Feature`]`, `[`Option`]`<`[`Rule`]`>)`, because [`Scenario`]
+    /// top-level item. For [`gherkin::Scenario`] it's
+    /// `(`[`Feature`]`, `[`Option`]`<`[`Rule`]`>)`, because [`gherkin::Scenario`]
     /// definitely has parent [`Feature`] and optionally can have parent
     /// [`Rule`].
     ///
     /// [`Feature`]: gherkin::Feature
     /// [`Rule`]: gherkin::Rule
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     type EmittedPath;
 
     /// Currently outputted key and value from this [`Queue`].
@@ -57,18 +57,18 @@ pub trait Emitter<World> {
     /// [`Queue`]: super::queue::Queue
     fn current_item(self) -> Option<Self::Current>;
 
-    /// Passes events of the current item ([`Feature`], [`Rule`], [`Scenario`]
-    /// or [`Step`]) to the provided [`Writer`].
+    /// Passes events of the current item ([`Feature`], [`Rule`], [`gherkin::Scenario`]
+    /// or [`crate::step::Step`]) to the provided [`crate::Writer`].
     ///
     /// If this method returns [`Some`], then all events of the current item
-    /// were passed to the provided [`Writer`] and that means it should be
+    /// were passed to the provided [`crate::Writer`] and that means it should be
     /// [`remove`]d.
     ///
     /// [`remove`]: super::queue::Queue::remove()
     /// [`Feature`]: gherkin::Feature
     /// [`Rule`]: gherkin::Rule
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     fn emit<W: Writer<World>>(
         self,
         path: Self::EmittedPath,

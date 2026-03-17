@@ -12,64 +12,64 @@ use crate::{step, writer::basic::coerce_error};
 /// [Step]: https://cucumber.io/docs/gherkin/reference#step
 #[derive(Debug)]
 pub enum Step<World> {
-    /// [`Step`] execution being started.
+    /// [`crate::step::Step`] execution being started.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     Started,
 
-    /// [`Step`] being skipped.
+    /// [`crate::step::Step`] being skipped.
     ///
-    /// That means there is no [`Regex`] matching [`Step`] in a
+    /// That means there is no [`regex::Regex`] matching [`crate::step::Step`] in a
     /// [`step::Collection`].
     ///
-    /// [`Regex`]: regex::Regex
-    /// [`Step`]: gherkin::Step
+    /// [`regex::Regex`]: regex::Regex
+    /// [`crate::step::Step`]: gherkin::Step
     /// [`step::Collection`]: crate::step::Collection
     Skipped,
 
-    /// [`Step`] passed.
+    /// [`crate::step::Step`] passed.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     Passed {
-        /// [`Regex`] [`CaptureLocations`] of the matched [`Step`].
+        /// [`regex::Regex`] [`CaptureLocations`] of the matched [`crate::step::Step`].
         ///
         /// [`CaptureLocations`]: regex::CaptureLocations
-        /// [`Regex`]: regex::Regex
-        /// [`Step`]: gherkin::Step
+        /// [`regex::Regex`]: regex::Regex
+        /// [`crate::step::Step`]: gherkin::Step
         captures: regex::CaptureLocations,
 
-        /// [`Location`] of the [`fn`] that matched this [`Step`].
+        /// [`Location`] of the [`fn`] that matched this [`crate::step::Step`].
         ///
         /// [`Location`]: step::Location
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         location: Option<step::Location>,
     },
 
-    /// [`Step`] failed.
+    /// [`crate::step::Step`] failed.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     Failed {
-        /// [`Regex`] [`CaptureLocations`] of the matched [`Step`] (if any).
+        /// [`regex::Regex`] [`CaptureLocations`] of the matched [`crate::step::Step`] (if any).
         ///
         /// [`CaptureLocations`]: regex::CaptureLocations
-        /// [`Regex`]: regex::Regex
-        /// [`Step`]: gherkin::Step
+        /// [`regex::Regex`]: regex::Regex
+        /// [`crate::step::Step`]: gherkin::Step
         captures: Option<regex::CaptureLocations>,
 
-        /// [`Location`] of the [`fn`] that matched this [`Step`] (if any).
+        /// [`Location`] of the [`fn`] that matched this [`crate::step::Step`] (if any).
         ///
         /// [`Location`]: step::Location
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         location: Option<step::Location>,
 
-        /// [`World`] at the time [`Step`] has failed (if any).
+        /// [`crate::World`] at the time [`crate::step::Step`] has failed (if any).
         ///
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         world: Option<Arc<World>>,
 
-        /// Error that caused the [`Step`] to fail.
+        /// Error that caused the [`crate::step::Step`] to fail.
         ///
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         error: StepError,
     },
 }
@@ -94,31 +94,31 @@ impl<World> Clone for Step<World> {
     }
 }
 
-/// Error of executing a [`Step`].
+/// Error of executing a [`crate::step::Step`].
 ///
-/// [`Step`]: gherkin::Step
+/// [`crate::step::Step`]: gherkin::Step
 #[derive(Clone, Debug, Display, Error, From)]
 pub enum StepError {
-    /// [`Step`] doesn't match any [`Regex`].
+    /// [`crate::step::Step`] doesn't match any [`regex::Regex`].
     ///
     /// It's emitted whenever a [`Step::Skipped`] event cannot be tolerated
     /// (such as when [`fail_on_skipped()`] is used).
     ///
-    /// [`Regex`]: regex::Regex
+    /// [`regex::Regex`]: regex::Regex
     /// [`fail_on_skipped()`]: crate::WriterExt::fail_on_skipped()
     #[display("Step doesn't match any function")]
     NotFound,
 
-    /// [`Step`] matches multiple [`Regex`]es.
+    /// [`crate::step::Step`] matches multiple [`regex::Regex`]es.
     ///
-    /// [`Regex`]: regex::Regex
-    /// [`Step`]: gherkin::Step
+    /// [`regex::Regex`]: regex::Regex
+    /// [`crate::step::Step`]: gherkin::Step
     #[display("Step match is ambiguous: {_0}")]
     AmbiguousMatch(step::AmbiguousMatchError),
 
-    /// [`Step`] panicked.
+    /// [`crate::step::Step`] panicked.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[display("Step panicked. Captured output: {}", coerce_error(_0))]
     Panic(#[error(not(source))] Info),
 }

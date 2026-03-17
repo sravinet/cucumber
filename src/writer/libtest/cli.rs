@@ -12,10 +12,10 @@
 
 use std::str::FromStr;
 
-/// CLI options of a [`Libtest`] [`Writer`].
+/// CLI options of a [`Libtest`] [`crate::Writer`].
 ///
 /// [`Libtest`]: crate::writer::Libtest
-/// [`Writer`]: crate::Writer
+/// [`crate::Writer`]: crate::Writer
 #[derive(Clone, Debug, Default, clap::Args)]
 #[group(skip)]
 pub struct Cli {

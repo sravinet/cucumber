@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! Event normalization for [`Writer`] implementations.
+//! Event normalization for [`crate::Writer`] implementations.
 //!
 //! This module provides tools for normalizing the order of [`Cucumber`] events
 //! to ensure they are emitted in a readable and consistent manner, even when
@@ -19,7 +19,7 @@
 //! The normalization functionality is organized into several focused modules:
 //!
 //! - [`wrapper`]: The main [`Normalize`] wrapper struct that provides event normalization
-//! - [`assert`]: The [`Normalized`] trait and [`AssertNormalized`] wrapper for asserting normalization
+//! - [`mod@assert`]: The [`Normalized`] trait and [`AssertNormalized`] wrapper for asserting normalization
 //! - [`queue`]: Core queue functionality with [`Queue`] and [`FinishedState`]
 //! - [`emitter`]: The [`Emitter`] trait for event emission logic
 //! - [`cucumber`]: [`CucumberQueue`] and [`FeatureQueue`] implementations
@@ -44,7 +44,7 @@
 //! ```
 //!
 //! [`Cucumber`]: crate::event::Cucumber
-//! [`Writer`]: crate::Writer
+//! [`crate::Writer`]: crate::Writer
 
 pub mod assert;
 pub mod cucumber;

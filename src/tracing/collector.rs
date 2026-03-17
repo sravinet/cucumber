@@ -65,9 +65,9 @@ impl Collector {
         SpanCloseWaiter::new(self.wait_span_event_sender.clone())
     }
 
-    /// Starts [`Scenario`]s from the provided `runnable`.
+    /// Starts [`gherkin::Scenario`]s from the provided `runnable`.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(crate) fn start_scenarios(
         &mut self,
         runnable: impl AsRef<
@@ -89,21 +89,21 @@ impl Collector {
         }
     }
 
-    /// Marks a [`Scenario`] as finished, by its ID.
+    /// Marks a [`gherkin::Scenario`] as finished, by its ID.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(crate) fn finish_scenario(&mut self, id: ScenarioId) {
         drop(self.scenarios.remove(&id));
     }
 
-    /// Returns all the emitted [`event::Scenario::Log`]s since this method was
+    /// Returns all the emitted [`crate::event::Scenario::Log`]s since this method was
     /// last called.
     ///
-    /// In case a received [`tracing::Event`] doesn't contain a [`Scenario`]'s
+    /// In case a received [`tracing::Event`] doesn't contain a [`gherkin::Scenario`]'s
     /// [`Span`], such [`tracing::Event`] will be forwarded to all active
-    /// [`Scenario`]s.
+    /// [`gherkin::Scenario`]s.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(crate) fn emitted_logs<W>(
         &mut self,
     ) -> Option<Vec<event::Cucumber<W>>> {

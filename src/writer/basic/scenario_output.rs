@@ -12,12 +12,12 @@ use crate::{
 };
 
 impl<Out: io::Write> Basic<Out> {
-    /// Outputs the [`Scenario`]'s [started]/[background]/[step] event.
+    /// Outputs the [`gherkin::Scenario`]'s [started]/[background]/[step] event.
     ///
     /// [background]: event::Scenario::Background
     /// [started]: event::Scenario::Started
     /// [step]: event::Step
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(crate) fn scenario<W: Debug>(
         &mut self,
         feat: &gherkin::Feature,
@@ -62,17 +62,17 @@ impl<Out: io::Write> Basic<Out> {
         Ok(())
     }
 
-    /// Outputs the [`event::Scenario::Log`].
+    /// Outputs the [`crate::event::Scenario::Log`].
     pub(super) fn emit_log(&mut self, msg: impl AsRef<str>) -> io::Result<()> {
         self.lines_to_clear += self.styles.lines_count(msg.as_ref());
         self.re_output_after_clear.push_str(msg.as_ref());
         self.output.write_str(msg)
     }
 
-    /// Outputs the [failed] [`Scenario`]'s hook.
+    /// Outputs the [failed] [`gherkin::Scenario`]'s hook.
     ///
     /// [failed]: event::Hook::Failed
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) fn hook_failed<W: Debug>(
         &mut self,
         feat: &gherkin::Feature,
@@ -116,10 +116,10 @@ impl<Out: io::Write> Basic<Out> {
         )))
     }
 
-    /// Outputs the [started] [`Scenario`].
+    /// Outputs the [started] [`gherkin::Scenario`].
     ///
     /// [started]: event::Scenario::Started
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) fn scenario_started(
         &mut self,
         scenario: &gherkin::Scenario,

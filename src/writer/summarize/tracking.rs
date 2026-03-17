@@ -4,41 +4,41 @@ use std::collections::HashMap;
 
 use crate::event::Source;
 
-/// Indicator of a [`Failed`], [`Skipped`] or retried [`Scenario`].
+/// Indicator of a [`Failed`], [`Skipped`] or retried [`gherkin::Scenario`].
 ///
 /// This enum tracks the current state of a scenario for statistical purposes.
 /// It helps distinguish between different types of scenario outcomes to provide
 /// accurate reporting.
 ///
 /// [`Failed`]: crate::event::Step::Failed
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 /// [`Skipped`]: crate::event::Step::Skipped
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Indicator {
-    /// [`Failed`] [`Scenario`].
+    /// [`Failed`] [`gherkin::Scenario`].
     ///
     /// Indicates that the scenario failed during execution, either due to a
     /// failed step or a failed hook.
     ///
     /// [`Failed`]: crate::event::Step::Failed
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     Failed,
 
-    /// [`Skipped`] [`Scenario`].
+    /// [`Skipped`] [`gherkin::Scenario`].
     ///
     /// Indicates that the scenario was skipped during execution, typically
     /// due to a skipped step or unmet preconditions.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     /// [`Skipped`]: crate::event::Step::Skipped
     Skipped,
 
-    /// Retried [`Scenario`].
+    /// Retried [`gherkin::Scenario`].
     ///
     /// Indicates that the scenario was retried during execution due to a
     /// transient failure. This state helps track retry statistics.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     Retried,
 }
 
@@ -74,7 +74,7 @@ impl Indicator {
 
 /// Type alias for tracking handled scenarios during test execution.
 ///
-/// This [`HashMap`] keeps track of handled [`Scenario`]s using their full path
+/// This [`HashMap`] keeps track of handled [`gherkin::Scenario`]s using their full path
 /// (including [`Feature`] and optional [`Rule`]) as the key to avoid collisions
 /// when scenarios with identical content exist in different contexts.
 ///
@@ -87,7 +87,7 @@ impl Indicator {
 ///
 /// [`Feature`]: gherkin::Feature
 /// [`Rule`]: gherkin::Rule
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 pub type HandledScenarios = HashMap<
     (
         Source<gherkin::Feature>,

@@ -1,6 +1,6 @@
 //! Basic runner implementation with modular architecture.
 //!
-//! This module provides the default [`Runner`] implementation that executes
+//! This module provides the default [`crate::runner::Runner`] implementation that executes
 //! scenarios with configurable concurrency, retry logic, and hooks.
 
 mod basic_struct;

@@ -9,14 +9,14 @@ use crate::{Parser, Runner, World, Writer, cli};
 /// Top-level [Cucumber] executor.
 ///
 /// Most of the time you don't need to work with it directly, just use
-/// [`World::run()`] or [`World::cucumber()`] on your [`World`] deriver to get
+/// [`World::run()`] or [`World::cucumber()`] on your [`crate::World`] deriver to get
 /// [Cucumber] up and running.
 ///
 /// Otherwise, use [`Cucumber::new()`] to get the default [Cucumber] executor,
-/// provide [`Step`]s with [`World::collection()`] or by hand with
+/// provide [`crate::step::Step`]s with [`World::collection()`] or by hand with
 /// [`Cucumber::given()`], [`Cucumber::when()`] and [`Cucumber::then()`].
 ///
-/// In case you want a custom [`Parser`], [`Runner`] or [`Writer`], or some
+/// In case you want a custom [`Parser`], [`crate::runner::Runner`] or [`crate::Writer`], or some
 /// other finer control, use [`Cucumber::custom()`] or
 /// [`Cucumber::with_parser()`], [`Cucumber::with_runner()`] and
 /// [`Cucumber::with_writer()`] to construct your dream [Cucumber] executor!
@@ -36,12 +36,12 @@ where
     /// [`Feature`]: gherkin::Feature
     pub(super) parser: P,
 
-    /// [`Runner`] executing [`Scenario`]s and producing [`event`]s.
+    /// [`crate::runner::Runner`] executing [`gherkin::Scenario`]s and producing [`event`]s.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(crate) runner: R,
 
-    /// [`Writer`] outputting [`event`]s to some output.
+    /// [`crate::Writer`] outputting [`event`]s to some output.
     pub(super) writer: Wr,
 
     /// CLI options this [`Cucumber`] has been run with.
@@ -49,7 +49,7 @@ where
     /// If empty, then will be parsed from a command line.
     pub(super) cli: Option<cli::Opts<P::Cli, R::Cli, Wr::Cli, Cli>>,
 
-    /// Type of the [`World`] this [`Cucumber`] run on.
+    /// Type of the [`crate::World`] this [`Cucumber`] run on.
     #[debug(ignore)]
     pub(super) _world: PhantomData<W>,
 
@@ -67,7 +67,7 @@ where
     Cli: clap::Args,
 {
     /// Creates a custom [`Cucumber`] executor with the provided [`Parser`],
-    /// [`Runner`] and [`Writer`].
+    /// [`crate::runner::Runner`] and [`crate::Writer`].
     #[must_use]
     pub const fn custom(parser: P, runner: R, writer: Wr) -> Self {
         Self {
@@ -100,7 +100,7 @@ where
         }
     }
 
-    /// Replaces [`Runner`].
+    /// Replaces [`crate::runner::Runner`].
     #[must_use]
     pub fn with_runner<NewR>(
         self,
@@ -120,7 +120,7 @@ where
         }
     }
 
-    /// Replaces [`Writer`].
+    /// Replaces [`crate::Writer`].
     #[must_use]
     pub fn with_writer<NewWr>(
         self,

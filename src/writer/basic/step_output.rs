@@ -17,13 +17,13 @@ use crate::{
 };
 
 impl<Out: io::Write> Basic<Out> {
-    /// Outputs the [`Step`]'s [started]/[passed]/[skipped]/[failed] event.
+    /// Outputs the [`crate::step::Step`]'s [started]/[passed]/[skipped]/[failed] event.
     ///
     /// [failed]: event::Step::Failed
     /// [passed]: event::Step::Passed
     /// [skipped]: event::Step::Skipped
     /// [started]: event::Step::Started
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn step<W: Debug>(
         &mut self,
         feat: &gherkin::Feature,
@@ -62,16 +62,16 @@ impl<Out: io::Write> Basic<Out> {
         Ok(())
     }
 
-    /// Outputs the [started] [`Step`].
+    /// Outputs the [started] [`crate::step::Step`].
     ///
-    /// The [`Step`] is printed only if [`Coloring`] is enabled and gets
+    /// The [`crate::step::Step`] is printed only if [`Coloring`] is enabled and gets
     /// overwritten by later [passed]/[skipped]/[failed] events.
     ///
     /// [failed]: event::Step::Failed
     /// [passed]: event::Step::Passed
     /// [skipped]: event::Step::Skipped
     /// [started]: event::Step::Started
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn step_started(
         &mut self,
         step: &gherkin::Step,
@@ -105,10 +105,10 @@ impl<Out: io::Write> Basic<Out> {
         Ok(())
     }
 
-    /// Outputs the [passed] [`Step`].
+    /// Outputs the [passed] [`crate::step::Step`].
     ///
     /// [passed]: event::Step::Passed
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn step_passed(
         &mut self,
         scenario: &gherkin::Scenario,
@@ -161,10 +161,10 @@ impl<Out: io::Write> Basic<Out> {
         )))
     }
 
-    /// Outputs the [skipped] [`Step`].
+    /// Outputs the [skipped] [`crate::step::Step`].
     ///
     /// [skipped]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn step_skipped(
         &mut self,
         feat: &gherkin::Feature,
@@ -199,10 +199,10 @@ impl<Out: io::Write> Basic<Out> {
         )))
     }
 
-    /// Outputs the [failed] [`Step`].
+    /// Outputs the [failed] [`crate::step::Step`].
     ///
     /// [failed]: event::Step::Failed
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn step_failed<W: Debug>(
         &mut self,
         feat: &gherkin::Feature,

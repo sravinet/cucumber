@@ -1,11 +1,10 @@
 use std::{
     future,
-    panic::AssertUnwindSafe,
     sync::atomic::{AtomicUsize, Ordering},
     time::Duration,
 };
 
-use cucumber::{Parameter, World as _, given, then, when};
+use cucumber::{Parameter, World as _, given, then, when, writer::Stats};
 use derive_more::with_trait::{Deref, FromStr};
 use futures::FutureExt as _;
 use tokio::time;
@@ -19,7 +18,7 @@ static NUMBER_OF_FAILED_STEPS: AtomicUsize = AtomicUsize::new(0);
 
 #[tokio::test]
 async fn fires_each_time() {
-    let res = World::cucumber()
+    let writer = World::cucumber()
         .before(move |_, _, _, _| {
             async move {
                 let before =
@@ -56,31 +55,32 @@ async fn fires_each_time() {
         .fail_on_skipped()
         .with_default_cli()
         .max_concurrent_scenarios(1)
-        .run_and_exit("tests/features/wait");
+        .run("tests/features/wait")
+        .await;
 
-    let err =
-        AssertUnwindSafe(res).catch_unwind().await.expect_err("should err");
-    let err = err.downcast_ref::<String>().unwrap();
+    assert!(writer.execution_has_failed(), "Cucumber should have failed");
 
-    // Updated expectations based on 16 scenarios and corrected ScenarioFinished behavior
-    // With background fix, we now have different step failure counts
-    assert!(
-        err == "6 steps failed, 1 parsing error"
-            || err == "6 steps failed, 1 parsing error, 8 hook errors",
-        "Unexpected error: {}",
-        err
-    );
+    // Check the counts
+    let failed_steps = writer.failed_steps();
+    let parsing_errors = writer.parsing_errors();
+    assert_eq!(failed_steps, 6, "Expected 6 failed steps");
+    assert_eq!(parsing_errors, 0, "Expected no parsing errors");
 
-    // We have 16 scenarios total but only 14 create World instances (2 are skipped)
-    assert_eq!(NUMBER_OF_BEFORE_WORLDS.load(Ordering::SeqCst), 14);
-    assert_eq!(NUMBER_OF_AFTER_WORLDS.load(Ordering::SeqCst), 14);
+    // We have 16 scenarios total but only 14 create World instances (2 are completely skipped)
+    let before_count = NUMBER_OF_BEFORE_WORLDS.load(Ordering::SeqCst);
+    let after_count = NUMBER_OF_AFTER_WORLDS.load(Ordering::SeqCst);
+    assert_eq!(before_count, 14);
+    assert_eq!(after_count, 14);
 
     // These counts reflect ScenarioFinished events
-    // With our fix, they now correctly show scenario outcomes
-    assert_eq!(NUMBER_OF_PASSED_STEPS.load(Ordering::SeqCst), 8); // 8 scenarios ended with all steps passed
-    assert_eq!(NUMBER_OF_FAILED_STEPS.load(Ordering::SeqCst), 6); // 6 scenarios had failed steps
-    assert_eq!(NUMBER_OF_SKIPPED_STEPS.load(Ordering::SeqCst), 0); // No scenarios ended with only skipped steps
-    assert_eq!(NUMBER_OF_FAILED_HOOKS.load(Ordering::SeqCst), 0); // No before hooks failed
+    let passed = NUMBER_OF_PASSED_STEPS.load(Ordering::SeqCst);
+    let failed = NUMBER_OF_FAILED_STEPS.load(Ordering::SeqCst);
+    let skipped = NUMBER_OF_SKIPPED_STEPS.load(Ordering::SeqCst);
+    let failed_hooks = NUMBER_OF_FAILED_HOOKS.load(Ordering::SeqCst);
+    assert_eq!(passed, 8); // 8 scenarios ended with all steps passed
+    assert_eq!(failed, 6); // 6 scenarios had failed steps  
+    assert_eq!(skipped, 0); // No scenarios ended with only skipped steps (scenarios with @allow.skipped have some passed steps)
+    assert_eq!(failed_hooks, 0); // No before hooks failed
 }
 
 #[given(regex = r"(\d+) secs?")]
@@ -94,6 +94,7 @@ async fn step(world: &mut World, secs: CustomU64) {
     world.0 += 1;
     assert!(world.0 < 4, "Too much!");
 }
+
 
 #[derive(Deref, FromStr, Parameter)]
 #[param(regex = "\\d+", name = "u64")]

@@ -77,18 +77,18 @@ pub trait Ext: Sized {
     /// [2]: https://cucumber.io/docs/gherkin/reference#examples
     fn expand_examples(self) -> Result<Self, ExpandExamplesError>;
 
-    /// Counts all the [`Feature`]'s [`Scenario`]s, including [`Rule`]s inside.
+    /// Counts all the [`Feature`]'s [`gherkin::Scenario`]s, including [`Rule`]s inside.
     ///
     /// [`Feature`]: gherkin::Feature
     /// [`Rule`]: gherkin::Rule
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     fn count_scenarios(&self) -> usize;
 
-    /// Counts all the [`Feature`]'s [`Step`]s.
+    /// Counts all the [`Feature`]'s [`crate::step::Step`]s.
     ///
     /// [`Feature`]: gherkin::Feature
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn count_steps(&self) -> usize;
 }
@@ -128,19 +128,19 @@ impl Ext for gherkin::Feature {
     }
 }
 
-/// Expands [`Scenario`] [`Examples`], if any.
+/// Expands [`gherkin::Scenario`] [`Examples`], if any.
 ///
 /// # Errors
 ///
 /// See [`ExpandExamplesError`] for details.
 ///
 /// [`Examples`]: gherkin::Examples
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 fn expand_scenario(
     scenario: gherkin::Scenario,
     path: Option<&PathBuf>,
 ) -> Vec<Result<gherkin::Scenario, ExpandExamplesError>> {
-    /// [`Regex`] matching placeholders [`Examples`] should expand into.
+    /// [`regex::Regex`] matching placeholders [`Examples`] should expand into.
     ///
     /// [`Examples`]: gherkin::Examples
     // TODO: Switch back to `lazy-regex::regex!()` once it migrates to `std`:

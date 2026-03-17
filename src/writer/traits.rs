@@ -19,10 +19,10 @@ use crate::{Event, event, parser};
 
 /// Writer of [`Cucumber`] events to some output.
 ///
-/// As [`Runner`] produces events in a [happened-before] order (see
-/// [its order guarantees][1]), [`Writer`]s are required to be [`Normalized`].
+/// As [`crate::runner::Runner`] produces events in a [happened-before] order (see
+/// [its order guarantees][1]), [`crate::Writer`]s are required to be [`Normalized`].
 ///
-/// As [`Cucumber::run()`] returns [`Writer`], it can hold some state inside for
+/// As [`Cucumber::run()`] returns [`crate::Writer`], it can hold some state inside for
 /// inspection after execution. See [`Summarize`] and
 /// [`Cucumber::run_and_exit()`] for examples.
 ///
@@ -30,20 +30,20 @@ use crate::{Event, event, parser};
 /// [`Cucumber::run()`]: crate::Cucumber::run
 /// [`Cucumber::run_and_exit()`]: crate::Cucumber::run_and_exit
 /// [`Normalized`]: super::Normalized
-/// [`Runner`]: crate::Runner
+/// [`crate::runner::Runner`]: crate::Runner
 /// [`Summarize`]: super::Summarize
 /// [1]: crate::Runner#order-guarantees
 /// [happened-before]: https://en.wikipedia.org/wiki/Happened-before
 pub trait Writer<World> {
-    /// CLI options of this [`Writer`]. In case no options should be introduced,
+    /// CLI options of this [`crate::Writer`]. In case no options should be introduced,
     /// just use [`cli::Empty`].
     ///
-    /// All CLI options from [`Parser`], [`Runner`] and [`Writer`] will be
+    /// All CLI options from [`Parser`], [`crate::runner::Runner`] and [`crate::Writer`] will be
     /// merged together, so overlapping arguments will cause a runtime panic.
     ///
     /// [`cli::Empty`]: crate::cli::Empty
     /// [`Parser`]: crate::Parser
-    /// [`Runner`]: crate::Runner
+    /// [`crate::runner::Runner`]: crate::Runner
     type Cli: clap::Args;
 
     /// Handles the given [`Cucumber`] event.
@@ -56,47 +56,47 @@ pub trait Writer<World> {
     ) -> impl Future<Output = ()>;
 }
 
-/// [`Writer`] that also can output an arbitrary `Value` in addition to
+/// [`crate::Writer`] that also can output an arbitrary `Value` in addition to
 /// regular [`Cucumber`] events.
 ///
 /// [`Cucumber`]: event::Cucumber
 pub trait Arbitrary<World, Value>: Writer<World> {
-    /// Writes `val` to the [`Writer`]'s output.
+    /// Writes `val` to the [`crate::Writer`]'s output.
     fn write(&mut self, val: Value) -> impl Future<Output = ()>;
 }
 
-/// [`Writer`] tracking a number of [`Passed`], [`Skipped`], [`Failed`]
-/// [`Step`]s and parsing errors.
+/// [`crate::Writer`] tracking a number of [`Passed`], [`Skipped`], [`Failed`]
+/// [`crate::step::Step`]s and parsing errors.
 ///
 /// [`Failed`]: event::Step::Failed
 /// [`Passed`]: event::Step::Passed
 /// [`Skipped`]: event::Step::Skipped
-/// [`Step`]: gherkin::Step
+/// [`crate::step::Step`]: gherkin::Step
 pub trait Stats<World>: Writer<World> {
-    /// Returns number of [`Passed`] [`Step`]s.
+    /// Returns number of [`Passed`] [`crate::step::Step`]s.
     ///
     /// [`Passed`]: event::Step::Passed
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn passed_steps(&self) -> usize;
 
-    /// Returns number of [`Skipped`] [`Step`]s.
+    /// Returns number of [`Skipped`] [`crate::step::Step`]s.
     ///
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn skipped_steps(&self) -> usize;
 
-    /// Returns number of [`Failed`] [`Step`]s.
+    /// Returns number of [`Failed`] [`crate::step::Step`]s.
     ///
     /// [`Failed`]: event::Step::Failed
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn failed_steps(&self) -> usize;
 
-    /// Returns number of retried [`Step`]s.
+    /// Returns number of retried [`crate::step::Step`]s.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn retried_steps(&self) -> usize;
 
@@ -104,9 +104,9 @@ pub trait Stats<World>: Writer<World> {
     #[must_use]
     fn parsing_errors(&self) -> usize;
 
-    /// Returns number of failed [`Scenario`] hooks.
+    /// Returns number of failed [`gherkin::Scenario`] hooks.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     fn hook_errors(&self) -> usize;
 

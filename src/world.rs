@@ -37,15 +37,15 @@ use crate::{
 /// [1]: https://doc.rust-lang.org/book/ch16-03-shared-state.html
 /// [Cucumber]: https://cucumber.io
 pub trait World: Sized + 'static {
-    /// Error of creating a new [`World`] instance.
+    /// Error of creating a new [`crate::World`] instance.
     type Error: Display;
 
-    /// Creates a new [`World`] instance.
+    /// Creates a new [`crate::World`] instance.
     fn new() -> impl Future<Output = Result<Self, Self::Error>>;
 
     #[cfg(feature = "macros")]
-    /// Returns runner for tests with auto-wired steps marked by [`given`],
-    /// [`when`] and [`then`] attributes.
+    /// Returns runner for tests with auto-wired steps marked by [`crate::given`],
+    /// [`crate::when`] and [`crate::then`] attributes.
     #[must_use]
     fn collection() -> Collection<Self>
     where
@@ -72,7 +72,7 @@ pub trait World: Sized + 'static {
     }
 
     #[cfg(feature = "macros")]
-    /// Returns default [`Cucumber`] with all the auto-wired [`Step`]s.
+    /// Returns default [`crate::Cucumber`] with all the auto-wired [`crate::step::Step`]s.
     #[must_use]
     fn cucumber<I: AsRef<Path>>() -> DefaultCucumber<Self, I>
     where
@@ -82,15 +82,15 @@ pub trait World: Sized + 'static {
     }
 
     #[cfg(feature = "macros")]
-    /// Runs [`Cucumber`].
+    /// Runs [`crate::Cucumber`].
     ///
-    /// [`Feature`]s sourced by [`Parser`] are fed into [`Runner`] where the
-    /// later produces events handled by [`Writer`].
+    /// [`Feature`]s sourced by [`crate::parser::Parser`] are fed into [`crate::runner::Runner`] where the
+    /// later produces events handled by [`crate::writer::Writer`].
     ///
     /// # Panics
     ///
     /// If encountered errors while parsing [`Feature`]s or at least one
-    /// [`Step`] panicked.
+    /// [`crate::step::Step`] panicked.
     ///
     /// [`Feature`]: gherkin::Feature
     fn run<I: AsRef<Path>>(input: I) -> impl Future<Output = ()>
@@ -101,19 +101,19 @@ pub trait World: Sized + 'static {
     }
 
     #[cfg(feature = "macros")]
-    /// Runs [`Cucumber`] with [`Scenario`]s filter.
+    /// Runs [`crate::Cucumber`] with [`gherkin::Scenario`]s filter.
     ///
-    /// [`Feature`]s sourced by [`Parser`] are fed into [`Runner`] where the
-    /// later produces events handled by [`Writer`].
+    /// [`Feature`]s sourced by [`crate::parser::Parser`] are fed into [`crate::runner::Runner`] where the
+    /// later produces events handled by [`crate::writer::Writer`].
     ///
     /// # Panics
     ///
     /// If encountered errors while parsing [`Feature`]s or at least one
-    /// [`Step`] panicked.
+    /// [`crate::step::Step`] panicked.
     ///
     /// [`Feature`]: gherkin::Feature
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     fn filter_run<I, F>(input: I, filter: F) -> impl Future<Output = ()>
     where
         Self: Debug + WorldInventory,

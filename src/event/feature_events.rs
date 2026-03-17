@@ -15,7 +15,7 @@ pub enum Feature<World> {
     /// [`Rule`] event.
     Rule(Source<gherkin::Rule>, Rule<World>),
 
-    /// [`Scenario`] event.
+    /// [`gherkin::Scenario`] event.
     Scenario(Source<gherkin::Scenario>, RetryableScenario<World>),
 
     /// [`Feature`] execution being finished.

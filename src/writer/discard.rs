@@ -16,7 +16,7 @@ use crate::{Event, World, Writer, event::Cucumber, parser, writer};
 
 /// Wrapper providing a no-op [`ArbitraryWriter`] implementation.
 ///
-/// Intended to be used for feeding a non-[`ArbitraryWriter`] [`Writer`] into a
+/// Intended to be used for feeding a non-[`ArbitraryWriter`] [`crate::Writer`] into a
 /// [`writer::Tee`], as the latter accepts only [`ArbitraryWriter`]s.
 ///
 /// [`ArbitraryWriter`]: writer::Arbitrary
@@ -90,7 +90,7 @@ impl<Wr: writer::Normalized> writer::Normalized for Arbitrary<Wr> {}
 impl<Wr: writer::NonTransforming> writer::NonTransforming for Arbitrary<Wr> {}
 
 impl<Wr> Arbitrary<Wr> {
-    /// Wraps the given [`Writer`] into a [`discard::Arbitrary`] one.
+    /// Wraps the given [`crate::Writer`] into a [`discard::Arbitrary`] one.
     ///
     /// [`discard::Arbitrary`]: Arbitrary
     #[must_use]
@@ -101,7 +101,7 @@ impl<Wr> Arbitrary<Wr> {
 
 /// Wrapper providing a no-op [`StatsWriter`] implementation returning only `0`.
 ///
-/// Intended to be used for feeding a non-[`StatsWriter`] [`Writer`] into a
+/// Intended to be used for feeding a non-[`StatsWriter`] [`crate::Writer`] into a
 /// [`writer::Tee`], as the later accepts only [`StatsWriter`]s.
 ///
 /// [`StatsWriter`]: writer::Stats
@@ -175,7 +175,7 @@ impl<Wr: writer::Normalized> writer::Normalized for Stats<Wr> {}
 impl<Wr: writer::NonTransforming> writer::NonTransforming for Stats<Wr> {}
 
 impl<Wr> Stats<Wr> {
-    /// Wraps the given [`Writer`] into a [`discard::Stats`] one.
+    /// Wraps the given [`crate::Writer`] into a [`discard::Stats`] one.
     ///
     /// [`discard::Stats`]: Stats
     #[must_use]

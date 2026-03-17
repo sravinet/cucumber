@@ -27,14 +27,14 @@ pub enum Cucumber<World> {
         /// [`Rule`]: gherkin::Rule
         rules: usize,
 
-        /// Number of parsed [`Scenario`]s.
+        /// Number of parsed [`gherkin::Scenario`]s.
         ///
-        /// [`Scenario`]: gherkin::Scenario
+        /// [`gherkin::Scenario`]: gherkin::Scenario
         scenarios: usize,
 
-        /// Number of parsed [`Step`]s.
+        /// Number of parsed [`crate::step::Step`]s.
         ///
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         steps: usize,
 
         /// Number of happened [`Parser`] errors.
@@ -111,7 +111,7 @@ impl<World> Cucumber<World> {
         Self::Feature(feat.into(), Feature::Rule(rule.into(), Rule::Finished))
     }
 
-    /// Constructs a [`Cucumber`] event from the given [`Scenario`] event.
+    /// Constructs a [`Cucumber`] event from the given [`gherkin::Scenario`] event.
     #[must_use]
     pub fn scenario(
         feat: impl Into<Source<gherkin::Feature>>,

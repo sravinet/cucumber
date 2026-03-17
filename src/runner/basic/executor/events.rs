@@ -56,6 +56,7 @@ impl<W: World> EventSender<W> {
 
     /// Creates a new EventSender with observer support.
     #[cfg(feature = "observability")]
+    #[allow(dead_code)] // Used only when observability feature is enabled
     pub(super) fn new_with_sender(
         sender: mpsc::UnboundedSender<
             parser::Result<Event<event::Cucumber<W>>>,

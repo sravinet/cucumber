@@ -22,7 +22,7 @@ where
     /// [`clap::Args`] deriving type, used as the last type parameter of
     /// [`cli::Opts`].
     ///
-    /// > ⚠️ __WARNING__: Any CLI options of [`Parser`], [`Runner`], [`Writer`]
+    /// > ⚠️ __WARNING__: Any CLI options of [`Parser`], [`crate::runner::Runner`], [`crate::Writer`]
     /// >                 or custom ones should not overlap, otherwise
     /// >                 [`cli::Opts`] will fail to parse on startup.
     ///

@@ -12,7 +12,7 @@ pub enum Rule<World> {
     /// [`Rule`]: gherkin::Rule
     Started,
 
-    /// [`Scenario`] event.
+    /// [`gherkin::Scenario`] event.
     Scenario(Source<gherkin::Scenario>, RetryableScenario<World>),
 
     /// [`Rule`] execution being finished.

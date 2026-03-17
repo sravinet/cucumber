@@ -1,4 +1,4 @@
-//! [JUnit XML report][1] [`Writer`] implementation.
+//! [JUnit XML report][1] [`crate::Writer`] implementation.
 //!
 //! This module provides a modular implementation of a JUnit XML writer that follows
 //! the Single Responsibility Principle. The implementation is split across several

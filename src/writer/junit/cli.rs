@@ -2,10 +2,10 @@
 
 use crate::writer::Verbosity;
 
-/// CLI options of a [`JUnit`] [`Writer`].
+/// CLI options of a [`JUnit`] [`crate::Writer`].
 ///
 /// [`JUnit`]: super::JUnit
-/// [`Writer`]: crate::Writer
+/// [`crate::Writer`]: crate::Writer
 #[derive(Clone, Copy, Debug, Default, clap::Args)]
 #[group(skip)]
 pub struct Cli {

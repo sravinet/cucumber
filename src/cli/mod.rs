@@ -11,10 +11,10 @@
 //! Tools for composing CLI options.
 //!
 //! The main thing in this module is [`Opts`], which compose all the strongly
-//! typed CLI options from [`Parser`], [`Runner`] and [`Writer`], and provide
-//! filtering based on [`Regex`] or [tag expressions][1].
+//! typed CLI options from [`Parser`], [`crate::runner::Runner`] and [`crate::Writer`], and provide
+//! filtering based on [`regex::Regex`] or [tag expressions][1].
 //!
-//! The idea behind this is that [`Parser`], [`Runner`] and/or [`Writer`] may
+//! The idea behind this is that [`Parser`], [`crate::runner::Runner`] and/or [`crate::Writer`] may
 //! want to introduce their own CLI options to allow tweaking themselves, but we
 //! still do want them combine in a single CLI and avoid any boilerplate burden.
 //!
@@ -23,8 +23,8 @@
 //!
 //! [`cli::Empty`]: self::Empty
 //! [`Parser`]: crate::Parser
-//! [`Runner`]: crate::Runner
-//! [`Writer`]: crate::Writer
+//! [`crate::runner::Runner`]: crate::Runner
+//! [`crate::Writer`]: crate::Writer
 //! [1]: https://cucumber.io/docs/cucumber/api#tag-expressions
 
 mod colored;

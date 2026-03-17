@@ -10,9 +10,9 @@ use crate::{
     runner::basic::{RetryOptions, ScenarioId},
 };
 
-/// [`HashMap`] from a [`ScenarioId`] to its [`Scenario`] and full path.
+/// [`HashMap`] from a [`ScenarioId`] to its [`gherkin::Scenario`] and full path.
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 pub type Scenarios = HashMap<
     ScenarioId,
     (
@@ -23,14 +23,14 @@ pub type Scenarios = HashMap<
     ),
 >;
 
-/// All [`Callback`]s for [`Span`]s closing events with their completion status.
+/// All [`Callback`]s for [`tracing::Span`]s closing events with their completion status.
 pub type SpanEventsCallbacks =
     HashMap<span::Id, (Option<Vec<Callback>>, IsReceived)>;
 
-/// Indication whether a [`Span`] closing event was received.
+/// Indication whether a [`tracing::Span`] closing event was received.
 pub type IsReceived = bool;
 
-/// Callback for notifying a [`Runner`] about a [`Span`] being closed.
+/// Callback for notifying a [`crate::runner::Runner`] about a [`tracing::Span`] being closed.
 pub type Callback = oneshot::Sender<()>;
 
 /// Message structure for tracing events with optional scenario ID.

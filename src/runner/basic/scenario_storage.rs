@@ -26,9 +26,9 @@ use crate::{
     feature::Ext as _,
 };
 
-/// [`Scenario`]s storage.
+/// [`gherkin::Scenario`]s storage.
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 type Scenarios = HashMap<
     ScenarioType,
     Vec<(
@@ -52,10 +52,10 @@ type InsertedScenarios = HashMap<
     )>,
 >;
 
-/// Storage sorted by [`ScenarioType`] [`Feature`]'s [`Scenario`]s.
+/// Storage sorted by [`ScenarioType`] [`Feature`]'s [`gherkin::Scenario`]s.
 ///
 /// [`Feature`]: gherkin::Feature
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[derive(Clone, Default)]
 pub(super) struct Features {
     /// Storage itself.
@@ -68,11 +68,11 @@ pub(super) struct Features {
 }
 
 impl Features {
-    /// Splits [`Feature`] into [`Scenario`]s, sorts by [`ScenarioType`] and
+    /// Splits [`Feature`] into [`gherkin::Scenario`]s, sorts by [`ScenarioType`] and
     /// stores them.
     ///
     /// [`Feature`]: gherkin::Feature
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) async fn insert<Which>(
         &self,
         feature: gherkin::Feature,
@@ -117,10 +117,10 @@ impl Features {
         self.insert_scenarios(local).await;
     }
 
-    /// Inserts the provided retried [`Scenario`] into this [`Features`]
+    /// Inserts the provided retried [`gherkin::Scenario`] into this [`Features`]
     /// storage.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) async fn insert_retried_scenario(
         &self,
         feature: Source<gherkin::Feature>,
@@ -139,9 +139,9 @@ impl Features {
         .await;
     }
 
-    /// Inserts the provided [`Scenario`]s into this [`Features`] storage.
+    /// Inserts the provided [`gherkin::Scenario`]s into this [`Features`] storage.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     async fn insert_scenarios(&self, scenarios: InsertedScenarios) {
         let now = Instant::now();
 
@@ -212,10 +212,10 @@ impl Features {
         }
     }
 
-    /// Returns [`Scenario`]s which are ready to run and the minimal deadline of
-    /// all retried [`Scenario`]s.
+    /// Returns [`gherkin::Scenario`]s which are ready to run and the minimal deadline of
+    /// all retried [`gherkin::Scenario`]s.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) async fn get(
         &self,
         max_concurrent_scenarios: Option<usize>,
@@ -337,26 +337,26 @@ pub(super) type FinishedFeaturesReceiver = mpsc::UnboundedReceiver<(
 /// [`Feature`]: gherkin::Feature
 /// [`Rule`]: gherkin::Rule
 pub(super) struct FinishedRulesAndFeatures {
-    /// Number of finished [`Scenario`]s of [`Feature`].
+    /// Number of finished [`gherkin::Scenario`]s of [`Feature`].
     ///
     /// [`Feature`]: gherkin::Feature
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     features_scenarios_count: HashMap<Source<gherkin::Feature>, usize>,
 
-    /// Number of finished [`Scenario`]s of [`Rule`].
+    /// Number of finished [`gherkin::Scenario`]s of [`Rule`].
     ///
     /// We also store path to a [`Feature`], so [`Rule`]s with same names and
     /// spans in different `.feature` files will have different hashes.
     ///
     /// [`Feature`]: gherkin::Feature
     /// [`Rule`]: gherkin::Rule
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     rule_scenarios_count:
         HashMap<(Source<gherkin::Feature>, Source<gherkin::Rule>), usize>,
 
-    /// Receiver for notifying state of [`Scenario`]s completion.
+    /// Receiver for notifying state of [`gherkin::Scenario`]s completion.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     finished_receiver: FinishedFeaturesReceiver,
 }
 
@@ -375,12 +375,12 @@ impl FinishedRulesAndFeatures {
         &mut self.finished_receiver
     }
 
-    /// Marks [`Rule`]'s [`Scenario`] as finished and returns [`Rule::Finished`]
-    /// event if no [`Scenario`]s left.
+    /// Marks [`Rule`]'s [`gherkin::Scenario`] as finished and returns [`Rule::Finished`]
+    /// event if no [`gherkin::Scenario`]s left.
     ///
     /// [`Rule`]: gherkin::Rule
     /// [`Rule::Finished`]: event::Rule::Finished
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) fn rule_scenario_finished<W>(
         &mut self,
         feature: Source<gherkin::Feature>,
@@ -410,12 +410,12 @@ impl FinishedRulesAndFeatures {
         })
     }
 
-    /// Marks [`Feature`]'s [`Scenario`] as finished and returns
-    /// [`Feature::Finished`] event if no [`Scenario`]s left.
+    /// Marks [`Feature`]'s [`gherkin::Scenario`] as finished and returns
+    /// [`Feature::Finished`] event if no [`gherkin::Scenario`]s left.
     ///
     /// [`Feature`]: gherkin::Feature
     /// [`Feature::Finished`]: event::Feature::Finished
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) fn feature_scenario_finished<W>(
         &mut self,
         feature: Source<gherkin::Feature>,
@@ -461,15 +461,15 @@ impl FinishedRulesAndFeatures {
             )
     }
 
-    /// Marks [`Scenario`]s as started and returns [`Rule::Started`] and
-    /// [`Feature::Started`] if given [`Scenario`] was first for particular
+    /// Marks [`gherkin::Scenario`]s as started and returns [`Rule::Started`] and
+    /// [`Feature::Started`] if given [`gherkin::Scenario`] was first for particular
     /// [`Rule`] or [`Feature`].
     ///
     /// [`Feature`]: gherkin::Feature
     /// [`Feature::Started`]: event::Feature::Started
     /// [`Rule`]: gherkin::Rule
     /// [`Rule::Started`]: event::Rule::Started
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) fn start_scenarios<W, R>(
         &mut self,
         runnable: R,

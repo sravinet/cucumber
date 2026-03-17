@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! Passing events to multiple terminating [`Writer`]s simultaneously.
+//! Passing events to multiple terminating [`crate::Writer`]s simultaneously.
 
 use std::cmp;
 
@@ -16,13 +16,13 @@ use futures::future;
 
 use crate::{Event, World, Writer, cli, event, parser, writer};
 
-/// Wrapper for passing events to multiple terminating [`Writer`]s
+/// Wrapper for passing events to multiple terminating [`crate::Writer`]s
 /// simultaneously.
 ///
 /// # Blanket implementations
 ///
 /// [`ArbitraryWriter`] and [`StatsWriter`] are implemented only in case both
-/// `left` and `right` [`Writer`]s implement them. In case one of them doesn't
+/// `left` and `right` [`crate::Writer`]s implement them. In case one of them doesn't
 /// implement the required traits, use
 /// [`WriterExt::discard_arbitrary_writes()`][1] and
 /// [`WriterExt::discard_stats_writes()`][2] methods to provide the one with
@@ -34,28 +34,28 @@ use crate::{Event, World, Writer, cli, event, parser, writer};
 /// [2]: crate::WriterExt::discard_stats_writes
 #[derive(Clone, Copy, Debug)]
 pub struct Tee<L, R> {
-    /// Left [`Writer`].
+    /// Left [`crate::Writer`].
     left: L,
 
-    /// Right [`Writer`].
+    /// Right [`crate::Writer`].
     right: R,
 }
 
 impl<L, R> Tee<L, R> {
-    /// Creates a new [`Tee`] [`Writer`], which passes events both to the `left`
-    /// and `right` [`Writer`]s simultaneously.
+    /// Creates a new [`Tee`] [`crate::Writer`], which passes events both to the `left`
+    /// and `right` [`crate::Writer`]s simultaneously.
     #[must_use]
     pub const fn new(left: L, right: R) -> Self {
         Self { left, right }
     }
 
-    /// Returns the left [`Writer`] of this [`Tee`] one.
+    /// Returns the left [`crate::Writer`] of this [`Tee`] one.
     #[must_use]
     pub const fn left_writer(&self) -> &L {
         &self.left
     }
 
-    /// Returns the right [`Writer`] of this [`Tee`] one.
+    /// Returns the right [`crate::Writer`] of this [`Tee`] one.
     #[must_use]
     pub const fn right_writer(&self) -> &R {
         &self.right

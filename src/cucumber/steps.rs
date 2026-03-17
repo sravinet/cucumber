@@ -35,17 +35,17 @@ where
         ) -> LocalBoxFuture<'a, ()>
         + 'static,
 {
-    /// Replaces [`Collection`] of [`Step`]s.
+    /// Replaces [`Collection`] of [`crate::step::Step`]s.
     ///
     /// [`Collection`]: step::Collection
-    /// [`Step`]: step::Step
+    /// [`crate::step::Step`]: step::Step
     #[must_use]
     pub fn steps(mut self, steps: step::Collection<W>) -> Self {
         self.runner = self.runner.steps(steps);
         self
     }
 
-    /// Inserts [Given] [`Step`].
+    /// Inserts [Given] [`crate::step::Step`].
     ///
     /// [Given]: https://cucumber.io/docs/gherkin/reference#given
     #[must_use]
@@ -54,7 +54,7 @@ where
         self
     }
 
-    /// Inserts [When] [`Step`].
+    /// Inserts [When] [`crate::step::Step`].
     ///
     /// [When]: https://cucumber.io/docs/gherkin/reference#when
     #[must_use]
@@ -63,7 +63,7 @@ where
         self
     }
 
-    /// Inserts [Then] [`Step`].
+    /// Inserts [Then] [`crate::step::Step`].
     ///
     /// [Then]: https://cucumber.io/docs/gherkin/reference#then
     #[must_use]

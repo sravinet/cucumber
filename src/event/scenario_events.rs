@@ -13,28 +13,28 @@ use crate::step;
 /// [Scenario]: https://cucumber.io/docs/gherkin/reference#example
 #[derive(Debug)]
 pub enum Scenario<World> {
-    /// [`Scenario`] execution being started.
+    /// [`gherkin::Scenario`] execution being started.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     Started,
 
     /// [`Hook`] event.
     Hook(HookType, Hook<World>),
 
-    /// [`Background`] [`Step`] event.
+    /// [`Background`] [`crate::step::Step`] event.
     ///
     /// [`Background`]: gherkin::Background
     Background(Source<gherkin::Step>, Step<World>),
 
-    /// [`Step`] event.
+    /// [`crate::step::Step`] event.
     Step(Source<gherkin::Step>, Step<World>),
 
-    /// [`Scenario`]'s log entry is emitted.
+    /// [`gherkin::Scenario`]'s log entry is emitted.
     Log(String),
 
-    /// [`Scenario`] execution being finished.
+    /// [`gherkin::Scenario`] execution being finished.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     Finished,
 }
 
@@ -56,25 +56,25 @@ impl<World> Clone for Scenario<World> {
 }
 
 impl<World> Scenario<World> {
-    /// Constructs an event of a [`Scenario`] hook being started.
+    /// Constructs an event of a [`gherkin::Scenario`] hook being started.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub const fn hook_started(which: HookType) -> Self {
         Self::Hook(which, Hook::Started)
     }
 
-    /// Constructs an event of a passed [`Scenario`] hook.
+    /// Constructs an event of a passed [`gherkin::Scenario`] hook.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub const fn hook_passed(which: HookType) -> Self {
         Self::Hook(which, Hook::Passed)
     }
 
-    /// Constructs an event of a failed [`Scenario`] hook.
+    /// Constructs an event of a failed [`gherkin::Scenario`] hook.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub fn hook_failed(
         which: HookType,
@@ -84,18 +84,18 @@ impl<World> Scenario<World> {
         Self::Hook(which, Hook::Failed(world, info))
     }
 
-    /// Constructs an event of a [`Step`] being started.
+    /// Constructs an event of a [`crate::step::Step`] being started.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn step_started(step: impl Into<Source<gherkin::Step>>) -> Self {
         Self::Step(step.into(), Step::Started)
     }
 
-    /// Constructs an event of a [`Background`] [`Step`] being started.
+    /// Constructs an event of a [`Background`] [`crate::step::Step`] being started.
     ///
     /// [`Background`]: gherkin::Background
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn background_step_started(
         step: impl Into<Source<gherkin::Step>>,
@@ -103,9 +103,9 @@ impl<World> Scenario<World> {
         Self::Background(step.into(), Step::Started)
     }
 
-    /// Constructs an event of a passed [`Step`].
+    /// Constructs an event of a passed [`crate::step::Step`].
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn step_passed(
         step: impl Into<Source<gherkin::Step>>,
@@ -115,10 +115,10 @@ impl<World> Scenario<World> {
         Self::Step(step.into(), Step::Passed { captures, location: loc })
     }
 
-    /// Constructs an event of a passed [`Background`] [`Step`].
+    /// Constructs an event of a passed [`Background`] [`crate::step::Step`].
     ///
     /// [`Background`]: gherkin::Background
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn background_step_passed(
         step: impl Into<Source<gherkin::Step>>,
@@ -128,17 +128,17 @@ impl<World> Scenario<World> {
         Self::Background(step.into(), Step::Passed { captures, location: loc })
     }
 
-    /// Constructs an event of a skipped [`Step`].
+    /// Constructs an event of a skipped [`crate::step::Step`].
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn step_skipped(step: impl Into<Source<gherkin::Step>>) -> Self {
         Self::Step(step.into(), Step::Skipped)
     }
-    /// Constructs an event of a skipped [`Background`] [`Step`].
+    /// Constructs an event of a skipped [`Background`] [`crate::step::Step`].
     ///
     /// [`Background`]: gherkin::Background
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn background_step_skipped(
         step: impl Into<Source<gherkin::Step>>,
@@ -146,9 +146,9 @@ impl<World> Scenario<World> {
         Self::Background(step.into(), Step::Skipped)
     }
 
-    /// Constructs an event of a failed [`Step`].
+    /// Constructs an event of a failed [`crate::step::Step`].
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn step_failed(
         step: impl Into<Source<gherkin::Step>>,
@@ -163,10 +163,10 @@ impl<World> Scenario<World> {
         )
     }
 
-    /// Constructs an event of a failed [`Background`] [`Step`].
+    /// Constructs an event of a failed [`Background`] [`crate::step::Step`].
     ///
     /// [`Background`]: gherkin::Background
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn background_step_failed(
         step: impl Into<Source<gherkin::Step>>,
@@ -181,7 +181,7 @@ impl<World> Scenario<World> {
         )
     }
 
-    /// Transforms this [`Scenario`] event into a [`RetryableScenario`] event.
+    /// Transforms this [`gherkin::Scenario`] event into a [`RetryableScenario`] event.
     #[must_use]
     pub const fn with_retries(
         self,
@@ -196,7 +196,7 @@ impl<World> Scenario<World> {
 /// [Scenario]: https://cucumber.io/docs/gherkin/reference#example
 #[derive(Debug)]
 pub struct RetryableScenario<World> {
-    /// Happened [`Scenario`] event.
+    /// Happened [`gherkin::Scenario`] event.
     pub event: Scenario<World>,
 
     /// Number of [`Retries`].

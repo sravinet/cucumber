@@ -10,13 +10,13 @@ use itertools::Itertools as _;
 
 use super::{location::Location, regex::HashableRegex};
 
-/// Error of a [`gherkin::Step`] matching multiple [`Step`] [`Regex`]es inside a
+/// Error of a [`gherkin::Step`] matching multiple [`crate::step::Step`] [`regex::Regex`]es inside a
 /// [`Collection`].
 ///
 /// [`Collection`]: super::Collection
 #[derive(Clone, Debug, Error)]
 pub struct AmbiguousMatchError {
-    /// Possible [`Regex`]es the [`gherkin::Step`] matches.
+    /// Possible [`regex::Regex`]es the [`gherkin::Step`] matches.
     pub possible_matches: Vec<(HashableRegex, Option<Location>)>,
 }
 

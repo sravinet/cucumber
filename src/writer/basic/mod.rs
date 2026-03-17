@@ -1,4 +1,4 @@
-//! Basic CLI [`Writer`] implementation.
+//! Basic CLI [`crate::Writer`] implementation.
 //!
 //! This writer outputs test results in a human-readable format similar to
 //! standard test runners, with colored output support and verbose modes.

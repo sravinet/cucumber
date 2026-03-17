@@ -3,10 +3,10 @@
 //! The top-level enum here is [`Cucumber`].
 //!
 //! Each event enum contains variants indicating what stage of execution
-//! [`Runner`] is at, and variants with detailed content about the precise
+//! [`crate::runner::Runner`] is at, and variants with detailed content about the precise
 //! sub-event.
 //!
-//! [`Runner`]: crate::Runner
+//! [`crate::runner::Runner`]: crate::Runner
 //! [Cucumber]: https://cucumber.io
 
 // Core modules

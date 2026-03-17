@@ -63,7 +63,7 @@ pub struct Element {
     /// [`gherkin::Scenario::tags`].
     pub tags: Vec<Tag>,
 
-    /// [`gherkin::Scenario`]'s [`Step`]s.
+    /// [`gherkin::Scenario`]'s [`crate::step::Step`]s.
     pub steps: Vec<Step>,
 }
 

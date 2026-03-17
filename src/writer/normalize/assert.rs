@@ -14,29 +14,29 @@ use derive_more::with_trait::Deref;
 
 use crate::{Event, World, Writer, event, parser, writer};
 
-/// Marker indicating that a [`Writer`] can accept events in a [happened-before]
+/// Marker indicating that a [`crate::Writer`] can accept events in a [happened-before]
 /// order.
 ///
 /// This means one of two things:
 ///
-/// 1. Either [`Writer`] doesn't depend on events ordering.
-///    For example, [`Writer`] which prints only [`Failed`] [`Step`]s.
+/// 1. Either [`crate::Writer`] doesn't depend on events ordering.
+///    For example, [`crate::Writer`] which prints only [`Failed`] [`crate::step::Step`]s.
 ///
-/// 2. Or [`Writer`] does depend on events ordering, but implements some logic
+/// 2. Or [`crate::Writer`] does depend on events ordering, but implements some logic
 ///    to rearrange them.
 ///    For example, a [`Normalize`] wrapper will rearrange events and pass them
-///    to the underlying [`Writer`], like a [`Runner`] wasn't concurrent at all.
+///    to the underlying [`crate::Writer`], like a [`crate::runner::Runner`] wasn't concurrent at all.
 ///
-/// [`Step`]: gherkin::Step
+/// [`crate::step::Step`]: gherkin::Step
 /// [`Failed`]: event::Step::Failed
-/// [`Runner`]: crate::Runner
+/// [`crate::runner::Runner`]: crate::Runner
 /// [`Normalize`]: super::wrapper::Normalize
 /// [happened-before]: https://en.wikipedia.org/wiki/Happened-before
 pub trait Normalized {}
 
-/// Wrapper for a [`Writer`] asserting it being [`Normalized`].
+/// Wrapper for a [`crate::Writer`] asserting it being [`Normalized`].
 ///
-/// Technically is no-op, only forcing the [`Writer`] to become [`Normalized`]
+/// Technically is no-op, only forcing the [`crate::Writer`] to become [`Normalized`]
 /// despite it actually doesn't represent the one.
 ///
 /// > ⚠️ __WARNING__: Should be used only in case you are absolutely sure, that

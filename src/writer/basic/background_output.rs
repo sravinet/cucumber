@@ -17,7 +17,7 @@ use crate::{
 };
 
 impl<Out: io::Write> Basic<Out> {
-    /// Outputs the [`Background`] [`Step`]'s
+    /// Outputs the [`Background`] [`crate::step::Step`]'s
     /// [started]/[passed]/[skipped]/[failed] event.
     ///
     /// [failed]: event::Step::Failed
@@ -25,7 +25,7 @@ impl<Out: io::Write> Basic<Out> {
     /// [skipped]: event::Step::Skipped
     /// [started]: event::Step::Started
     /// [`Background`]: gherkin::Background
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn background<W: Debug>(
         &mut self,
         feat: &gherkin::Feature,
@@ -64,9 +64,9 @@ impl<Out: io::Write> Basic<Out> {
         Ok(())
     }
 
-    /// Outputs the [started] [`Background`] [`Step`].
+    /// Outputs the [started] [`Background`] [`crate::step::Step`].
     ///
-    /// The [`Step`] is printed only if [`Coloring`] is enabled and gets
+    /// The [`crate::step::Step`] is printed only if [`Coloring`] is enabled and gets
     /// overwritten by later [passed]/[skipped]/[failed] events.
     ///
     /// [failed]: event::Step::Failed
@@ -74,7 +74,7 @@ impl<Out: io::Write> Basic<Out> {
     /// [skipped]: event::Step::Skipped
     /// [started]: event::Step::Started
     /// [`Background`]: gherkin::Background
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn bg_step_started(
         &mut self,
         step: &gherkin::Step,
@@ -108,11 +108,11 @@ impl<Out: io::Write> Basic<Out> {
         Ok(())
     }
 
-    /// Outputs the [passed] [`Background`] [`Step`].
+    /// Outputs the [passed] [`Background`] [`crate::step::Step`].
     ///
     /// [passed]: event::Step::Passed
     /// [`Background`]: gherkin::Background
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn bg_step_passed(
         &mut self,
         scenario: &gherkin::Scenario,
@@ -166,11 +166,11 @@ impl<Out: io::Write> Basic<Out> {
         )))
     }
 
-    /// Outputs the [skipped] [`Background`] [`Step`].
+    /// Outputs the [skipped] [`Background`] [`crate::step::Step`].
     ///
     /// [skipped]: event::Step::Skipped
     /// [`Background`]: gherkin::Background
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn bg_step_skipped(
         &mut self,
         feat: &gherkin::Feature,
@@ -205,11 +205,11 @@ impl<Out: io::Write> Basic<Out> {
         )))
     }
 
-    /// Outputs the [failed] [`Background`] [`Step`].
+    /// Outputs the [failed] [`Background`] [`crate::step::Step`].
     ///
     /// [failed]: event::Step::Failed
     /// [`Background`]: gherkin::Background
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) fn bg_step_failed<W: Debug>(
         &mut self,
         feat: &gherkin::Feature,

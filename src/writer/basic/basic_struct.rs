@@ -10,7 +10,7 @@ use crate::writer::{
     out::{Styles, WriteStrExt as _},
 };
 
-/// Default [`Writer`] implementation outputting to an [`io::Write`] implementor
+/// Default [`crate::Writer`] implementation outputting to an [`io::Write`] implementor
 /// ([`io::Stdout`] by default).
 ///
 /// Pretty-prints with colors if terminal was successfully detected, otherwise
@@ -18,13 +18,13 @@ use crate::writer::{
 ///
 /// # Ordering
 ///
-/// This [`Writer`] isn't [`Normalized`] by itself, so should be wrapped into
+/// This [`crate::Writer`] isn't [`Normalized`] by itself, so should be wrapped into
 /// a [`writer::Normalize`], otherwise will produce output [`Event`]s in a
 /// broken order.
 ///
 /// [`Event`]: crate::Event
 /// [`Normalized`]: writer::Normalized
-/// [`Writer`]: crate::Writer
+/// [`crate::Writer`]: crate::Writer
 #[derive(Clone, Debug, Deref, DerefMut)]
 pub struct Basic<Out: io::Write = io::Stdout> {
     /// [`io::Write`] implementor to write the output into.
@@ -46,12 +46,12 @@ pub struct Basic<Out: io::Write = io::Stdout> {
     /// [0]: Self::clear_last_lines_if_term_present
     pub(super) re_output_after_clear: String,
 
-    /// [`Verbosity`] of this [`Writer`].
+    /// [`Verbosity`] of this [`crate::Writer`].
     pub(super) verbosity: Verbosity,
 }
 
 impl Basic {
-    /// Creates a new [`Normalized`] [`Basic`] [`Writer`] outputting to
+    /// Creates a new [`Normalized`] [`Basic`] [`crate::Writer`] outputting to
     /// [`io::Stdout`].
     ///
     /// [`Normalized`]: writer::Normalized
@@ -68,7 +68,7 @@ impl Default for Basic {
 }
 
 impl<Out: io::Write> Basic<Out> {
-    /// Creates a new [`Normalized`] [`Basic`] [`Writer`] outputting to the
+    /// Creates a new [`Normalized`] [`Basic`] [`crate::Writer`] outputting to the
     /// given `output`.
     ///
     /// [`Normalized`]: writer::Normalize
@@ -81,12 +81,12 @@ impl<Out: io::Write> Basic<Out> {
         Self::raw(output, color, verbosity).normalized()
     }
 
-    /// Creates a new non-[`Normalized`] [`Basic`] [`Writer`] outputting to the
+    /// Creates a new non-[`Normalized`] [`Basic`] [`crate::Writer`] outputting to the
     /// given `output`.
     ///
     /// Use it only if you know what you're doing. Otherwise, consider using
     /// [`Basic::new()`] which creates an already [`Normalized`] version of a
-    /// [`Basic`] [`Writer`].
+    /// [`Basic`] [`crate::Writer`].
     ///
     /// [`Normalized`]: writer::Normalize
     #[must_use]
@@ -107,7 +107,7 @@ impl<Out: io::Write> Basic<Out> {
         basic
     }
 
-    /// Applies the given [`Cli`] options to this [`Basic`] [`Writer`].
+    /// Applies the given [`Cli`] options to this [`Basic`] [`crate::Writer`].
     pub fn apply_cli(&mut self, cli: Cli) {
         match cli.verbose {
             0 => {}

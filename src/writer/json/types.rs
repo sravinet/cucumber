@@ -65,9 +65,9 @@ pub struct Embedding {
 }
 
 impl Embedding {
-    /// Creates [`Embedding`] from the provided [`event::Scenario::Log`].
+    /// Creates [`Embedding`] from the provided [`crate::event::Scenario::Log`].
     pub fn from_log(msg: impl AsRef<str>) -> Self {
-        /// [`Mime`] of the [`event::Scenario::Log`] [`Embedding`].
+        /// [`Mime`] of the [`crate::event::Scenario::Log`] [`Embedding`].
         static LOG_MIME: LazyLock<Mime> = LazyLock::new(|| {
             "text/x.cucumber.log+plain"
                 .parse()
@@ -99,19 +99,19 @@ pub struct Tag {
 #[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Status {
-    /// [`event::Step::Passed`].
+    /// [`crate::event::Step::Passed`].
     Passed,
 
-    /// [`event::Step::Failed`] with an [`event::StepError::Panic`].
+    /// [`crate::event::Step::Failed`] with an [`crate::event::StepError::Panic`].
     Failed,
 
-    /// [`event::Step::Skipped`].
+    /// [`crate::event::Step::Skipped`].
     Skipped,
 
-    /// [`event::Step::Failed`] with an [`event::StepError::AmbiguousMatch`].
+    /// [`crate::event::Step::Failed`] with an [`crate::event::StepError::AmbiguousMatch`].
     Ambiguous,
 
-    /// [`event::Step::Failed`] with an [`event::StepError::NotFound`].
+    /// [`crate::event::Step::Failed`] with an [`crate::event::StepError::NotFound`].
     Undefined,
 
     /// Never constructed and is here only to fully describe [JSON schema][1].
@@ -156,10 +156,10 @@ pub struct Step {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub hidden: bool,
 
-    /// [`RunResult`] of this [`Step`].
+    /// [`RunResult`] of this [`crate::step::Step`].
     pub result: RunResult,
 
-    /// [`Embedding`]s of this [`Step`].
+    /// [`Embedding`]s of this [`crate::step::Step`].
     ///
     /// Although this field isn't present in the [JSON schema][1], all major
     /// implementations have it (see [Java], [JavaScript], [Ruby]).

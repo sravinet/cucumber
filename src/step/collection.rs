@@ -20,17 +20,17 @@ use super::{
 pub type Step<World> =
     for<'a> fn(&'a mut World, Context) -> LocalBoxFuture<'a, ()>;
 
-/// Alias for a [`Step`] with [`regex::CaptureLocations`], [`Location`] and
+/// Alias for a [`crate::step::Step`] with [`regex::CaptureLocations`], [`Location`] and
 /// [`Context`] returned by [`Collection::find()`].
 pub type WithContext<'me, World> =
     (&'me Step<World>, regex::CaptureLocations, Option<Location>, Context);
 
-/// Collection of [`Step`]s.
+/// Collection of [`crate::step::Step`]s.
 ///
-/// Every [`Step`] has to match with exactly 1 [`Regex`].
+/// Every [`crate::step::Step`] has to match with exactly 1 [`regex::Regex`].
 #[derive(Debug)]
 pub struct Collection<World> {
-    /// Collection of [Given] [`Step`]s.
+    /// Collection of [Given] [`crate::step::Step`]s.
     ///
     /// [Given]: https://cucumber.io/docs/gherkin/reference#given
     #[debug("{:?}",
@@ -40,7 +40,7 @@ pub struct Collection<World> {
     )]
     given: HashMap<(HashableRegex, Option<Location>), Step<World>>,
 
-    /// Collection of [When] [`Step`]s.
+    /// Collection of [When] [`crate::step::Step`]s.
     ///
     /// [When]: https://cucumber.io/docs/gherkin/reference#when
     #[debug("{:?}",
@@ -50,7 +50,7 @@ pub struct Collection<World> {
     )]
     when: HashMap<(HashableRegex, Option<Location>), Step<World>>,
 
-    /// Collection of [Then] [`Step`]s.
+    /// Collection of [Then] [`crate::step::Step`]s.
     ///
     /// [Then]: https://cucumber.io/docs/gherkin/reference#then
     #[debug("{:?}",
@@ -197,7 +197,7 @@ impl<World> Collection<World> {
         self.given.len() + self.when.len() + self.then.len()
     }
 
-    /// Adds a [Given] [`Step`] matching the given `regex`.
+    /// Adds a [Given] [`crate::step::Step`] matching the given `regex`.
     ///
     /// [Given]: https://cucumber.io/docs/gherkin/reference#given
     #[must_use]
@@ -211,7 +211,7 @@ impl<World> Collection<World> {
         self
     }
 
-    /// Adds a [When] [`Step`] matching the given `regex`.
+    /// Adds a [When] [`crate::step::Step`] matching the given `regex`.
     ///
     /// [When]: https://cucumber.io/docs/gherkin/reference#when
     #[must_use]
@@ -225,7 +225,7 @@ impl<World> Collection<World> {
         self
     }
 
-    /// Adds a [Then] [`Step`] matching the given `regex`.
+    /// Adds a [Then] [`crate::step::Step`] matching the given `regex`.
     ///
     /// [Then]: https://cucumber.io/docs/gherkin/reference#then
     #[must_use]
@@ -239,12 +239,12 @@ impl<World> Collection<World> {
         self
     }
 
-    /// Returns a [`Step`] function matching the given [`gherkin::Step`], if
+    /// Returns a [`crate::step::Step`] function matching the given [`gherkin::Step`], if
     /// any.
     ///
     /// # Errors
     ///
-    /// If the given [`gherkin::Step`] matches multiple [`Regex`]es.
+    /// If the given [`gherkin::Step`] matches multiple [`regex::Regex`]es.
     pub fn find(
         &self,
         step: &gherkin::Step,
@@ -515,9 +515,6 @@ mod tests {
         assert_eq!(enterprise_collection.when_len(), 3); // health check, login, create key  
         assert_eq!(enterprise_collection.then_len(), 1); // key created
 
-        println!(
-            "✅ Enterprise modular pattern: {} total steps registered",
-            enterprise_collection.total_len()
-        );
+        // Enterprise modular pattern verification complete
     }
 }

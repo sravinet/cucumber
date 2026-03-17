@@ -1,13 +1,13 @@
 //! State management for the summarize writer execution flow.
 
-/// Possible states of a [`Summarize`] [`Writer`] during test execution.
+/// Possible states of a [`Summarize`] [`crate::Writer`] during test execution.
 ///
 /// This enum tracks the execution state to ensure proper timing of summary
 /// output. The summary should only be generated once when the test run finishes,
 /// and this state machine prevents duplicate or premature summary generation.
 ///
 /// [`Summarize`]: super::core::Summarize
-/// [`Writer`]: crate::Writer
+/// [`crate::Writer`]: crate::Writer
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum State {
     /// [`Finished`] event hasn't been encountered yet.

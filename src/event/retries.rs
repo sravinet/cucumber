@@ -2,9 +2,9 @@
 
 use std::hash::Hash;
 
-/// Number of retry attempts for a [`Scenario`].
+/// Number of retry attempts for a [`gherkin::Scenario`].
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Retries {
     /// Current retry attempt.

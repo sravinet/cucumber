@@ -16,11 +16,11 @@ use crate::{
     step,
 };
 
-/// ID of a [`Scenario`], uniquely identifying it.
+/// ID of a [`gherkin::Scenario`], uniquely identifying it.
 ///
-/// **NOTE**: Retried [`Scenario`] has a different ID from a failed one.
+/// **NOTE**: Retried [`gherkin::Scenario`] has a different ID from a failed one.
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[derive(Clone, Copy, Debug, Display, Eq, FromStr, Hash, PartialEq)]
 pub struct ScenarioId(pub u64);
 
@@ -40,26 +40,26 @@ impl Default for ScenarioId {
     }
 }
 
-/// Alias for a failed [`Scenario`].
+/// Alias for a failed [`gherkin::Scenario`].
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 pub(super) type IsFailed = bool;
 
-/// Alias for a retried [`Scenario`].
+/// Alias for a retried [`gherkin::Scenario`].
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 pub(super) type IsRetried = bool;
 
-/// Failure encountered during execution of [`HookType::Before`] or [`Step`].
+/// Failure encountered during execution of [`HookType::Before`] or [`crate::step::Step`].
 /// See [`Executor::emit_failed_events()`] for more info.
 ///
 /// [`Executor::emit_failed_events()`]: super::executor::Executor::emit_failed_events
-/// [`Step`]: gherkin::Step
+/// [`crate::step::Step`]: gherkin::Step
 #[derive(Debug)]
 pub(super) enum ExecutionFailure<World> {
     /// [`HookType::Before`] panicked.
     BeforeHookPanicked {
-        /// [`World`] at the time [`HookType::Before`] has panicked.
+        /// [`crate::World`] at the time [`HookType::Before`] has panicked.
         world: Option<World>,
 
         /// [`catch_unwind()`] of the [`HookType::Before`] panic.
@@ -71,50 +71,50 @@ pub(super) enum ExecutionFailure<World> {
         meta: Metadata,
     },
 
-    /// [`Step`] was skipped.
+    /// [`crate::step::Step`] was skipped.
     ///
-    /// [`Step`]: gherkin::Step.
+    /// [`crate::step::Step`]: gherkin::Step.
     StepSkipped(Option<World>),
 
-    /// [`Step`] failed.
+    /// [`crate::step::Step`] failed.
     ///
-    /// [`Step`]: gherkin::Step.
+    /// [`crate::step::Step`]: gherkin::Step.
     StepPanicked {
-        /// [`World`] at the time when [`Step`] has failed.
+        /// [`crate::World`] at the time when [`crate::step::Step`] has failed.
         ///
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         world: Option<World>,
 
-        /// [`Step`] itself.
+        /// [`crate::step::Step`] itself.
         ///
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         step: Source<gherkin::Step>,
 
-        /// [`Step`]s [`regex`] [`CaptureLocations`].
+        /// [`crate::step::Step`]s [`regex`] [`CaptureLocations`].
         ///
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         captures: Option<CaptureLocations>,
 
-        /// [`Location`] of the [`fn`] that matched this [`Step`].
+        /// [`Location`] of the [`fn`] that matched this [`crate::step::Step`].
         ///
         /// [`Location`]: step::Location
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         loc: Option<step::Location>,
 
-        /// [`StepError`] of the [`Step`].
+        /// [`StepError`] of the [`crate::step::Step`].
         ///
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         /// [`StepError`]: event::StepError
         err: event::StepError,
 
-        /// [`Metadata`] at the time when [`Step`] failed.
+        /// [`Metadata`] at the time when [`crate::step::Step`] failed.
         ///
-        /// [`Step`]: gherkin::Step.
+        /// [`crate::step::Step`]: gherkin::Step.
         meta: Metadata,
 
-        /// Indicator whether the [`Step`] was background or not.
+        /// Indicator whether the [`crate::step::Step`] was background or not.
         ///
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         is_background: bool,
     },
 
@@ -123,7 +123,7 @@ pub(super) enum ExecutionFailure<World> {
 }
 
 impl<W> ExecutionFailure<W> {
-    /// Takes the [`World`] leaving a [`None`] in its place.
+    /// Takes the [`crate::World`] leaving a [`None`] in its place.
     pub(super) const fn take_world(&mut self) -> Option<W> {
         match self {
             Self::BeforeHookPanicked { world, .. }

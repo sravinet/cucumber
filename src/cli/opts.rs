@@ -11,7 +11,7 @@
 //! Main CLI options structure for the cucumber framework.
 //!
 //! This module contains the primary [`Opts`] struct that combines all CLI
-//! options from [`Parser`], [`Runner`], and [`Writer`] components, along with
+//! options from [`Parser`], [`crate::runner::Runner`], and [`crate::Writer`] components, along with
 //! filtering capabilities based on regex patterns or tag expressions.
 
 use clap::{Args, Parser};
@@ -22,7 +22,7 @@ use super::compose::Empty;
 
 /// Root CLI (command line interface) of a top-level [`Cucumber`] executor.
 ///
-/// It combines all the nested CLIs of [`Parser`], [`Runner`] and [`Writer`],
+/// It combines all the nested CLIs of [`Parser`], [`crate::runner::Runner`] and [`crate::Writer`],
 /// and may be extended with custom CLI options additionally.
 ///
 /// # Example
@@ -62,8 +62,8 @@ use super::compose::Empty;
 ///
 /// [`Cucumber`]: crate::Cucumber
 /// [`Parser`]: crate::Parser
-/// [`Runner`]: crate::Runner
-/// [`Writer`]: crate::Writer
+/// [`crate::runner::Runner`]: crate::Runner
+/// [`crate::Writer`]: crate::Writer
 #[derive(Clone, Debug, Default, Parser)]
 #[command(
     name = "cucumber",
@@ -108,15 +108,15 @@ where
     #[command(flatten)]
     pub parser: Parser,
 
-    /// [`Runner`] CLI options.
+    /// [`crate::runner::Runner`] CLI options.
     ///
-    /// [`Runner`]: crate::Runner
+    /// [`crate::runner::Runner`]: crate::Runner
     #[command(flatten)]
     pub runner: Runner,
 
-    /// [`Writer`] CLI options.
+    /// [`crate::Writer`] CLI options.
     ///
-    /// [`Writer`]: crate::Writer
+    /// [`crate::Writer`]: crate::Writer
     #[command(flatten)]
     pub writer: Writer,
 

@@ -22,12 +22,12 @@ use super::{
 };
 use crate::{Event, event, parser};
 
-/// Extension of [`Writer`] allowing its normalization and summarization.
+/// Extension of [`crate::Writer`] allowing its normalization and summarization.
 #[sealed]
 pub trait Ext: Sized {
-    /// Asserts this [`Writer`] being [`Normalized`].
+    /// Asserts this [`crate::Writer`] being [`Normalized`].
     ///
-    /// Technically is no-op, only forcing the [`Writer`] to become
+    /// Technically is no-op, only forcing the [`crate::Writer`] to become
     /// [`Normalized`] despite it actually doesn't represent the one.
     ///
     /// If you need a real normalization, use [`normalized()`] instead.
@@ -44,37 +44,37 @@ pub trait Ext: Sized {
     #[must_use]
     fn assert_normalized(self) -> AssertNormalized<Self>;
 
-    /// Wraps this [`Writer`] into a [`Normalize`]d version.
+    /// Wraps this [`crate::Writer`] into a [`Normalize`]d version.
     ///
     /// See [`Normalize`] for more information.
     #[must_use]
     fn normalized<W>(self) -> Normalize<W, Self>;
 
-    /// Wraps this [`Writer`] to print a summary at the end of an output.
+    /// Wraps this [`crate::Writer`] to print a summary at the end of an output.
     ///
     /// See [`Summarize`] for more information.
     #[must_use]
     fn summarized(self) -> Summarize<Self>;
 
-    /// Wraps this [`Writer`] to fail on [`Skipped`] [`Step`]s if their
-    /// [`Scenario`] isn't marked with `@allow.skipped` tag.
+    /// Wraps this [`crate::Writer`] to fail on [`Skipped`] [`crate::step::Step`]s if their
+    /// [`gherkin::Scenario`] isn't marked with `@allow.skipped` tag.
     ///
     /// See [`FailOnSkipped`] for more information.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn fail_on_skipped(self) -> FailOnSkipped<Self>;
 
-    /// Wraps this [`Writer`] to fail on [`Skipped`] [`Step`]s if the given
+    /// Wraps this [`crate::Writer`] to fail on [`Skipped`] [`crate::step::Step`]s if the given
     /// `with` predicate returns `true`.
     ///
     /// See [`FailOnSkipped`] for more information.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn fail_on_skipped_with<F>(self, with: F) -> FailOnSkipped<Self, F>
     where
@@ -84,39 +84,39 @@ pub trait Ext: Sized {
             &gherkin::Scenario,
         ) -> bool;
 
-    /// Wraps this [`Writer`] to re-output [`Skipped`] [`Step`]s at the end of
+    /// Wraps this [`crate::Writer`] to re-output [`Skipped`] [`crate::step::Step`]s at the end of
     /// an output.
     ///
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn repeat_skipped<W>(self) -> Repeat<W, Self>;
 
-    /// Wraps this [`Writer`] to re-output [`Failed`] [`Step`]s or [`Parser`]
+    /// Wraps this [`crate::Writer`] to re-output [`Failed`] [`crate::step::Step`]s or [`Parser`]
     /// errors at the end of an output.
     ///
     /// [`Failed`]: event::Step::Failed
     /// [`Parser`]: crate::Parser
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     fn repeat_failed<W>(self) -> Repeat<W, Self>;
 
-    /// Wraps this [`Writer`] to re-output `filter`ed events at the end of an
+    /// Wraps this [`crate::Writer`] to re-output `filter`ed events at the end of an
     /// output.
     #[must_use]
     fn repeat_if<W, F>(self, filter: F) -> Repeat<W, Self, F>
     where
         F: Fn(&parser::Result<Event<event::Cucumber<W>>>) -> bool;
 
-    /// Attaches the provided `other` [`Writer`] to the current one for passing
+    /// Attaches the provided `other` [`crate::Writer`] to the current one for passing
     /// events to both of them simultaneously.
     #[must_use]
     fn tee<W, Wr: Writer<W>>(self, other: Wr) -> Tee<Self, Wr>;
 
-    /// Wraps this [`Writer`] into a [`discard::Arbitrary`] one, providing a
+    /// Wraps this [`crate::Writer`] into a [`discard::Arbitrary`] one, providing a
     /// no-op [`ArbitraryWriter`] implementation.
     ///
-    /// Intended to be used for feeding a non-[`ArbitraryWriter`] [`Writer`]
+    /// Intended to be used for feeding a non-[`ArbitraryWriter`] [`crate::Writer`]
     /// into a [`tee()`], as the later accepts only [`ArbitraryWriter`]s.
     ///
     /// [`tee()`]: Ext::tee
@@ -124,10 +124,10 @@ pub trait Ext: Sized {
     #[must_use]
     fn discard_arbitrary_writes(self) -> discard::Arbitrary<Self>;
 
-    /// Wraps this [`Writer`] into a [`discard::Stats`] one, providing a no-op
+    /// Wraps this [`crate::Writer`] into a [`discard::Stats`] one, providing a no-op
     /// [`StatsWriter`] implementation returning only `0`.
     ///
-    /// Intended to be used for feeding a non-[`StatsWriter`] [`Writer`] into a
+    /// Intended to be used for feeding a non-[`StatsWriter`] [`crate::Writer`] into a
     /// [`tee()`], as the later accepts only [`StatsWriter`]s.
     ///
     /// [`tee()`]: Ext::tee
@@ -135,13 +135,13 @@ pub trait Ext: Sized {
     #[must_use]
     fn discard_stats_writes(self) -> discard::Stats<Self>;
     
-    /// Configures this [`Writer`] with the given coloring option.
+    /// Configures this [`crate::Writer`] with the given coloring option.
     ///
     /// This is a convenience method for setting up writer coloring behavior.
     #[must_use]
     fn with_coloring(self, coloring: super::Coloring) -> Self;
     
-    /// Wraps this [`Writer`] to repeat output a specified number of times.
+    /// Wraps this [`crate::Writer`] to repeat output a specified number of times.
     ///
     /// This is useful for testing or debugging scenarios where multiple
     /// output repetitions are desired.

@@ -8,8 +8,10 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! Definitions for a [`Collection`] which is used to store [`Step`] [`Fn`]s and
+//! Definitions for a [`Collection`] which is used to store [`crate::step::Step`] [`Fn`]s and
 //! corresponding [`Regex`] patterns.
+//!
+//! [`Regex`]: crate::codegen::Regex
 //!
 //! This module has been refactored into smaller, focused modules while maintaining
 //! backward compatibility through re-exports. Each module follows the Single
@@ -22,7 +24,7 @@
 //! - [`regex`]: Hashable regex wrapper utilities
 //! - [`builder`]: Modular step builder traits for enterprise-scale BDD
 //!
-//! [`Step`]: gherkin::Step
+//! [`crate::step::Step`]: gherkin::Step
 
 pub mod builder;
 pub mod collection;

@@ -30,12 +30,12 @@ pub trait Parser<I> {
     /// CLI options of this [`Parser`]. In case no options should be introduced,
     /// just use [`cli::Empty`].
     ///
-    /// All CLI options from [`Parser`], [`Runner`] and [`Writer`] will be
+    /// All CLI options from [`Parser`], [`crate::runner::Runner`] and [`crate::Writer`] will be
     /// merged together, so overlapping arguments will cause a runtime panic.
     ///
     /// [`cli::Empty`]: crate::cli::Empty
-    /// [`Runner`]: crate::Runner
-    /// [`Writer`]: crate::Writer
+    /// [`crate::runner::Runner`]: crate::Runner
+    /// [`crate::Writer`]: crate::Writer
     type Cli: clap::Args;
 
     /// Output [`Stream`] of parsed [`Feature`]s.

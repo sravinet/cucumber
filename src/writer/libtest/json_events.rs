@@ -46,10 +46,10 @@ pub enum SuiteEvent {
     /// Test suite started.
     Started {
         /// Number of test cases. In our case, this is number of parsed
-        /// [`Step`]s and [`Parser`] errors.
+        /// [`crate::step::Step`]s and [`Parser`] errors.
         ///
         /// [`Parser`]: crate::Parser
-        /// [`Step`]: gherkin::Step
+        /// [`crate::step::Step`]: gherkin::Step
         test_count: usize,
     },
 

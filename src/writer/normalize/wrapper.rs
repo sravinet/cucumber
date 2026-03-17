@@ -19,14 +19,14 @@ use crate::{
     parser, writer,
 };
 
-/// Wrapper for a [`Writer`] implementation for outputting events corresponding
-/// to _order guarantees_ from the [`Runner`] in a [`Normalized`] readable
+/// Wrapper for a [`crate::Writer`] implementation for outputting events corresponding
+/// to _order guarantees_ from the [`crate::runner::Runner`] in a [`super::Normalized`] readable
 /// order.
 ///
 /// Doesn't output anything by itself, but rather is used as a combinator for
-/// rearranging events and feeding them to the underlying [`Writer`].
+/// rearranging events and feeding them to the underlying [`crate::Writer`].
 ///
-/// If some [`Feature`]([`Rule`]/[`Scenario`]/[`Step`]) has started to be
+/// If some [`Feature`]([`Rule`]/[`gherkin::Scenario`]/[`crate::step::Step`]) has started to be
 /// written into an output, then it will be written uninterruptedly until its
 /// end, even if some other [`Feature`]s have finished their execution. It makes
 /// much easier to understand what is really happening in the running
@@ -34,12 +34,12 @@ use crate::{
 ///
 /// [`Feature`]: gherkin::Feature
 /// [`Rule`]: gherkin::Rule
-/// [`Runner`]: crate::Runner
-/// [`Scenario`]: gherkin::Scenario
-/// [`Step`]: gherkin::Step
+/// [`crate::runner::Runner`]: crate::Runner
+/// [`gherkin::Scenario`]: gherkin::Scenario
+/// [`crate::step::Step`]: gherkin::Step
 #[derive(Debug, Deref)]
 pub struct Normalize<World, Writer> {
-    /// Original [`Writer`] to normalize output of.
+    /// Original [`crate::Writer`] to normalize output of.
     #[deref]
     writer: Writer,
 
@@ -57,13 +57,13 @@ impl<World, Writer: Clone> Clone for Normalize<World, Writer> {
 
 impl<W, Writer> Normalize<W, Writer> {
     /// Creates a new [`Normalize`] wrapper, which will rearrange [`event`]s
-    /// and feed them to the given [`Writer`].
+    /// and feed them to the given [`crate::Writer`].
     #[must_use]
     pub fn new(writer: Writer) -> Self {
         Self { writer, queue: CucumberQueue::new(Metadata::new(())) }
     }
 
-    /// Returns the original [`Writer`], wrapped by this [`Normalize`] one.
+    /// Returns the original [`crate::Writer`], wrapped by this [`Normalize`] one.
     #[must_use]
     pub const fn inner_writer(&self) -> &Writer {
         &self.writer

@@ -34,10 +34,10 @@ pub struct Queue<K: Eq + Hash, V> {
     /// Initial [`Metadata`] of this [`Queue`] creation.
     ///
     /// If this value is [`Some`], then `Started` [`Event`] hasn't been passed
-    /// on to the inner [`Writer`] yet.
+    /// on to the inner [`crate::Writer`] yet.
     ///
     /// [`Event`]: crate::Event
-    /// [`Writer`]: crate::Writer
+    /// [`crate::Writer`]: crate::Writer
     pub(super) initial: Option<Metadata>,
 
     /// [`FinishedState`] of this [`Queue`].
@@ -81,17 +81,17 @@ pub enum FinishedState {
     NotFinished,
 
     /// `Finished` event has been encountered, but not passed to the inner
-    /// [`Writer`] yet.
+    /// [`crate::Writer`] yet.
     ///
     /// This happens when output is busy due to outputting some other item.
     ///
-    /// [`Writer`]: crate::Writer
+    /// [`crate::Writer`]: crate::Writer
     FinishedButNotEmitted(Metadata),
 
     /// `Finished` event has been encountered and passed to the inner
-    /// [`Writer`].
+    /// [`crate::Writer`].
     ///
-    /// [`Writer`]: crate::Writer
+    /// [`crate::Writer`]: crate::Writer
     FinishedAndEmitted,
 }
 

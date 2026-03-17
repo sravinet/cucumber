@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! [`Writer`]-wrapper for re-outputting events at the end of an output.
+//! [`crate::Writer`]-wrapper for re-outputting events at the end of an output.
 
 use std::mem;
 
@@ -21,20 +21,20 @@ use crate::{Event, World, Writer, event, parser, writer};
 pub type FilterEvent<W> =
     fn(&parser::Result<Event<event::Cucumber<W>>>) -> bool;
 
-/// Wrapper for a [`Writer`] implementation for re-outputting events at the end
+/// Wrapper for a [`crate::Writer`] implementation for re-outputting events at the end
 /// of an output, based on a filter predicated.
 ///
-/// Useful for re-outputting [skipped] or [failed] [`Step`]s.
+/// Useful for re-outputting [skipped] or [failed] [`crate::step::Step`]s.
 ///
-/// An underlying [`Writer`] has to be [`NonTransforming`].
+/// An underlying [`crate::Writer`] has to be [`NonTransforming`].
 ///
 /// [failed]: crate::WriterExt::repeat_failed
 /// [skipped]: crate::WriterExt::repeat_skipped
 /// [`NonTransforming`]: writer::NonTransforming
-/// [`Step`]: gherkin::Step
+/// [`crate::step::Step`]: gherkin::Step
 #[derive(Debug, Deref)]
 pub struct Repeat<W, Wr, F = FilterEvent<W>> {
-    /// Original [`Writer`].
+    /// Original [`crate::Writer`].
     #[deref]
     writer: Wr,
 
@@ -141,7 +141,7 @@ impl<W, Wr: writer::Normalized, F> writer::Normalized for Repeat<W, Wr, F> {}
 impl<W, Wr, F> writer::Summarizable for Repeat<W, Wr, F> {}
 
 impl<W, Wr, F> Repeat<W, Wr, F> {
-    /// Creates a new [`Writer`] for re-outputting events at the end of an
+    /// Creates a new [`crate::Writer`] for re-outputting events at the end of an
     /// output in case the given `filter` predicated returns `true`.
     #[must_use]
     pub const fn new(writer: Wr, filter: F) -> Self {
@@ -150,7 +150,7 @@ impl<W, Wr, F> Repeat<W, Wr, F> {
 }
 
 impl<W, Wr> Repeat<W, Wr> {
-    /// Creates [`Writer`] for re-outputting [`Skipped`] events at the end of
+    /// Creates [`crate::Writer`] for re-outputting [`Skipped`] events at the end of
     /// an output.
     ///
     /// [`Skipped`]: event::Step::Skipped
@@ -195,7 +195,7 @@ impl<W, Wr> Repeat<W, Wr> {
         }
     }
 
-    /// Creates a [`Writer`] for re-outputting [`Failed`] events and [`Parser`]
+    /// Creates a [`crate::Writer`] for re-outputting [`Failed`] events and [`Parser`]
     /// errors at the end of an output.
     ///
     /// [`Failed`]: event::Step::Failed
@@ -250,7 +250,7 @@ impl<W, Wr> Repeat<W, Wr> {
         }
     }
 
-    /// Returns the original [`Writer`], wrapped by this [`Repeat`] one.
+    /// Returns the original [`crate::Writer`], wrapped by this [`Repeat`] one.
     #[must_use]
     pub fn inner_writer(&self) -> &Wr {
         &self.writer

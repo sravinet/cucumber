@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! [Rust `libtest`][1] compatible [`Writer`] implementation.
+//! [Rust `libtest`][1] compatible [`crate::Writer`] implementation.
 //!
 //! This module provides a modular implementation of the libtest writer,
 //! organized into separate modules for better maintainability:

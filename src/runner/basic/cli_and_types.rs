@@ -13,10 +13,10 @@ use crate::{
     tag::Ext as _,
 };
 
-/// CLI options of a [`Basic`] [`Runner`].
+/// CLI options of a [`Basic`] [`crate::runner::Runner`].
 ///
 /// [`Basic`]: super::Basic
-/// [`Runner`]: crate::Runner
+/// [`crate::runner::Runner`]: crate::Runner
 #[derive(Clone, Debug, Default, clap::Args)]
 #[group(skip)]
 pub struct Cli {
@@ -56,26 +56,26 @@ pub struct Cli {
     pub retry_tag_filter: Option<TagOperation>,
 }
 
-/// Type determining whether [`Scenario`]s should run concurrently or
+/// Type determining whether [`gherkin::Scenario`]s should run concurrently or
 /// sequentially.
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum ScenarioType {
-    /// Run [`Scenario`]s sequentially (one-by-one).
+    /// Run [`gherkin::Scenario`]s sequentially (one-by-one).
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     Serial,
 
-    /// Run [`Scenario`]s concurrently.
+    /// Run [`gherkin::Scenario`]s concurrently.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     Concurrent,
 }
 
-/// Options for retrying [`Scenario`]s.
+/// Options for retrying [`gherkin::Scenario`]s.
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RetryOptions {
     /// Number of [`Retries`].
@@ -95,12 +95,12 @@ impl RetryOptions {
             .map(|num| Self { retries: num, after: self.after })
     }
 
-    /// Parses [`RetryOptions`] from [`Feature`]'s, [`Rule`]'s, [`Scenario`]'s
+    /// Parses [`RetryOptions`] from [`Feature`]'s, [`Rule`]'s, [`gherkin::Scenario`]'s
     /// tags and [`Cli`] options.
     ///
     /// [`Feature`]: gherkin::Feature
     /// [`Rule`]: gherkin::Rule
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub fn parse_from_tags(
         feature: &gherkin::Feature,
@@ -177,10 +177,10 @@ impl RetryOptions {
     }
 
     /// Constructs [`RetryOptionsWithDeadline`], that will reschedule
-    /// [`Scenario`] [`after`] delay.
+    /// [`gherkin::Scenario`] [`after`] delay.
     ///
     /// [`after`]: RetryOptions::after
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) fn with_deadline(
         self,
         now: Instant,
@@ -192,10 +192,10 @@ impl RetryOptions {
     }
 
     /// Constructs [`RetryOptionsWithDeadline`], that will reschedule
-    /// [`Scenario`] immediately, ignoring [`RetryOptions::after`]. Used for
-    /// initial [`Scenario`] run, where we don't need to wait for the delay.
+    /// [`gherkin::Scenario`] immediately, ignoring [`RetryOptions::after`]. Used for
+    /// initial [`gherkin::Scenario`] run, where we don't need to wait for the delay.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) fn without_deadline(self) -> RetryOptionsWithDeadline {
         RetryOptionsWithDeadline {
             retries: self.retries,
@@ -205,9 +205,9 @@ impl RetryOptions {
 }
 
 /// [`RetryOptions`] with an [`Option`]al [`Instant`] to determine, whether
-/// [`Scenario`] should be already rescheduled or not.
+/// [`gherkin::Scenario`] should be already rescheduled or not.
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[derive(Clone, Copy, Debug)]
 pub struct RetryOptionsWithDeadline {
     /// Number of [`Retries`].
@@ -224,32 +224,32 @@ impl From<RetryOptionsWithDeadline> for RetryOptions {
 }
 
 impl RetryOptionsWithDeadline {
-    /// Returns [`Duration`] after which a [`Scenario`] could be retried. If
-    /// [`None`], then [`Scenario`] is ready for the retry.
+    /// Returns [`Duration`] after which a [`gherkin::Scenario`] could be retried. If
+    /// [`None`], then [`gherkin::Scenario`] is ready for the retry.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) fn left_until_retry(&self) -> Option<Duration> {
         let (dur, instant) = self.after?;
         dur.checked_sub(instant?.elapsed())
     }
 }
 
-/// Alias for [`fn`] used to determine whether a [`Scenario`] is [`Concurrent`]
+/// Alias for [`fn`] used to determine whether a [`gherkin::Scenario`] is [`Concurrent`]
 /// or a [`Serial`] one.
 ///
 /// [`Concurrent`]: ScenarioType::Concurrent
 /// [`Serial`]: ScenarioType::Serial
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 pub type WhichScenarioFn = fn(
     &gherkin::Feature,
     Option<&gherkin::Rule>,
     &gherkin::Scenario,
 ) -> ScenarioType;
 
-/// Alias for [`Arc`]ed [`Fn`] used to determine [`Scenario`]'s
+/// Alias for [`Arc`]ed [`Fn`] used to determine [`gherkin::Scenario`]'s
 /// [`RetryOptions`].
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 pub type RetryOptionsFn = Arc<
     dyn Fn(
         &gherkin::Feature,
@@ -259,10 +259,10 @@ pub type RetryOptionsFn = Arc<
     ) -> Option<RetryOptions>,
 >;
 
-/// Alias for [`fn`] executed on each [`Scenario`] before running all [`Step`]s.
+/// Alias for [`fn`] executed on each [`gherkin::Scenario`] before running all [`crate::step::Step`]s.
 ///
-/// [`Scenario`]: gherkin::Scenario
-/// [`Step`]: gherkin::Step
+/// [`gherkin::Scenario`]: gherkin::Scenario
+/// [`crate::step::Step`]: gherkin::Step
 pub type BeforeHookFn<World> = for<'a> fn(
     &'a gherkin::Feature,
     Option<&'a gherkin::Rule>,
@@ -270,10 +270,10 @@ pub type BeforeHookFn<World> = for<'a> fn(
     &'a mut World,
 ) -> LocalBoxFuture<'a, ()>;
 
-/// Alias for [`fn`] executed on each [`Scenario`] after running all [`Step`]s.
+/// Alias for [`fn`] executed on each [`gherkin::Scenario`] after running all [`crate::step::Step`]s.
 ///
-/// [`Scenario`]: gherkin::Scenario
-/// [`Step`]: gherkin::Step
+/// [`gherkin::Scenario`]: gherkin::Scenario
+/// [`crate::step::Step`]: gherkin::Step
 pub type AfterHookFn<World> = for<'a> fn(
     &'a gherkin::Feature,
     Option<&'a gherkin::Rule>,

@@ -325,10 +325,6 @@ mod tests {
         assert_eq!(enterprise_collection.when_len(), 2);
         assert_eq!(enterprise_collection.then_len(), 1);
 
-        println!(
-            "✅ Enterprise pattern: {} total steps across {} domains",
-            enterprise_collection.total_len(),
-            2
-        );
+        // Verification of enterprise pattern setup complete
     }
 }

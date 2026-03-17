@@ -6,10 +6,10 @@ use smart_default::SmartDefault;
 
 use crate::cli::Colored;
 
-/// CLI options of a [`Basic`] [`Writer`].
+/// CLI options of a [`Basic`] [`crate::Writer`].
 ///
 /// [`Basic`]: super::Basic
-/// [`Writer`]: crate::Writer
+/// [`crate::Writer`]: crate::Writer
 #[derive(Clone, Copy, Debug, SmartDefault, clap::Args)]
 #[group(skip)]
 pub struct Cli {

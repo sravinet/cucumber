@@ -50,11 +50,11 @@ impl Colored for Empty {}
 ///
 /// This struct allows combining two separate CLI argument structures into
 /// a single structure, which is particularly useful when implementing
-/// custom [`Writer`] that wraps another one and needs to combine CLI options.
+/// custom [`crate::Writer`] that wraps another one and needs to combine CLI options.
 ///
 /// # Example
 ///
-/// This struct is especially useful, when implementing custom [`Writer`]
+/// This struct is especially useful, when implementing custom [`crate::Writer`]
 /// wrapping another one:
 /// ```rust
 /// # use cucumber::{cli, event, parser, writer, Event, World, Writer};
@@ -136,7 +136,7 @@ impl Colored for Empty {}
 /// {}
 /// ```
 ///
-/// [`Writer`]: crate::Writer
+/// [`crate::Writer`]: crate::Writer
 #[derive(Args, Clone, Copy, Debug, Default)]
 #[group(skip)]
 pub struct Compose<L: Args, R: Args> {

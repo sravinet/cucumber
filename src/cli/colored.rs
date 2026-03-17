@@ -16,15 +16,15 @@
 
 use crate::writer::Coloring;
 
-/// Indication whether a [`Writer`] using CLI options supports colored output.
+/// Indication whether a [`crate::Writer`] using CLI options supports colored output.
 ///
 /// This trait allows CLI options to specify their coloring preferences,
 /// which can then be used by writers to determine whether to output
 /// colored text or plain text.
 ///
-/// [`Writer`]: crate::Writer
+/// [`crate::Writer`]: crate::Writer
 pub trait Colored {
-    /// Returns [`Coloring`] indicating whether a [`Writer`] using CLI options
+    /// Returns [`Coloring`] indicating whether a [`crate::Writer`] using CLI options
     /// supports colored output or not.
     ///
     /// # Default Implementation
@@ -51,7 +51,7 @@ pub trait Colored {
     /// }
     /// ```
     ///
-    /// [`Writer`]: crate::Writer
+    /// [`crate::Writer`]: crate::Writer
     #[must_use]
     fn coloring(&self) -> Coloring {
         Coloring::Never

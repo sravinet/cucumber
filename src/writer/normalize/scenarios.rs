@@ -16,9 +16,9 @@ use crate::{
     event::{self, Retries, Source},
 };
 
-/// [`Queue`] of all events of a single [`Scenario`].
+/// [`Queue`] of all events of a single [`gherkin::Scenario`].
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 /// [`Queue`]: super::queue::Queue
 #[derive(Debug)]
 pub struct ScenariosQueue<World>(

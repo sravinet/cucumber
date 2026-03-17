@@ -36,12 +36,12 @@ where
         ) -> LocalBoxFuture<'a, ()>
         + 'static,
 {
-    /// Sets a hook, executed on each [`Scenario`] before running all its
-    /// [`Step`]s, including [`Background`] ones.
+    /// Sets a hook, executed on each [`gherkin::Scenario`] before running all its
+    /// [`crate::step::Step`]s, including [`Background`] ones.
     ///
     /// [`Background`]: gherkin::Background
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn before<Before>(
         self,
@@ -67,17 +67,17 @@ where
         }
     }
 
-    /// Sets a hook, executed on each [`Scenario`] after running all its
-    /// [`Step`]s, even after [`Skipped`] of [`Failed`] [`Step`]s.
+    /// Sets a hook, executed on each [`gherkin::Scenario`] after running all its
+    /// [`crate::step::Step`]s, even after [`Skipped`] of [`Failed`] [`crate::step::Step`]s.
     ///
     /// Last `World` argument is supplied to the function, in case it was
-    /// initialized before by running [`before`] hook or any [`Step`].
+    /// initialized before by running [`before`] hook or any [`crate::step::Step`].
     ///
     /// [`before`]: Self::before()
     /// [`Failed`]: event::Step::Failed
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub fn after<After>(
         self,

@@ -1,4 +1,4 @@
-//! [`Writer`]-wrapper for collecting a summary of execution.
+//! [`crate::Writer`]-wrapper for collecting a summary of execution.
 //!
 //! This module has been refactored into focused submodules for better maintainability
 //! and testability. The main functionality remains available through re-exports.

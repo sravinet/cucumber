@@ -10,12 +10,12 @@ use tracing_subscriber::{
 use super::visitor::GetScenarioId;
 use crate::runner::basic::ScenarioId;
 
-/// [`Layer`] recording a [`ScenarioId`] into [`Span`]'s [`Extensions`].
+/// [`Layer`] recording a [`ScenarioId`] into [`tracing::Span`]'s [`Extensions`].
 ///
 /// [`Extensions`]: tracing_subscriber::registry::Extensions
 #[derive(Debug)]
 pub struct RecordScenarioId {
-    /// Sender for [`Span`] closing events.
+    /// Sender for [`tracing::Span`] closing events.
     span_close_sender: mpsc::UnboundedSender<span::Id>,
 }
 

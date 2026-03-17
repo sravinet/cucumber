@@ -14,19 +14,19 @@ impl ScenarioId {
     /// Name of the [`ScenarioId`] [`Span`] field.
     pub(crate) const SPAN_FIELD_NAME: &'static str = "__cucumber_scenario_id";
 
-    /// Creates a new [`Span`] for running a [`Scenario`] with this
+    /// Creates a new [`Span`] for running a [`gherkin::Scenario`] with this
     /// [`ScenarioId`].
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(crate) fn scenario_span(self) -> Span {
         // `Level::ERROR` is used to minimize the chance of the user-provided
         // filter to skip it.
         tracing::error_span!("scenario", __cucumber_scenario_id = self.0)
     }
 
-    /// Creates a new [`Span`] for a running [`Step`].
+    /// Creates a new [`Span`] for a running [`crate::step::Step`].
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(crate) fn step_span(self, is_background: bool) -> Span {
         // `Level::ERROR` is used to minimize the chance of the user-provided
         // filter to skip it.

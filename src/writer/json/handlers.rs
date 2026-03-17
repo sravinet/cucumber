@@ -33,12 +33,12 @@ pub struct EventHandler {
     /// [1]: https://github.com/cucumber/cucumber-json-schema
     pub features: Vec<Feature>,
 
-    /// [`SystemTime`] when the current [`Hook`]/[`Step`] has started.
+    /// [`SystemTime`] when the current [`Hook`]/[`crate::step::Step`] has started.
     ///
     /// [`Hook`]: event::Hook
     pub started: Option<SystemTime>,
 
-    /// [`event::Scenario::Log`]s of the current [`Hook`]/[`Step`].
+    /// [`crate::event::Scenario::Log`]s of the current [`Hook`]/[`crate::step::Step`].
     ///
     /// [`Hook`]: event::Hook
     pub logs: Vec<String>,

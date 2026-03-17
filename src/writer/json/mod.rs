@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! [Cucumber JSON format][1] [`Writer`] implementation.
+//! [Cucumber JSON format][1] [`crate::Writer`] implementation.
 //!
 //! This module provides a modular implementation of the JSON writer following
 //! the Single Responsibility Principle. The implementation is organized into

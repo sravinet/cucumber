@@ -23,7 +23,7 @@ pub use regex::Regex;
 
 use crate::{Step, World, step};
 
-/// [`World`] extension allowing to register steps in [`inventory`].
+/// [`crate::World`] extension allowing to register steps in [`inventory`].
 pub trait WorldInventory: World {
     /// Struct [`submit`]ted in a [`given`] macro.
     ///
@@ -41,17 +41,17 @@ pub trait WorldInventory: World {
     type Then: inventory::Collect + StepConstructor<Self>;
 }
 
-/// Alias for a [`fn`] returning a [`Regex`].
+/// Alias for a [`fn`] returning a [`regex::Regex`].
 pub type LazyRegex = fn() -> Regex;
 
-/// Trait for registering a [`Step`] with [`given`], [`when`] and [`then`]
+/// Trait for registering a [`crate::step::Step`] with [`given`], [`when`] and [`then`]
 /// attributes inside [`World::collection()`] method.
 ///
 /// [`given`]: crate::given
 /// [`when`]: crate::when
 /// [`then`]: crate::then
 pub trait StepConstructor<W> {
-    /// Returns an inner [`Step`] with the corresponding [`Regex`].
+    /// Returns an inner [`crate::step::Step`] with the corresponding [`regex::Regex`].
     fn inner(&self) -> (step::Location, LazyRegex, Step<W>);
 }
 
@@ -62,7 +62,7 @@ pub trait StepConstructor<W> {
 /// [`Parameter`]: macro@crate::Parameter
 /// [Cucumber Expression]: https://cucumber.github.io/cucumber-expressions
 pub trait Parameter {
-    /// [`Regex`] matching this [`Parameter`].
+    /// [`regex::Regex`] matching this [`Parameter`].
     ///
     /// Shouldn't contain any capturing groups.
     ///
@@ -135,12 +135,12 @@ pub const fn str_eq(l: &str, r: &str) -> bool {
 /// }
 /// ```
 pub trait ToWorldFuture {
-    /// [`Future`] returned by this [`World`] constructor.
+    /// [`Future`] returned by this [`crate::World`] constructor.
     ///
     /// Set to [`future::Ready`] in case construction is sync.
     type Future: Future;
 
-    /// Resolves this [`Future`] for constructing a new[`World`] using
+    /// Resolves this [`Future`] for constructing a new[`crate::World`] using
     /// [autoderef-based specialization][0].
     ///
     /// [0]: https://tinyurl.com/autoref-spec
@@ -171,7 +171,7 @@ where
 ///
 /// It allows to accept both fallible (returning [`Result`]) and infallible
 /// functions as an attribute's argument, by automatically wrapping infallible
-/// functions in a [`Result`]`<`[`World`]`, `[`Infallible`]`>`.
+/// functions in a [`Result`]`<`[`crate::World`]`, `[`Infallible`]`>`.
 ///
 /// ```rust
 /// # #[derive(Default)]
@@ -200,20 +200,20 @@ where
 /// }
 /// ```
 pub trait IntoWorldResult: Sized {
-    /// [`World`] type itself.
+    /// [`crate::World`] type itself.
     type World: World;
 
-    /// Error returned by this [`World`] constructor.
+    /// Error returned by this [`crate::World`] constructor.
     ///
     /// Set to [`Infallible`] in case construction is infallible.
     type Error;
 
-    /// Passes [`Result`]`<`[`World`]`, Self::Error>` as is, or wraps the plain
-    /// [`World`] in a [`Result`]`<`[`World`]`, `[`Infallible`]`>`.
+    /// Passes [`Result`]`<`[`crate::World`]`, Self::Error>` as is, or wraps the plain
+    /// [`crate::World`] in a [`Result`]`<`[`crate::World`]`, `[`Infallible`]`>`.
     ///
     /// # Errors
     ///
-    /// In case the [`World`] construction errors.
+    /// In case the [`crate::World`] construction errors.
     fn into_world_result(self) -> Result<Self::World, Self::Error>;
 }
 

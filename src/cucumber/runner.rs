@@ -41,10 +41,10 @@ where
         ) -> LocalBoxFuture<'a, ()>
         + 'static,
 {
-    /// If `max` is [`Some`] number of concurrently executed [`Scenario`]s will
+    /// If `max` is [`Some`] number of concurrently executed [`gherkin::Scenario`]s will
     /// be limited.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub fn max_concurrent_scenarios(
         mut self,
@@ -54,9 +54,9 @@ where
         self
     }
 
-    /// Makes failed [`Scenario`]s being retried the specified number of times.
+    /// Makes failed [`gherkin::Scenario`]s being retried the specified number of times.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub fn retries(mut self, retries: impl Into<Option<usize>>) -> Self {
         self.runner = self.runner.retries(retries);
@@ -65,33 +65,33 @@ where
 
     /// Makes stop running tests on the first failure.
     ///
-    /// __NOTE__: All the already started [`Scenario`]s at the moment of failure
+    /// __NOTE__: All the already started [`gherkin::Scenario`]s at the moment of failure
     ///           will be finished.
     ///
-    /// __NOTE__: Retried [`Scenario`]s are considered as failed, only in case
+    /// __NOTE__: Retried [`gherkin::Scenario`]s are considered as failed, only in case
     ///           they exhaust all retry attempts and still do fail.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub fn fail_fast(mut self) -> Self {
         self.runner = self.runner.fail_fast();
         self
     }
 
-    /// Makes failed [`Scenario`]s being retried after the specified
+    /// Makes failed [`gherkin::Scenario`]s being retried after the specified
     /// [`Duration`] passes.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub fn retry_after(mut self, after: impl Into<Option<Duration>>) -> Self {
         self.runner = self.runner.retry_after(after);
         self
     }
 
-    /// Makes failed [`Scenario`]s being retried only if they're matching the
+    /// Makes failed [`gherkin::Scenario`]s being retried only if they're matching the
     /// specified `tag_expression`.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub fn retry_filter(
         mut self,
@@ -101,12 +101,12 @@ where
         self
     }
 
-    /// Function determining whether a [`Scenario`] is [`Concurrent`] or
+    /// Function determining whether a [`gherkin::Scenario`] is [`Concurrent`] or
     /// a [`Serial`] one.
     ///
     /// [`Concurrent`]: ScenarioType::Concurrent
     /// [`Serial`]: ScenarioType::Serial
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub fn which_scenario<Which>(
         self,
@@ -131,9 +131,9 @@ where
         }
     }
 
-    /// Function determining [`Scenario`]'s [`RetryOptions`].
+    /// Function determining [`gherkin::Scenario`]'s [`RetryOptions`].
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub fn retry_options<Retry>(mut self, func: Retry) -> Self
     where

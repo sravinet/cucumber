@@ -6,23 +6,23 @@ use derive_more::with_trait::Display;
 
 use super::event_struct::Info;
 
-/// Type of hook executed before or after all [`Scenario`]'s [`Step`]s.
+/// Type of hook executed before or after all [`gherkin::Scenario`]'s [`crate::step::Step`]s.
 ///
-/// [`Scenario`]: gherkin::Scenario
-/// [`Step`]: gherkin::Step
+/// [`gherkin::Scenario`]: gherkin::Scenario
+/// [`crate::step::Step`]: gherkin::Step
 #[derive(Clone, Copy, Debug, Display, PartialEq, Eq)]
 #[display("{self:?}")]
 pub enum HookType {
-    /// Executing on each [`Scenario`] before running all [`Step`]s.
+    /// Executing on each [`gherkin::Scenario`] before running all [`crate::step::Step`]s.
     ///
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     Before,
 
-    /// Executing on each [`Scenario`] after running all [`Step`]s.
+    /// Executing on each [`gherkin::Scenario`] after running all [`crate::step::Step`]s.
     ///
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     After,
 }
 

@@ -23,79 +23,79 @@ use crate::{
     parser, step,
 };
 
-/// Runs [`Scenario`]s and notifies about their state of completion.
+/// Runs [`gherkin::Scenario`]s and notifies about their state of completion.
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[cfg(not(feature = "observability"))]
 pub(crate) struct Executor<W, Before, After> {
-    /// [`Step`]s [`Collection`].
+    /// [`crate::step::Step`]s [`Collection`].
     ///
     /// [`Collection`]: step::Collection
     collection: step::Collection<W>,
 
-    /// Function, executed on each [`Scenario`] before running all [`Step`]s,
+    /// Function, executed on each [`gherkin::Scenario`] before running all [`crate::step::Step`]s,
     /// including [`Background`] ones.
     ///
     /// [`Background`]: gherkin::Background
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     before_hook: Option<Before>,
 
-    /// Function, executed on each [`Scenario`] after running all [`Step`]s.
+    /// Function, executed on each [`gherkin::Scenario`] after running all [`crate::step::Step`]s.
     ///
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     after_hook: Option<After>,
 
     /// Event sender for scenario events.
     event_sender: EventSender<W>,
 
-    /// Sender for notifying of [`Scenario`]s completion.
+    /// Sender for notifying of [`gherkin::Scenario`]s completion.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     finished_sender: FinishedFeaturesSender,
 
-    /// [`Scenario`]s storage.
+    /// [`gherkin::Scenario`]s storage.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     storage: Features,
 }
 
-/// Runs [`Scenario`]s and notifies about their state of completion (with observability).
+/// Runs [`gherkin::Scenario`]s and notifies about their state of completion (with observability).
 ///
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[cfg(feature = "observability")]
 pub(crate) struct Executor<W: World, Before, After> {
-    /// [`Step`]s [`Collection`].
+    /// [`crate::step::Step`]s [`Collection`].
     ///
     /// [`Collection`]: step::Collection
     collection: step::Collection<W>,
 
-    /// Function, executed on each [`Scenario`] before running all [`Step`]s,
+    /// Function, executed on each [`gherkin::Scenario`] before running all [`crate::step::Step`]s,
     /// including [`Background`] ones.
     ///
     /// [`Background`]: gherkin::Background
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     before_hook: Option<Before>,
 
-    /// Function, executed on each [`Scenario`] after running all [`Step`]s.
+    /// Function, executed on each [`gherkin::Scenario`] after running all [`crate::step::Step`]s.
     ///
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     after_hook: Option<After>,
 
     /// Event sender for scenario events.
     event_sender: EventSender<W>,
 
-    /// Sender for notifying of [`Scenario`]s completion.
+    /// Sender for notifying of [`gherkin::Scenario`]s completion.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     finished_sender: FinishedFeaturesSender,
 
-    /// [`Scenario`]s storage.
+    /// [`gherkin::Scenario`]s storage.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     storage: Features,
 
     /// Observer registry for external monitoring
@@ -153,6 +153,7 @@ where
 
     /// Register an observer for monitoring test execution
     #[cfg(feature = "observability")]
+    #[allow(dead_code)] // Used only when observability feature is enabled
     pub(crate) fn register_observer(
         &self,
         observer: Box<dyn crate::observer::TestObserver<W>>,
@@ -162,9 +163,9 @@ where
         }
     }
 
-    /// Runs a [`Scenario`] with the given [`ScenarioId`].
+    /// Runs a [`gherkin::Scenario`] with the given [`ScenarioId`].
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(crate) async fn run_scenario(
         &self,
         id: ScenarioId,
@@ -534,6 +535,7 @@ where
             );
             
             // Use metadata for detailed timing analysis if available
+            #[allow(unused_variables)] // meta used conditionally in cfg features
             if let Some(meta) = failure_metadata {
                 #[cfg(feature = "timestamps")]
                 tracing::debug!(

@@ -6,32 +6,32 @@
 /// The `retried` count represents items that were retried during execution and is
 /// not included in the total count to avoid double-counting.
 ///
-/// [`Step`]: gherkin::Step
-/// [`Scenario`]: gherkin::Scenario
+/// [`crate::step::Step`]: gherkin::Step
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Stats {
-    /// Number of passed [`Step`]s (or [`Scenario`]s).
+    /// Number of passed [`crate::step::Step`]s (or [`gherkin::Scenario`]s).
     ///
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     pub passed: usize,
 
-    /// Number of skipped [`Step`]s (or [`Scenario`]s).
+    /// Number of skipped [`crate::step::Step`]s (or [`gherkin::Scenario`]s).
     ///
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     pub skipped: usize,
 
-    /// Number of failed [`Step`]s (or [`Scenario`]s).
+    /// Number of failed [`crate::step::Step`]s (or [`gherkin::Scenario`]s).
     ///
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     pub failed: usize,
 
-    /// Number of retried [`Step`]s (or [`Scenario`]s).
+    /// Number of retried [`crate::step::Step`]s (or [`gherkin::Scenario`]s).
     ///
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     pub retried: usize,
 }
 
@@ -42,14 +42,14 @@ impl Stats {
         Self { passed: 0, skipped: 0, failed: 0, retried: 0 }
     }
 
-    /// Returns total number of [`Step`]s (or [`Scenario`]s), these [`Stats`]
+    /// Returns total number of [`crate::step::Step`]s (or [`gherkin::Scenario`]s), these [`Stats`]
     /// have been collected for.
     ///
     /// Note: `retried` count is intentionally not included here, as retried
     /// items are already counted in either `passed` or `failed`.
     ///
-    /// [`Scenario`]: gherkin::Scenario
-    /// [`Step`]: gherkin::Step
+    /// [`gherkin::Scenario`]: gherkin::Scenario
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub const fn total(&self) -> usize {
         // We intentionally don't include `self.retried` number here, as it's

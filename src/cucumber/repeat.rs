@@ -47,7 +47,7 @@ where
     ///     async data-autoplay="true" data-rows="19">
     /// </script>
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     /// [`Skipped`]: event::Step::Skipped
     #[must_use]
     pub fn repeat_skipped(

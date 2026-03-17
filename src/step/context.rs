@@ -7,15 +7,15 @@
 /// Name of a capturing group inside a [`regex`].
 pub type CaptureName = Option<String>;
 
-/// Context for a [`Step`] function execution.
+/// Context for a [`crate::step::Step`] function execution.
 #[derive(Clone, Debug)]
 pub struct Context {
-    /// [`Step`] matched to a [`Step`] function.
+    /// [`crate::step::Step`] matched to a [`crate::step::Step`] function.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub step: gherkin::Step,
 
-    /// [`Regex`] matches of a [`Step::value`].
+    /// [`regex::Regex`] matches of a [`Step::value`].
     ///
     /// [`Step::value`]: gherkin::Step::value
     pub matches: Vec<(CaptureName, String)>,

@@ -8,42 +8,42 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! Passing events to one of two [`Writer`]s based on a predicate.
+//! Passing events to one of two [`crate::Writer`]s based on a predicate.
 
 use crate::{Event, World, Writer, cli, event, parser, writer};
 
-/// Wrapper for passing events to one of two [`Writer`]s based on a predicate.
+/// Wrapper for passing events to one of two [`crate::Writer`]s based on a predicate.
 #[derive(Clone, Copy, Debug)]
 pub struct Or<L, R, F> {
-    /// Left [`Writer`].
+    /// Left [`crate::Writer`].
     left: L,
 
-    /// Right [`Writer`].
+    /// Right [`crate::Writer`].
     right: R,
 
-    /// Predicate indicating which [`Writer`] should be used.
+    /// Predicate indicating which [`crate::Writer`] should be used.
     /// `left` is used on [`true`] and `right` on [`false`].
     predicate: F,
 }
 
 impl<L, R, F> Or<L, R, F> {
-    /// Creates a new [`Or`] [`Writer`] passing events to the `left` and `right`
-    /// [`Writer`]s based on the specified `predicate`.
+    /// Creates a new [`Or`] [`crate::Writer`] passing events to the `left` and `right`
+    /// [`crate::Writer`]s based on the specified `predicate`.
     ///
-    /// In case `predicate` returns [`true`], the `left` [`Writer`] is used,
-    /// otherwise the `right` [`Writer`] is used on [`false`].
+    /// In case `predicate` returns [`true`], the `left` [`crate::Writer`] is used,
+    /// otherwise the `right` [`crate::Writer`] is used on [`false`].
     #[must_use]
     pub const fn new(left: L, right: R, predicate: F) -> Self {
         Self { left, right, predicate }
     }
 
-    /// Returns the left [`Writer`] of this [`Or`] one.
+    /// Returns the left [`crate::Writer`] of this [`Or`] one.
     #[must_use]
     pub const fn left_writer(&self) -> &L {
         &self.left
     }
 
-    /// Returns the right [`Writer`] of this [`Or`] one.
+    /// Returns the right [`crate::Writer`] of this [`Or`] one.
     #[must_use]
     pub const fn right_writer(&self) -> &R {
         &self.right

@@ -17,22 +17,22 @@ where
 {
     /// Runs [`Cucumber`].
     ///
-    /// [`Feature`]s sourced from a [`Parser`] are fed to a [`Runner`], which
-    /// produces events handled by a [`Writer`].
+    /// [`Feature`]s sourced from a [`Parser`] are fed to a [`crate::runner::Runner`], which
+    /// produces events handled by a [`crate::Writer`].
     ///
     /// [`Feature`]: gherkin::Feature
     pub async fn run(self, input: I) -> Wr {
         self.filter_run(input, |_, _, _| true).await
     }
 
-    /// Runs [`Cucumber`] with [`Scenario`]s filter.
+    /// Runs [`Cucumber`] with [`gherkin::Scenario`]s filter.
     ///
-    /// [`Feature`]s sourced from a [`Parser`] are fed to a [`Runner`], which
-    /// produces events handled by a [`Writer`].
+    /// [`Feature`]s sourced from a [`Parser`] are fed to a [`crate::runner::Runner`], which
+    /// produces events handled by a [`crate::Writer`].
     ///
     /// # Example
     ///
-    /// Adjust [`Cucumber`] to run only [`Scenario`]s marked with `@cat` tag:
+    /// Adjust [`Cucumber`] to run only [`gherkin::Scenario`]s marked with `@cat` tag:
     /// ```rust
     /// # use cucumber::World;
     /// #
@@ -70,7 +70,7 @@ where
     /// </script>
     ///
     /// [`Feature`]: gherkin::Feature
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub async fn filter_run<F>(self, input: I, filter: F) -> Wr
     where
         F: Fn(
@@ -156,34 +156,34 @@ where
 {
     /// Runs [`Cucumber`].
     ///
-    /// [`Feature`]s sourced from a [`Parser`] are fed to a [`Runner`], which
-    /// produces events handled by a [`Writer`].
+    /// [`Feature`]s sourced from a [`Parser`] are fed to a [`crate::runner::Runner`], which
+    /// produces events handled by a [`crate::Writer`].
     ///
     /// # Panics
     ///
     /// If encountered errors while parsing [`Feature`]s or at least one
-    /// [`Step`] [`Failed`].
+    /// [`crate::step::Step`] [`Failed`].
     ///
-    /// [`Failed`]: event::Step::Failed
+    /// [`Failed`]: crate::event::Step::Failed
     /// [`Feature`]: gherkin::Feature
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub async fn run_and_exit(self, input: I) {
         self.filter_run_and_exit(input, |_, _, _| true).await;
     }
 
-    /// Runs [`Cucumber`] with [`Scenario`]s filter.
+    /// Runs [`Cucumber`] with [`gherkin::Scenario`]s filter.
     ///
-    /// [`Feature`]s sourced from a [`Parser`] are fed to a [`Runner`], which
-    /// produces events handled by a [`Writer`].
+    /// [`Feature`]s sourced from a [`Parser`] are fed to a [`crate::runner::Runner`], which
+    /// produces events handled by a [`crate::Writer`].
     ///
     /// # Panics
     ///
     /// If encountered errors while parsing [`Feature`]s or at least one
-    /// [`Step`] [`Failed`].
+    /// [`crate::step::Step`] [`Failed`].
     ///
     /// # Example
     ///
-    /// Adjust [`Cucumber`] to run only [`Scenario`]s marked with `@cat` tag:
+    /// Adjust [`Cucumber`] to run only [`gherkin::Scenario`]s marked with `@cat` tag:
     /// ```rust
     /// # use cucumber::World;
     /// #
@@ -220,9 +220,9 @@ where
     ///     async data-autoplay="true" data-rows="14">
     /// </script>
     ///
-    /// [`Failed`]: event::Step::Failed
+    /// [`Failed`]: crate::event::Step::Failed
     /// [`Feature`]: gherkin::Feature
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub async fn filter_run_and_exit<Filter>(self, input: I, filter: Filter)
     where
         Filter: Fn(

@@ -1,7 +1,7 @@
 //! Regex utilities for step matching.
 //!
 //! This module provides the [`HashableRegex`] wrapper that implements
-//! [`Eq`], [`Ord`], and [`Hash`] traits for [`Regex`] objects, enabling
+//! [`Eq`], [`Ord`], and [`Hash`] traits for [`regex::Regex`] objects, enabling
 //! their use in hash maps and other collections.
 
 use std::{
@@ -12,24 +12,24 @@ use std::{
 use derive_more::with_trait::{Debug, Deref, DerefMut, Display};
 use regex::Regex;
 
-/// [`Regex`] wrapper implementing [`Eq`], [`Ord`] and [`Hash`].
+/// [`regex::Regex`] wrapper implementing [`Eq`], [`Ord`] and [`Hash`].
 #[derive(Clone, Debug, Deref, DerefMut, Display)]
 pub struct HashableRegex(Regex);
 
 impl HashableRegex {
-    /// Creates a new [`HashableRegex`] from a [`Regex`].
+    /// Creates a new [`HashableRegex`] from a [`regex::Regex`].
     #[must_use]
     pub fn new(regex: Regex) -> Self {
         Self(regex)
     }
 
-    /// Returns a reference to the inner [`Regex`].
+    /// Returns a reference to the inner [`regex::Regex`].
     #[must_use]
     pub fn inner(&self) -> &Regex {
         &self.0
     }
 
-    /// Consumes the wrapper and returns the inner [`Regex`].
+    /// Consumes the wrapper and returns the inner [`regex::Regex`].
     #[must_use]
     pub fn into_inner(self) -> Regex {
         self.0

@@ -13,12 +13,12 @@ use crate::{
     writer::{self, Ext as _, Verbosity, discard},
 };
 
-/// [JUnit XML report][1] [`Writer`] implementation outputting XML to an
+/// [JUnit XML report][1] [`crate::Writer`] implementation outputting XML to an
 /// [`io::Write`] implementor.
 ///
 /// # Ordering
 ///
-/// This [`Writer`] isn't [`Normalized`] by itself, so should be wrapped into
+/// This [`crate::Writer`] isn't [`Normalized`] by itself, so should be wrapped into
 /// a [`writer::Normalize`], otherwise will panic in runtime as won't be able to
 /// form correct [JUnit `testsuite`s][1].
 ///
@@ -39,21 +39,21 @@ pub struct JUnit<W, Out: io::Write> {
     /// [1]: https://llg.cubic.org/docs/junit
     suit: Option<junit_report::TestSuite>,
 
-    /// [`SystemTime`] when the current [`Scenario`] has started.
+    /// [`SystemTime`] when the current [`gherkin::Scenario`] has started.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     scenario_started_at: Option<SystemTime>,
 
-    /// Current [`Scenario`] [events][1].
+    /// Current [`gherkin::Scenario`] [events][1].
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     /// [1]: event::Scenario
     events: Vec<event::RetryableScenario<W>>,
 
     /// Event handler for processing different event types.
     event_handler: EventHandler<W, Out>,
 
-    /// [`Verbosity`] of this [`Writer`].
+    /// [`Verbosity`] of this [`crate::Writer`].
     verbosity: Verbosity,
 }
 
@@ -154,7 +154,7 @@ where
 impl<W, O: io::Write> writer::NonTransforming for JUnit<W, O> {}
 
 impl<W: Debug + World, Out: io::Write> JUnit<W, Out> {
-    /// Creates a new [`Normalized`] [`JUnit`] [`Writer`] outputting XML report
+    /// Creates a new [`Normalized`] [`JUnit`] [`crate::Writer`] outputting XML report
     /// into the given `output`.
     ///
     /// [`Normalized`]: writer::Normalized
@@ -166,7 +166,7 @@ impl<W: Debug + World, Out: io::Write> JUnit<W, Out> {
         Self::raw(output, verbosity).normalized()
     }
 
-    /// Creates a new non-[`Normalized`] [`JUnit`] [`Writer`] outputting XML
+    /// Creates a new non-[`Normalized`] [`JUnit`] [`crate::Writer`] outputting XML
     /// report into the given `output`, and suitable for feeding into [`tee()`].
     ///
     /// [`Normalized`]: writer::Normalized
@@ -183,12 +183,12 @@ impl<W: Debug + World, Out: io::Write> JUnit<W, Out> {
             .discard_arbitrary_writes()
     }
 
-    /// Creates a new raw and non-[`Normalized`] [`JUnit`] [`Writer`] outputting
+    /// Creates a new raw and non-[`Normalized`] [`JUnit`] [`crate::Writer`] outputting
     /// XML report into the given `output`.
     ///
     /// Use it only if you know what you're doing. Otherwise, consider using
     /// [`JUnit::new()`] which creates an already [`Normalized`] version of
-    /// [`JUnit`] [`Writer`].
+    /// [`JUnit`] [`crate::Writer`].
     ///
     /// [`Normalized`]: writer::Normalized
     /// [1]: https://llg.cubic.org/docs/junit
@@ -209,7 +209,7 @@ impl<W: Debug + World, Out: io::Write> JUnit<W, Out> {
         }
     }
 
-    /// Applies the given [`Cli`] options to this [`JUnit`] [`Writer`].
+    /// Applies the given [`Cli`] options to this [`JUnit`] [`crate::Writer`].
     pub fn apply_cli(&mut self, cli: Cli) {
         if let Some(verbosity) = cli.to_verbosity() {
             self.verbosity = verbosity;

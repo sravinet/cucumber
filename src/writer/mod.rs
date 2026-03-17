@@ -26,7 +26,7 @@
 //!
 //! The writer module is organized into several focused sub-modules:
 //!
-//! - [`traits`]: Core traits defining writer behavior ([`Writer`], [`Arbitrary`], [`Stats`])
+//! - [`traits`]: Core traits defining writer behavior ([`crate::Writer`], [`Arbitrary`], [`Stats`])
 //! - [`ext`]: Extension trait for fluent writer composition and transformations
 //! - [`types`]: Common types and marker traits ([`Verbosity`], [`NonTransforming`])
 //! - Individual writer implementations: [`basic`], [`json`], [`junit`], etc.

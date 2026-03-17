@@ -1,8 +1,5 @@
-use std::panic::AssertUnwindSafe;
-
 use clap::Parser;
-use cucumber::{World as _, cli, given};
-use futures::FutureExt as _;
+use cucumber::{World as _, cli, given, writer::Stats};
 
 #[derive(cli::Args)]
 struct CustomCli {
@@ -41,14 +38,10 @@ async fn tags_option_filters_all_scenarios_with_subcommand() {
     ])
     .expect("Invalid command line");
 
-    let res =
-        World::cucumber().with_cli(cli).run_and_exit("tests/features/cli");
+    let writer = World::cucumber().with_cli(cli).run("tests/features/cli").await;
 
-    let err =
-        AssertUnwindSafe(res).catch_unwind().await.expect_err("should err");
-    let err = err.downcast_ref::<String>().unwrap();
-
-    assert_eq!(err, "2 steps failed");
+    assert!(writer.execution_has_failed(), "Cucumber should have failed");
+    assert_eq!(writer.failed_steps(), 2, "Expected 2 failed steps");
 }
 
 // This test uses a subcommand with the global option `--tags` to filter on one
@@ -63,14 +56,10 @@ async fn tags_option_filters_scenario1_with_subcommand() {
     ])
     .expect("Invalid command line");
 
-    let res =
-        World::cucumber().with_cli(cli).run_and_exit("tests/features/cli");
+    let writer = World::cucumber().with_cli(cli).run("tests/features/cli").await;
 
-    let err =
-        AssertUnwindSafe(res).catch_unwind().await.expect_err("should err");
-    let err = err.downcast_ref::<String>().unwrap();
-
-    assert_eq!(err, "1 step failed");
+    assert!(writer.execution_has_failed(), "Cucumber should have failed");
+    assert_eq!(writer.failed_steps(), 1, "Expected 1 failed step");
 }
 
 // This test verifies that the global option `--tags` is still available without
@@ -83,12 +72,8 @@ async fn tags_option_filters_scenario1_no_subcommand() {
     ])
     .expect("Invalid command line");
 
-    let res =
-        World::cucumber().with_cli(cli).run_and_exit("tests/features/cli");
+    let writer = World::cucumber().with_cli(cli).run("tests/features/cli").await;
 
-    let err =
-        AssertUnwindSafe(res).catch_unwind().await.expect_err("should err");
-    let err = err.downcast_ref::<String>().unwrap();
-
-    assert_eq!(err, "1 step failed");
+    assert!(writer.execution_has_failed(), "Cucumber should have failed");
+    assert_eq!(writer.failed_steps(), 1, "Expected 1 failed step");
 }

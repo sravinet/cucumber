@@ -23,13 +23,13 @@ use crate::{
     },
 };
 
-/// [`libtest`][1] compatible [`Writer`].
+/// [`libtest`][1] compatible [`crate::Writer`].
 ///
 /// Currently used only to support `--format=json` option.
 ///
 /// # Ordering
 ///
-/// This [`Writer`] isn't [`Normalized`] by itself, so should be wrapped into a
+/// This [`crate::Writer`] isn't [`Normalized`] by itself, so should be wrapped into a
 /// [`writer::Normalize`], otherwise will produce output [`Event`]s in a broken
 /// order.
 ///
@@ -62,24 +62,24 @@ pub struct Libtest<W, Out: io::Write = io::Stdout> {
     /// [`ParsingFinished`]: event::Cucumber::ParsingFinished
     pub(super) parsed_all: bool,
 
-    /// Number of passed [`Step`]s.
+    /// Number of passed [`crate::step::Step`]s.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) passed: usize,
 
-    /// Number of failed [`Step`]s.
+    /// Number of failed [`crate::step::Step`]s.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) failed: usize,
 
-    /// Number of retried [`Step`]s.
+    /// Number of retried [`crate::step::Step`]s.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) retried: usize,
 
-    /// Number of skipped [`Step`]s.
+    /// Number of skipped [`crate::step::Step`]s.
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) ignored: usize,
 
     /// Number of [`Parser`] errors.
@@ -165,7 +165,7 @@ pub type Or<W, Wr> = writer::Or<
 pub type OrBasic<W> = Or<W, writer::Summarize<Normalize<W, writer::Basic>>>;
 
 impl<W: Debug + World> Libtest<W, io::Stdout> {
-    /// Creates a new [`Normalized`] [`Libtest`] [`Writer`] outputting into the
+    /// Creates a new [`Normalized`] [`Libtest`] [`crate::Writer`] outputting into the
     /// [`io::Stdout`].
     ///
     /// [`Normalized`]: writer::Normalized
@@ -174,7 +174,7 @@ impl<W: Debug + World> Libtest<W, io::Stdout> {
         Self::new(io::stdout())
     }
 
-    /// Creates a new [`Writer`] which uses a [`Normalized`] [`Libtest`] in case
+    /// Creates a new [`crate::Writer`] which uses a [`Normalized`] [`Libtest`] in case
     /// [`Cli::format`] is set to [`Json`], or provided the `writer` otherwise.
     ///
     /// [`Json`]: Format::Json
@@ -188,7 +188,7 @@ impl<W: Debug + World> Libtest<W, io::Stdout> {
         })
     }
 
-    /// Creates a new [`Writer`] which uses a [`Normalized`] [`Libtest`] in case
+    /// Creates a new [`crate::Writer`] which uses a [`Normalized`] [`Libtest`] in case
     /// [`Cli::format`] is set to [`Json`], or a [`Normalized`]
     /// [`writer::Basic`] otherwise.
     ///
@@ -201,11 +201,11 @@ impl<W: Debug + World> Libtest<W, io::Stdout> {
 }
 
 impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
-    /// Creates a new [`Normalized`] [`Libtest`] [`Writer`] outputting into the
+    /// Creates a new [`Normalized`] [`Libtest`] [`crate::Writer`] outputting into the
     /// provided `output`.
     ///
     /// Theoretically, normalization should be done by the tool that's consuming
-    /// the output og this [`Writer`]. But lack of clear specification of the
+    /// the output og this [`crate::Writer`]. But lack of clear specification of the
     /// [`libtest`][1]'s JSON output leads to some tools [struggling][2] to
     /// interpret it. So, we recommend using a [`Normalized`] [`Libtest::new()`]
     /// rather than a non-[`Normalized`] [`Libtest::raw()`].
@@ -218,11 +218,11 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
         Self::raw(output).normalized()
     }
 
-    /// Creates a new non-[`Normalized`] [`Libtest`] [`Writer`] outputting into
+    /// Creates a new non-[`Normalized`] [`Libtest`] [`crate::Writer`] outputting into
     /// the provided `output`.
     ///
     /// Theoretically, normalization should be done by the tool that's consuming
-    /// the output og this [`Writer`]. But lack of clear specification of the
+    /// the output og this [`crate::Writer`]. But lack of clear specification of the
     /// [`libtest`][1]'s JSON output leads to some tools [struggling][2] to
     /// interpret it. So, we recommend using a [`Normalized`] [`Libtest::new()`]
     /// rather than a non-[`Normalized`] [`Libtest::raw()`].

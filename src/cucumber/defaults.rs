@@ -39,18 +39,18 @@ where
     ///
     /// * [`Parser`] — [`parser::Basic`]
     ///
-    /// * [`Runner`] — [`runner::Basic`]
+    /// * [`crate::runner::Runner`] — [`runner::Basic`]
     ///   * [`ScenarioType`] — [`Concurrent`] by default, [`Serial`] if
-    ///     `@serial` [tag] is present on a [`Scenario`];
-    ///   * Allowed to run up to 64 [`Concurrent`] [`Scenario`]s.
+    ///     `@serial` [tag] is present on a [`gherkin::Scenario`];
+    ///   * Allowed to run up to 64 [`Concurrent`] [`gherkin::Scenario`]s.
     ///
-    /// * [`Writer`] — [`Normalize`] and [`Summarize`] [`writer::Basic`].
+    /// * [`crate::Writer`] — [`Normalize`] and [`Summarize`] [`writer::Basic`].
     ///
     /// [`Concurrent`]: crate::ScenarioType::Concurrent
     /// [`Normalize`]: writer::Normalize
     /// [`Parser`]: crate::Parser
-    /// [`Runner`]: crate::Runner
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`crate::runner::Runner`]: crate::Runner
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     /// [`ScenarioType`]: crate::ScenarioType
     /// [`Serial`]: crate::ScenarioType::Serial
     /// [`Summarize`]: writer::Summarize

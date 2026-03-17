@@ -147,25 +147,25 @@ impl<'me, World> Emitter<World> for &'me mut CucumberQueue<World> {
     }
 }
 
-/// Either a [`Rule`] or a [`Scenario`].
+/// Either a [`Rule`] or a [`gherkin::Scenario`].
 ///
 /// [`Rule`]: gherkin::Rule
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 pub type RuleOrScenario =
     Either<Source<gherkin::Rule>, (Source<gherkin::Scenario>, Option<Retries>)>;
 
-/// Either a [`Rule`]'s or a [`Scenario`]'s [`Queue`].
+/// Either a [`Rule`]'s or a [`gherkin::Scenario`]'s [`Queue`].
 ///
 /// [`Rule`]: gherkin::Rule
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 pub type RuleOrScenarioQueue<World> =
     Either<RulesQueue<World>, ScenariosQueue<World>>;
 
-/// Either a [`Rule`]'s or a [`Scenario`]'s [`Queue`] with the corresponding
-/// [`Rule`] or [`Scenario`] which is currently being outputted.
+/// Either a [`Rule`]'s or a [`gherkin::Scenario`]'s [`Queue`] with the corresponding
+/// [`Rule`] or [`gherkin::Scenario`] which is currently being outputted.
 ///
 /// [`Rule`]: gherkin::Rule
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 pub type NextRuleOrScenario<'events, World> = Either<
     (Source<gherkin::Rule>, &'events mut RulesQueue<World>),
     (Source<gherkin::Scenario>, &'events mut ScenariosQueue<World>),
@@ -204,9 +204,9 @@ impl<World> FeatureQueue<World> {
         }
     }
 
-    /// Inserts a new [`Scenario`] event.
+    /// Inserts a new [`gherkin::Scenario`] event.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub fn insert_scenario_event(
         &mut self,
         rule: Option<Source<gherkin::Rule>>,

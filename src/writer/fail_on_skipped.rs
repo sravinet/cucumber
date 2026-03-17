@@ -8,11 +8,11 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! [`Writer`]-wrapper for transforming [`Skipped`] [`Step`]s into [`Failed`].
+//! [`crate::Writer`]-wrapper for transforming [`Skipped`] [`crate::step::Step`]s into [`Failed`].
 //!
 //! [`Failed`]: event::Step::Failed
 //! [`Skipped`]: event::Step::Skipped
-//! [`Step`]: gherkin::Step
+//! [`crate::step::Step`]: gherkin::Step
 
 use derive_more::with_trait::Deref;
 
@@ -22,14 +22,14 @@ use crate::{
     parser, writer,
 };
 
-/// [`Writer`]-wrapper for transforming [`Skipped`] [`Step`]s into [`Failed`].
+/// [`crate::Writer`]-wrapper for transforming [`Skipped`] [`crate::step::Step`]s into [`Failed`].
 ///
 /// [`Failed`]: event::Step::Failed
 /// [`Skipped`]: event::Step::Skipped
-/// [`Step`]: gherkin::Step
+/// [`crate::step::Step`]: gherkin::Step
 #[derive(Clone, Copy, Debug, Deref)]
 pub struct FailOnSkipped<W, F = SkipFn> {
-    /// Original [`Writer`] to pass transformed event into.
+    /// Original [`crate::Writer`] to pass transformed event into.
     #[deref]
     writer: W,
 
@@ -222,19 +222,19 @@ impl<Writer> From<Writer> for FailOnSkipped<Writer> {
 }
 
 impl<Writer> FailOnSkipped<Writer> {
-    /// Wraps the given [`Writer`] in a new [`FailOnSkipped`] one.
+    /// Wraps the given [`crate::Writer`] in a new [`FailOnSkipped`] one.
     #[must_use]
     pub fn new(writer: Writer) -> Self {
         Self::from(writer)
     }
 
-    /// Wraps the given [`Writer`] in a new [`FailOnSkipped`] one with the given
-    /// `predicate` indicating when a [`Skipped`] [`Step`] is considered
+    /// Wraps the given [`crate::Writer`] in a new [`FailOnSkipped`] one with the given
+    /// `predicate` indicating when a [`Skipped`] [`crate::step::Step`] is considered
     /// [`Failed`].
     ///
     /// [`Failed`]: event::Step::Failed
     /// [`Skipped`]: event::Step::Skipped
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub const fn with<P>(
         writer: Writer,
@@ -250,7 +250,7 @@ impl<Writer> FailOnSkipped<Writer> {
         FailOnSkipped { writer, should_fail: predicate }
     }
 
-    /// Returns the original [`Writer`], wrapped by this [`FailOnSkipped`] one.
+    /// Returns the original [`crate::Writer`], wrapped by this [`FailOnSkipped`] one.
     #[must_use]
     pub fn inner_writer(&self) -> &Writer {
         &self.writer
