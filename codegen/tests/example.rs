@@ -1,7 +1,6 @@
-use std::{fs, io, panic::AssertUnwindSafe, time::Duration};
+use std::{fs, io, time::Duration};
 
-use cucumber::{World, gherkin::Step, given, then, when};
-use futures::FutureExt as _;
+use cucumber::{World, gherkin::Step, given, then, when, writer::Stats as _};
 use tempfile::TempDir;
 use tokio::time;
 
@@ -98,14 +97,12 @@ fn test_return_result_read_slice(
 
 #[tokio::main]
 async fn main() {
-    let res = MyWorld::cucumber()
+    let writer = MyWorld::cucumber()
         .max_concurrent_scenarios(None)
         .fail_on_skipped()
-        .run_and_exit("./tests/features");
+        .run("./tests/features")
+        .await;
 
-    let err =
-        AssertUnwindSafe(res).catch_unwind().await.expect_err("should err");
-    let err = err.downcast_ref::<String>().unwrap();
-
-    assert_eq!(err, "1 step failed");
+    assert!(writer.execution_has_failed(), "Execution should have failed");
+    assert_eq!(writer.failed_steps(), 1, "Expected 1 failed step");
 }
