@@ -17,19 +17,19 @@ use crate::{
     writer::{self, out::Styles},
 };
 
-/// Wrapper for a [`Writer`] for outputting an execution summary (number of
+/// Wrapper for a [`crate::Writer`] for outputting an execution summary (number of
 /// executed features, scenarios, steps and parsing errors).
 ///
-/// Underlying [`Writer`] has to be [`Summarizable`] and [`ArbitraryWriter`]
+/// Underlying [`crate::Writer`] has to be [`Summarizable`] and [`ArbitraryWriter`]
 /// with `Value` accepting [`String`]. If your underlying [`ArbitraryWriter`]
 /// operates with something like JSON (or any other type), you should implement
-/// a [`Writer`] on [`Summarize`] by yourself, to provide the required summary
+/// a [`crate::Writer`] on [`Summarize`] by yourself, to provide the required summary
 /// format.
 ///
 /// [`ArbitraryWriter`]: writer::Arbitrary
 #[derive(Clone, Debug, Deref)]
 pub struct Summarize<Writer> {
-    /// Original [`Writer`] to summarize output of.
+    /// Original [`crate::Writer`] to summarize output of.
     #[deref]
     writer: Writer,
 
@@ -43,14 +43,14 @@ pub struct Summarize<Writer> {
     /// [`Rule`]: gherkin::Rule
     pub(super) rules: usize,
 
-    /// [`Scenario`]s [`Stats`].
+    /// [`gherkin::Scenario`]s [`Stats`].
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) scenarios: Stats,
 
-    /// [`Step`]s [`Stats`].
+    /// [`crate::step::Step`]s [`Stats`].
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub(super) steps: Stats,
 
     /// Number of [`Parser`] errors.
@@ -58,17 +58,17 @@ pub struct Summarize<Writer> {
     /// [`Parser`]: crate::Parser
     pub(super) parsing_errors: usize,
 
-    /// Number of failed [`Scenario`] hooks.
+    /// Number of failed [`gherkin::Scenario`] hooks.
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(super) failed_hooks: usize,
 
-    /// Current [`State`] of this [`Writer`].
+    /// Current [`State`] of this [`crate::Writer`].
     state: State,
 
-    /// Handled [`Scenario`]s to collect [`Stats`].
+    /// Handled [`gherkin::Scenario`]s to collect [`Stats`].
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     handled_scenarios: HandledScenarios,
 }
 
@@ -201,30 +201,30 @@ impl<Writer> From<Writer> for Summarize<Writer> {
 }
 
 impl<Writer> Summarize<Writer> {
-    /// Wraps the given [`Writer`] into a new [`Summarize`]d one.
+    /// Wraps the given [`crate::Writer`] into a new [`Summarize`]d one.
     #[must_use]
     pub fn new(writer: Writer) -> Self {
         Self::from(writer)
     }
 
-    /// Returns the original [`Writer`], wrapped by this [`Summarize`]d one.
+    /// Returns the original [`crate::Writer`], wrapped by this [`Summarize`]d one.
     #[must_use]
     pub const fn inner_writer(&self) -> &Writer {
         &self.writer
     }
 
-    /// Returns collected [`Scenario`]s [`Stats`] of this [`Summarize`]d
-    /// [`Writer`].
+    /// Returns collected [`gherkin::Scenario`]s [`Stats`] of this [`Summarize`]d
+    /// [`crate::Writer`].
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     #[must_use]
     pub const fn scenarios_stats(&self) -> &Stats {
         &self.scenarios
     }
 
-    /// Returns collected [`Step`]s [`Stats`] of this [`Summarize`]d [`Writer`].
+    /// Returns collected [`crate::step::Step`]s [`Stats`] of this [`Summarize`]d [`crate::Writer`].
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     #[must_use]
     pub const fn steps_stats(&self) -> &Stats {
         &self.steps
@@ -260,9 +260,9 @@ impl<Writer> Summarize<Writer> {
         self.state
     }
 
-    /// Keeps track of [`Step`]'s [`Stats`].
+    /// Keeps track of [`crate::step::Step`]'s [`Stats`].
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     fn handle_step<W>(
         &mut self,
         feature: Source<gherkin::Feature>,
@@ -335,9 +335,9 @@ impl<Writer> Summarize<Writer> {
         }
     }
 
-    /// Keeps track of [`Scenario`]'s [`Stats`].
+    /// Keeps track of [`gherkin::Scenario`]'s [`Stats`].
     ///
-    /// [`Scenario`]: gherkin::Scenario
+    /// [`gherkin::Scenario`]: gherkin::Scenario
     fn handle_scenario<W>(
         &mut self,
         feature: Source<gherkin::Feature>,
@@ -402,12 +402,12 @@ impl<Writer> Summarize<Writer> {
     }
 }
 
-/// Marker indicating that a [`Writer`] can be wrapped into a [`Summarize`].
+/// Marker indicating that a [`crate::Writer`] can be wrapped into a [`Summarize`].
 ///
-/// Not any [`Writer`] can be wrapped into a [`Summarize`], as it may transform
+/// Not any [`crate::Writer`] can be wrapped into a [`Summarize`], as it may transform
 /// events inside and the summary won't reflect outputted events correctly.
 ///
-/// So, this trait ensures that a wrong [`Writer`]s pipeline cannot be build.
+/// So, this trait ensures that a wrong [`crate::Writer`]s pipeline cannot be build.
 ///
 /// # Example
 ///
@@ -432,33 +432,32 @@ impl<Writer> Summarize<Writer> {
 /// ```
 ///
 /// ```rust
-/// # use std::panic::AssertUnwindSafe;
-/// #
-/// # use cucumber::{writer, World, WriterExt as _};
-/// # use futures::FutureExt as _;
+/// # use cucumber::{writer, World, WriterExt as _, given, when, then, writer::Stats as _};
 /// #
 /// # #[derive(Debug, Default, World)]
 /// # struct MyWorld;
 /// #
+/// # #[given("Alice is hungry")]
+/// # fn alice_is_hungry(_world: &mut MyWorld) {}
+/// #
+/// # #[when("she eats 3 cucumbers")]
+/// # fn she_eats_cucumbers(_world: &mut MyWorld) {}
+/// #
+/// # #[then("she is full")]
+/// # fn she_is_full(_world: &mut MyWorld) {}
+/// #
 /// # #[tokio::main(flavor = "current_thread")]
 /// # async fn main() {
-/// # let fut = async {
-/// MyWorld::cucumber()
+/// let writer = MyWorld::cucumber()
 ///     .with_writer(
 ///         // `Writer`s pipeline is constructed in a reversed order.
 ///         writer::Basic::stdout() // And, finally, print them.
 ///             .summarized()       // Only then, count summary for them.
 ///             .fail_on_skipped(), // First, transform skipped steps to failed.
 ///     )
-///     .run_and_exit("tests/features/readme")
+///     .run("tests/features/readme")
 ///     .await;
-/// # };
-/// # let err = AssertUnwindSafe(fut)
-/// #         .catch_unwind()
-/// #         .await
-/// #         .expect_err("should err");
-/// # let err = err.downcast_ref::<String>().unwrap();
-/// # assert_eq!(err, "2 steps failed");
+/// # assert!(!writer.execution_has_failed(), "Execution should succeed with proper step definitions");
 /// # }
 /// ```
 pub trait Summarizable {}

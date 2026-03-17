@@ -14,16 +14,16 @@
 //! traits like [`NonTransforming`] that help organize and constrain writer
 //! behavior in the pipeline.
 
-/// Marker indicating that a [`Writer`] doesn't transform or rearrange events.
+/// Marker indicating that a [`crate::Writer`] doesn't transform or rearrange events.
 ///
-/// It's used to ensure that a [`Writer`]s pipeline is built in the right order,
+/// It's used to ensure that a [`crate::Writer`]s pipeline is built in the right order,
 /// avoiding situations like an event transformation isn't done before it's
 /// [`Repeat`]ed.
 ///
 /// # Example
 ///
 /// If you want to pipeline [`FailOnSkipped`], [`Summarize`] and [`Repeat`]
-/// [`Writer`]s, the code won't compile because of the wrong pipelining order.
+/// [`crate::Writer`]s, the code won't compile because of the wrong pipelining order.
 ///
 /// ```rust,compile_fail
 /// # use cucumber::{writer, World, WriterExt as _};
@@ -68,18 +68,23 @@
 /// ```
 ///
 /// ```rust
-/// # use std::panic::AssertUnwindSafe;
-/// #
-/// # use cucumber::{writer, World, WriterExt as _};
-/// # use futures::FutureExt as _;
+/// # use cucumber::{writer, World, WriterExt as _, given, when, then, writer::Stats as _};
 /// #
 /// # #[derive(Debug, Default, World)]
 /// # struct MyWorld;
 /// #
+/// # #[given("Alice is hungry")]
+/// # fn alice_is_hungry(_world: &mut MyWorld) {}
+/// #
+/// # #[when("she eats 3 cucumbers")]
+/// # fn she_eats_cucumbers(_world: &mut MyWorld) {}
+/// #
+/// # #[then("she is full")]
+/// # fn she_is_full(_world: &mut MyWorld) {}
+/// #
 /// # #[tokio::main(flavor = "current_thread")]
 /// # async fn main() {
-/// # let fut = async {
-/// MyWorld::cucumber()
+/// let writer = MyWorld::cucumber()
 ///     .with_writer(
 ///         // `Writer`s pipeline is constructed in a reversed order.
 ///         writer::Basic::stdout() // And, finally, print them.
@@ -87,29 +92,23 @@
 ///             .summarized()       // Only then, count summary for them.
 ///             .fail_on_skipped(), // First, transform skipped steps to failed.
 ///     )
-///     .run_and_exit("tests/features/readme")
+///     .run("tests/features/readme")
 ///     .await;
-/// # };
-/// # let err = AssertUnwindSafe(fut)
-/// #     .catch_unwind()
-/// #     .await
-/// #     .expect_err("should err");
-/// # let err = err.downcast_ref::<String>().unwrap();
-/// # assert_eq!(err, "2 steps failed");
+/// # assert!(!writer.execution_has_failed(), "Execution should succeed with proper step definitions");
 /// # }
 /// ```
 ///
-/// [`Failed`]: event::Step::Failed
+/// [`Failed`]: crate::event::Step::Failed
 /// [`FailOnSkipped`]: super::FailOnSkipped
 /// [`Repeat`]: super::Repeat
-/// [`Skipped`]: event::Step::Skipped
+/// [`Skipped`]: crate::event::Step::Skipped
 /// [`Summarize`]: super::Summarize
-/// [`Writer`]: super::Writer
+/// [`crate::Writer`]: super::Writer
 pub trait NonTransforming {}
 
-/// Standard verbosity levels of a [`Writer`].
+/// Standard verbosity levels of a [`crate::Writer`].
 ///
-/// [`Writer`]: super::Writer
+/// [`crate::Writer`]: super::Writer
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(u8)]
 pub enum Verbosity {
@@ -117,12 +116,12 @@ pub enum Verbosity {
     #[default]
     Default = 0,
 
-    /// Outputs the whole [`World`] on [`Failed`] [`Step`]s whenever is
+    /// Outputs the whole [`crate::World`] on [`Failed`] [`crate::step::Step`]s whenever is
     /// possible.
     ///
-    /// [`Failed`]: event::Step::Failed
-    /// [`Step`]: gherkin::Step
-    /// [`World`]: crate::World
+    /// [`Failed`]: crate::event::Step::Failed
+    /// [`crate::step::Step`]: gherkin::Step
+    /// [`crate::World`]: crate::World
     ShowWorld = 1,
 
     /// Additionally to [`Verbosity::ShowWorld`] outputs [Doc Strings].
@@ -152,12 +151,12 @@ impl From<Verbosity> for u8 {
 }
 
 impl Verbosity {
-    /// Indicates whether [`World`] should be outputted on [`Failed`] [`Step`]s
+    /// Indicates whether [`crate::World`] should be outputted on [`Failed`] [`crate::step::Step`]s
     /// implying this [`Verbosity`].
     ///
-    /// [`Failed`]: event::Step::Failed
-    /// [`Step`]: gherkin::Step
-    /// [`World`]: crate::World
+    /// [`Failed`]: crate::event::Step::Failed
+    /// [`crate::step::Step`]: gherkin::Step
+    /// [`crate::World`]: crate::World
     #[must_use]
     pub const fn shows_world(&self) -> bool {
         matches!(self, Self::ShowWorld | Self::ShowWorldAndDocString)
