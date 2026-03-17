@@ -5,7 +5,7 @@ use std::{ops::ControlFlow, panic, thread};
 use futures::{
     Stream, StreamExt as _,
     channel::{mpsc, oneshot},
-    future, pin_mut, stream,
+    future, pin_mut, stream, FutureExt as _,
 };
 
 use super::{
@@ -88,13 +88,13 @@ pub(super) async fn insert_features<W, S, F>(
 ///
 /// # Events
 ///
-/// - [`Scenario`] events are emitted by [`Executor`].
-/// - If [`Scenario`] was first or last for particular [`Rule`] or [`Feature`],
+/// - [`gherkin::Scenario`] events are emitted by [`Executor`].
+/// - If [`gherkin::Scenario`] was first or last for particular [`Rule`] or [`Feature`],
 ///   emits starting or finishing events for them.
 ///
 /// [`Feature`]: gherkin::Feature
 /// [`Rule`]: gherkin::Rule
-/// [`Scenario`]: gherkin::Scenario
+/// [`gherkin::Scenario`]: gherkin::Scenario
 #[cfg_attr(
     feature = "tracing",
     expect(clippy::too_many_arguments, reason = "needs refactoring")
@@ -253,12 +253,12 @@ pub(super) async fn execute<W, Before, After>(
             }
         }
 
-        while let Ok(Some((id, feat, rule, scenario_failed, retried))) =
-            storage.finished_receiver_mut().try_next()
+        while let Some(Some((id, feat, rule, scenario_failed, retried))) =
+            storage.finished_receiver_mut().next().now_or_never()
         {
             if let Some(rule) = rule {
                 if let Some(f) =
-                    storage.rule_scenario_finished(feat.clone(), rule, retried)
+                    storage.rule_scenario_finished::<W>(feat.clone(), rule, retried)
                 {
                     executor.send_event(f);
                 }

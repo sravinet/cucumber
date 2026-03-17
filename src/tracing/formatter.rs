@@ -2,7 +2,7 @@
 
 use std::fmt::{self, Write};
 
-use tracing::{Event, Subscriber, field::Field};
+use tracing::{Event, Subscriber};
 use tracing_subscriber::{
     fmt::{format, FormatEvent, FormatFields, FmtContext},
     field::RecordFields,
@@ -10,7 +10,6 @@ use tracing_subscriber::{
 };
 
 use super::visitor::{GetScenarioId, IsScenarioIdSpan};
-use crate::runner::basic::ScenarioId;
 
 /// [`FormatFields`] implementation that skips formatting fields if the span
 /// contains a scenario ID field.

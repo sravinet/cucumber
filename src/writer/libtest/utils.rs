@@ -24,10 +24,10 @@ use crate::{
     writer::basic::trim_path,
 };
 
-/// Indicator, whether a [`Step`] is [`Background`] or not.
+/// Indicator, whether a [`crate::step::Step`] is [`Background`] or not.
 ///
 /// [`Background`]: event::Scenario::Background
-/// [`Step`]: gherkin::Step
+/// [`crate::step::Step`]: gherkin::Step
 pub type IsBackground = bool;
 
 /// Utility functions for libtest writer operations.
@@ -102,9 +102,9 @@ impl LibtestUtils {
             .join("::")
     }
 
-    /// Saves [`Step`] starting [`SystemTime`].
+    /// Saves [`crate::step::Step`] starting [`SystemTime`].
     ///
-    /// [`Step`]: gherkin::Step
+    /// [`crate::step::Step`]: gherkin::Step
     pub fn step_started_at<W, Out: io::Write>(
         writer: &mut Libtest<W, Out>,
         meta: Metadata,
