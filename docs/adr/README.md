@@ -34,6 +34,16 @@ An Architecture Decision Record captures an important architectural decision mad
 | [0022](0022-modular-step-builder-architecture.md) | Modular Step Builder Architecture | Accepted | Enable enterprise-scale BDD with domain-specific step builders and modular composition |
 | [0023](0023-step-event-output-standardization.md) | Step Event Output Format Standardization | Accepted | Standardize on struct variant format for all step event outputs across debug, basic, and colored modes |
 | [0024](0024-event-metadata-integration.md) | Event Metadata Integration Enhancement | Accepted | Enable proper metadata wrapping for all events to enhance observability and debugging capabilities |
+| [0025](0025-missing-functionality-implementation.md) | Missing Functionality Implementation | Accepted | Complete missing features and fix critical gaps in functionality |
+| [0026](0026-test-remediation-and-production-readiness.md) | Test Remediation and Production Readiness | Accepted | Achieve 100% test pass rate while maintaining architectural integrity |
+| [0027](0027-tracing-span-lifecycle-management-fixes.md) | Tracing Span Lifecycle Management Fixes | Implemented | Fix critical tracing span lifecycle issues for production stability |
+| [0028](0028-step-definition-attribute-consistency.md) | Step Definition Attribute Consistency | Accepted | Ensure consistent attribute handling across step definitions |
+| [0029](0029-span-waiting-architecture-resolution.md) | Span Waiting Architecture Resolution | Implemented | Resolve span waiting conflicts and improve tracing reliability |
+| [0030](0030-comprehensive-test-coverage-enhancement.md) | Comprehensive Test Coverage Enhancement | Accepted | Enhance test coverage for critical system components |
+| [0031](0031-output-format-test-validation-strategy.md) | Output Format Test Validation Strategy | Accepted | Implement comprehensive testing for all output formats |
+| [0032](0032-panic-free-error-handling-architecture.md) | Panic-Free Error Handling Architecture | Implemented | Eliminate production panics and implement robust error handling |
+| [0033](0033-feature-flag-test-matrix-strategy.md) | Feature Flag Test Matrix Strategy | Accepted | Comprehensive testing across all feature combinations |
+| [0034](0034-async-runtime-compilation-fixes.md) | Async Runtime Compilation Fixes | Implemented | Fix critical compilation errors blocking production deployment |
 
 ## ADR Template
 
