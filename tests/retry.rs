@@ -12,7 +12,11 @@ async fn fail(_: &mut World, num: usize, step: &Step) {
     let mut guard = SCENARIO_RUNS.lock().await;
     let runs = guard.entry(step.clone()).or_default();
     *runs += 1;
-    assert!(*runs > num);
+    
+    // Fail for the first `num` attempts, succeed on attempt `num + 1`
+    if *runs <= num {
+        panic!("Expected failure #{} of {}", *runs, num);
+    }
 }
 
 #[tokio::test]
