@@ -1,7 +1,6 @@
 use std::time::Duration;
 
-use cucumber::{Parameter, World as _, cli, given, then, when, writer, writer::Stats};
-use derive_more::with_trait::{Deref, FromStr};
+use cucumber::{World as _, cli, given, then, when, writer, writer::Stats};
 use futures::FutureExt as _;
 use tokio::time;
 
@@ -40,27 +39,14 @@ async fn main() {
     assert_eq!(writer.parsing_errors(), 0, "Expected no parsing errors");
 }
 
-#[given(regex = r"(\d+) secs?")]
-#[when(regex = r"(\d+) secs?")]
-async fn step(world: &mut World, secs: CustomU64) {
-    time::sleep(Duration::from_secs(*secs)).await;
-
-    world.0 += 1;
-    assert!(world.0 < 4, "Too much!");
-}
-
 #[given(expr = "{int} sec")]
+#[given(expr = "{int} secs")]
 #[when(expr = "{int} sec")]
-async fn step_singular_gw(world: &mut World, secs: usize) {
+#[when(expr = "{int} secs")]
+#[then(expr = "{int} sec")]
+#[then(expr = "{int} secs")]
+async fn time_step(world: &mut World, secs: usize) {
     time::sleep(Duration::from_secs(secs as u64)).await;
-
-    world.0 += 1;
-    assert!(world.0 < 4, "Too much!");
-}
-
-#[then(regex = r"^(\d+) secs?$")]
-async fn then_step(world: &mut World, secs: CustomU64) {
-    time::sleep(Duration::from_secs(*secs)).await;
 
     world.0 += 1;
     assert!(world.0 < 4, "Too much!");
@@ -72,18 +58,8 @@ async fn unknown(_world: &mut World) {
     panic!("Unknown step executed");
 }
 
-#[then(expr = "{int} sec")]
-async fn then_step_singular(world: &mut World, secs: usize) {
-    time::sleep(Duration::from_secs(secs as u64)).await;
 
-    world.0 += 1;
-    assert!(world.0 < 4, "Too much!");
-}
-
-
-#[derive(Deref, FromStr, Parameter)]
-#[param(regex = r"\d+", name = "u64")]
-struct CustomU64(u64);
+// Removed CustomU64 - using native usize with expression-based step definitions
 
 #[derive(Clone, Copy, Debug, Default, cucumber::World)]
 struct World(usize);

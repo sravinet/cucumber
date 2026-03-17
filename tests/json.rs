@@ -1,20 +1,16 @@
 use std::{fs, io::Read as _};
 
 use cucumber::{World as _, given, then, when, writer};
-use futures::FutureExt as _;
 use regex::RegexBuilder;
 use tempfile::NamedTempFile;
-use tracing_subscriber::{
-    Layer as _,
-    filter::LevelFilter,
-    fmt::format::{DefaultFields, Format},
-    layer::SubscriberExt as _,
-};
 
-#[given(regex = r"(\d+) secs?")]
-#[when(regex = r"(\d+) secs?")]
-#[then(regex = r"(\d+) secs?")]
-fn step(world: &mut World) {
+#[given(expr = "{int} sec")]
+#[given(expr = "{int} secs")]
+#[when(expr = "{int} sec")]
+#[when(expr = "{int} secs")]
+#[then(expr = "{int} sec")]
+#[then(expr = "{int} secs")]
+fn step(world: &mut World, _secs: usize) {
     world.0 += 1;
     assert!(world.0 < 4, "Too much!");
 }

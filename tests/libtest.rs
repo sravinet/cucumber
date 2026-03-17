@@ -4,10 +4,13 @@ use cucumber::{World as _, WriterExt as _, cli, given, then, when, writer};
 use regex::Regex;
 use tempfile::NamedTempFile;
 
-#[given(regex = r"(\d+) secs?")]
-#[when(regex = r"(\d+) secs?")]
-#[then(regex = r"(\d+) secs?")]
-fn step(world: &mut World) {
+#[given(expr = "{int} sec")]
+#[given(expr = "{int} secs")]
+#[when(expr = "{int} sec")]
+#[when(expr = "{int} secs")]
+#[then(expr = "{int} sec")]
+#[then(expr = "{int} secs")]
+fn step(world: &mut World, _secs: usize) {
     world.0 += 1;
     assert!(world.0 < 4, "Too much!");
 }
