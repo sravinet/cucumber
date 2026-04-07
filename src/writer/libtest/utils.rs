@@ -18,7 +18,10 @@ use std::{
 use either::Either;
 use itertools::Itertools as _;
 
-use super::{cli::{Cli, ReportTime}, writer::Libtest};
+use super::{
+    cli::{Cli, ReportTime},
+    writer::Libtest,
+};
 use crate::{
     event::{self, Metadata, Retries},
     writer::basic::trim_path,
@@ -223,14 +226,14 @@ impl TimingUtils {
             Some(ReportTime::Colored) => {
                 // Use ANSI color codes for colored output
                 if seconds < 0.1 {
-                    format!("\x1b[32m{:.3}s\x1b[0m", seconds)  // Green for fast
+                    format!("\x1b[32m{:.3}s\x1b[0m", seconds) // Green for fast
                 } else if seconds < 1.0 {
-                    format!("\x1b[33m{:.3}s\x1b[0m", seconds)  // Yellow for moderate
+                    format!("\x1b[33m{:.3}s\x1b[0m", seconds) // Yellow for moderate
                 } else {
-                    format!("\x1b[31m{:.3}s\x1b[0m", seconds)  // Red for slow
+                    format!("\x1b[31m{:.3}s\x1b[0m", seconds) // Red for slow
                 }
             }
-            None => format!("{:.3}s", seconds),  // Default plain format
+            None => format!("{:.3}s", seconds), // Default plain format
         }
     }
 }
@@ -628,7 +631,7 @@ mod tests {
                 report_time: Some(ReportTime::Plain),
                 ..Default::default()
             };
-            
+
             let formatted = TimingUtils::format_duration(duration, &cli);
             assert_eq!(formatted, "1.500s");
         }
@@ -639,22 +642,25 @@ mod tests {
                 report_time: Some(ReportTime::Colored),
                 ..Default::default()
             };
-            
+
             // Fast test (green)
             let fast_duration = Duration::from_millis(50);
-            let formatted_fast = TimingUtils::format_duration(fast_duration, &cli);
+            let formatted_fast =
+                TimingUtils::format_duration(fast_duration, &cli);
             assert!(formatted_fast.contains("\x1b[32m")); // Green
             assert!(formatted_fast.contains("0.050s"));
-            
+
             // Moderate test (yellow)
             let moderate_duration = Duration::from_millis(500);
-            let formatted_moderate = TimingUtils::format_duration(moderate_duration, &cli);
+            let formatted_moderate =
+                TimingUtils::format_duration(moderate_duration, &cli);
             assert!(formatted_moderate.contains("\x1b[33m")); // Yellow
             assert!(formatted_moderate.contains("0.500s"));
-            
+
             // Slow test (red)
             let slow_duration = Duration::from_millis(2000);
-            let formatted_slow = TimingUtils::format_duration(slow_duration, &cli);
+            let formatted_slow =
+                TimingUtils::format_duration(slow_duration, &cli);
             assert!(formatted_slow.contains("\x1b[31m")); // Red
             assert!(formatted_slow.contains("2.000s"));
         }
@@ -662,11 +668,8 @@ mod tests {
         #[test]
         fn format_duration_none() {
             let duration = Duration::from_millis(750);
-            let cli = Cli {
-                report_time: None,
-                ..Default::default()
-            };
-            
+            let cli = Cli { report_time: None, ..Default::default() };
+
             let formatted = TimingUtils::format_duration(duration, &cli);
             assert_eq!(formatted, "0.750s");
         }

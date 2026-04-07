@@ -81,7 +81,8 @@ mod tests {
                 "File not found",
             ),
         };
-        let parser_error = parser::Error::Parsing(std::sync::Arc::new(parse_error));
+        let parser_error =
+            parser::Error::Parsing(std::sync::Arc::new(parse_error));
 
         ErrorHandler::handle_error(&mut report, &parser_error);
 
@@ -107,14 +108,17 @@ mod tests {
                 "Access denied",
             ),
         };
-        let parser_error = parser::Error::Parsing(std::sync::Arc::new(parse_error));
+        let parser_error =
+            parser::Error::Parsing(std::sync::Arc::new(parse_error));
 
         ErrorHandler::handle_error(&mut report, &parser_error);
 
         let suite = &report.testsuites()[0];
         let testcase = &suite.testcases()[0];
         // Path should be trimmed by trim_path function
-        assert!(testcase.name().contains("Feature: very/long/path/to/test/feature"));
+        assert!(
+            testcase.name().contains("Feature: very/long/path/to/test/feature")
+        );
     }
 
     #[test]
@@ -125,7 +129,9 @@ mod tests {
             pos: gherkin::LineCol { line: 10, col: 5 },
             name: "unknown_template".to_string(),
         };
-        let parser_error = parser::Error::ExampleExpansion(std::sync::Arc::new(expansion_error));
+        let parser_error = parser::Error::ExampleExpansion(
+            std::sync::Arc::new(expansion_error),
+        );
 
         ErrorHandler::handle_error(&mut report, &parser_error);
 
@@ -148,7 +154,9 @@ mod tests {
             pos: gherkin::LineCol { line: 5, col: 1 },
             name: "unknown_template".to_string(),
         };
-        let parser_error = parser::Error::ExampleExpansion(std::sync::Arc::new(expansion_error));
+        let parser_error = parser::Error::ExampleExpansion(
+            std::sync::Arc::new(expansion_error),
+        );
 
         ErrorHandler::handle_error(&mut report, &parser_error);
 
@@ -161,9 +169,13 @@ mod tests {
         let path = PathBuf::from("/test/scenario.feature");
         let parse_error = gherkin::ParseFileError::Reading {
             path: path.clone(),
-            source: std::io::Error::new(std::io::ErrorKind::InvalidData, "MissingFeatureKeyword"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "MissingFeatureKeyword",
+            ),
         };
-        let parser_error = parser::Error::Parsing(std::sync::Arc::new(parse_error));
+        let parser_error =
+            parser::Error::Parsing(std::sync::Arc::new(parse_error));
 
         let (name, error_type) =
             ErrorHandler::extract_error_info(&parser_error);
@@ -179,7 +191,9 @@ mod tests {
             pos: gherkin::LineCol { line: 15, col: 10 },
             name: "unknown_template".to_string(),
         };
-        let parser_error = parser::Error::ExampleExpansion(std::sync::Arc::new(expansion_error));
+        let parser_error = parser::Error::ExampleExpansion(
+            std::sync::Arc::new(expansion_error),
+        );
 
         let (name, error_type) =
             ErrorHandler::extract_error_info(&parser_error);

@@ -103,20 +103,23 @@ pub struct ScenarioTracker;
 
 impl ScenarioTracker {
     /// Creates a new empty [`HandledScenarios`] map.
-    /// 
+    ///
     /// This initializes a fresh tracking map for scenario state management,
     /// which is essential for accurate summary reporting.
     #[must_use]
     pub fn empty() -> HandledScenarios {
         HashMap::new()
     }
-    
+
     /// Creates a new empty [`HandledScenarios`] map.
-    /// 
+    ///
     /// Alias for `empty()` to maintain backward compatibility while
     /// following proper naming conventions for type aliases.
     #[must_use]
-    #[deprecated(since = "0.21.0", note = "use `empty()` instead for clearer intent")]
+    #[deprecated(
+        since = "0.21.0",
+        note = "use `empty()` instead for clearer intent"
+    )]
     pub fn new() -> HandledScenarios {
         Self::empty()
     }
@@ -214,14 +217,14 @@ mod tests {
 
     #[test]
     fn scenario_tracker_new() {
-        let scenarios = ScenarioTracker::new();
+        let scenarios = ScenarioTracker::empty();
         assert!(scenarios.is_empty());
     }
 
     #[test]
     fn scenario_tracker_default() {
-        let scenarios1 = ScenarioTracker::new();
-        let scenarios2 = ScenarioTracker::new();
+        let scenarios1 = ScenarioTracker::empty();
+        let scenarios2 = ScenarioTracker::empty();
 
         // Both should create empty maps
         assert!(scenarios1.is_empty());

@@ -289,7 +289,10 @@ mod tests {
         let mut writer = JUnit::<TestWorld, _>::raw(output, Verbosity::Default);
         let feature = create_test_feature();
         let event = Ok(Event {
-            value: Cucumber::Feature(event::Source::new(feature.clone()), FeatureEvent::Started),
+            value: Cucumber::Feature(
+                event::Source::new(feature.clone()),
+                FeatureEvent::Started,
+            ),
             at: SystemTime::UNIX_EPOCH,
         });
         let cli = Cli::default();
@@ -310,14 +313,20 @@ mod tests {
 
         // Start feature first
         let start_event = Ok(Event {
-            value: Cucumber::Feature(event::Source::new(feature.clone()), FeatureEvent::Started),
+            value: Cucumber::Feature(
+                event::Source::new(feature.clone()),
+                FeatureEvent::Started,
+            ),
             at: SystemTime::UNIX_EPOCH,
         });
         writer.handle_event(start_event, &cli).await;
 
         // Finish feature
         let finish_event = Ok(Event {
-            value: Cucumber::Feature(event::Source::new(feature.clone()), FeatureEvent::Finished),
+            value: Cucumber::Feature(
+                event::Source::new(feature.clone()),
+                FeatureEvent::Finished,
+            ),
             at: SystemTime::UNIX_EPOCH,
         });
         writer.handle_event(finish_event, &cli).await;
@@ -351,7 +360,8 @@ mod tests {
                 "File not found",
             ),
         };
-        let error = Err(parser::Error::Parsing(std::sync::Arc::new(parse_error)));
+        let error =
+            Err(parser::Error::Parsing(std::sync::Arc::new(parse_error)));
         let cli = Cli::default();
 
         writer.handle_event(error, &cli).await;

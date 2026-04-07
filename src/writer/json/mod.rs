@@ -109,113 +109,112 @@ mod integration_tests {
         let step = create_test_step();
 
         // 1. Scenario started
-        let event = Event::new(
-            Cucumber::Feature(
-                crate::event::Source::new(feature.clone()),
-                FeatureEvent::Scenario(
-                    crate::event::Source::new(scenario.clone()),
-                    crate::event::RetryableScenario {
-                        event: Scenario::Started::<TestWorld>,
-                        retries: None,
-                    },
-                ),
+        let event = Event::new(Cucumber::Feature(
+            crate::event::Source::new(feature.clone()),
+            FeatureEvent::Scenario(
+                crate::event::Source::new(scenario.clone()),
+                crate::event::RetryableScenario {
+                    event: Scenario::Started::<TestWorld>,
+                    retries: None,
+                },
             ),
-        );
+        ));
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // 2. Step started
-        let event = Event::new(
-            Cucumber::Feature(
-                crate::event::Source::new(feature.clone()),
-                FeatureEvent::Scenario(
-                    crate::event::Source::new(scenario.clone()),
-                    crate::event::RetryableScenario {
-                        event: Scenario::Step::<TestWorld>(crate::event::Source::new(step.clone()), StepEvent::Started),
-                        retries: None,
-                    },
-                ),
+        let event = Event::new(Cucumber::Feature(
+            crate::event::Source::new(feature.clone()),
+            FeatureEvent::Scenario(
+                crate::event::Source::new(scenario.clone()),
+                crate::event::RetryableScenario {
+                    event: Scenario::Step::<TestWorld>(
+                        crate::event::Source::new(step.clone()),
+                        StepEvent::Started,
+                    ),
+                    retries: None,
+                },
             ),
-        );
+        ));
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // 3. Add a log message
-        let event = Event::new(
-            Cucumber::Feature(
-                crate::event::Source::new(feature.clone()),
-                FeatureEvent::Scenario(
-                    crate::event::Source::new(scenario.clone()),
-                    crate::event::RetryableScenario {
-                        event: Scenario::<TestWorld>::Log("Step execution log".to_string()),
-                        retries: None,
-                    },
-                ),
+        let event = Event::new(Cucumber::Feature(
+            crate::event::Source::new(feature.clone()),
+            FeatureEvent::Scenario(
+                crate::event::Source::new(scenario.clone()),
+                crate::event::RetryableScenario {
+                    event: Scenario::<TestWorld>::Log(
+                        "Step execution log".to_string(),
+                    ),
+                    retries: None,
+                },
             ),
-        );
+        ));
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // 4. Step passed
-        let event = Event::new(
-            Cucumber::Feature(
-                crate::event::Source::new(feature.clone()),
-                FeatureEvent::Scenario(
-                    crate::event::Source::new(scenario.clone()),
-                    crate::event::RetryableScenario {
-                        event: Scenario::<TestWorld>::Step(
-                            crate::event::Source::new(step.clone()),
-                            StepEvent::Passed {
-                                captures: regex::Regex::new(r"").unwrap().capture_locations(),
-                                location: None,
-                            },
-                        ),
-                        retries: None,
-                    },
-                ),
+        let event = Event::new(Cucumber::Feature(
+            crate::event::Source::new(feature.clone()),
+            FeatureEvent::Scenario(
+                crate::event::Source::new(scenario.clone()),
+                crate::event::RetryableScenario {
+                    event: Scenario::<TestWorld>::Step(
+                        crate::event::Source::new(step.clone()),
+                        StepEvent::Passed {
+                            captures: regex::Regex::new(r"")
+                                .unwrap()
+                                .capture_locations(),
+                            location: None,
+                        },
+                    ),
+                    retries: None,
+                },
             ),
-        );
+        ));
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // 5. Before hook
-        let event = Event::new(
-            Cucumber::Feature(
-                crate::event::Source::new(feature.clone()),
-                FeatureEvent::Scenario(
-                    crate::event::Source::new(scenario.clone()),
-                    crate::event::RetryableScenario {
-                        event: Scenario::<TestWorld>::Hook(HookType::Before, Hook::Started),
-                        retries: None,
-                    },
-                ),
+        let event = Event::new(Cucumber::Feature(
+            crate::event::Source::new(feature.clone()),
+            FeatureEvent::Scenario(
+                crate::event::Source::new(scenario.clone()),
+                crate::event::RetryableScenario {
+                    event: Scenario::<TestWorld>::Hook(
+                        HookType::Before,
+                        Hook::Started,
+                    ),
+                    retries: None,
+                },
             ),
-        );
+        ));
         writer.handle_event(Ok(event), &cli::Empty).await;
 
-        let event = Event::new(
-            Cucumber::Feature(
-                crate::event::Source::new(feature.clone()),
-                FeatureEvent::Scenario(
-                    crate::event::Source::new(scenario.clone()),
-                    crate::event::RetryableScenario {
-                        event: Scenario::<TestWorld>::Hook(HookType::Before, Hook::Passed),
-                        retries: None,
-                    },
-                ),
+        let event = Event::new(Cucumber::Feature(
+            crate::event::Source::new(feature.clone()),
+            FeatureEvent::Scenario(
+                crate::event::Source::new(scenario.clone()),
+                crate::event::RetryableScenario {
+                    event: Scenario::<TestWorld>::Hook(
+                        HookType::Before,
+                        Hook::Passed,
+                    ),
+                    retries: None,
+                },
             ),
-        );
+        ));
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // 6. Scenario finished
-        let event = Event::new(
-            Cucumber::Feature(
-                crate::event::Source::new(feature.clone()),
-                FeatureEvent::Scenario(
-                    crate::event::Source::new(scenario.clone()),
-                    crate::event::RetryableScenario {
-                        event: Scenario::<TestWorld>::Finished,
-                        retries: None,
-                    },
-                ),
+        let event = Event::new(Cucumber::Feature(
+            crate::event::Source::new(feature.clone()),
+            FeatureEvent::Scenario(
+                crate::event::Source::new(scenario.clone()),
+                crate::event::RetryableScenario {
+                    event: Scenario::<TestWorld>::Finished,
+                    retries: None,
+                },
             ),
-        );
+        ));
         writer.handle_event(Ok(event), &cli::Empty).await;
 
         // 7. Finish and output JSON

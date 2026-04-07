@@ -328,7 +328,7 @@ mod tests {
     };
 
     use super::*;
-    use crate::event::{Hook, HookType, Step, Metadata};
+    use crate::event::{Hook, HookType, Metadata, Step};
 
     #[derive(Debug, Default)]
     struct TestWorld;

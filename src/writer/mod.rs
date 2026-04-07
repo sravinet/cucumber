@@ -119,44 +119,47 @@ mod tests {
 
         // Test writer combinator functionality
         let basic_writer = Basic::default();
-        
+
         // Test normalization functionality - use correct method names
         let normalized = basic_writer.normalized::<()>();
-        let _assert_normalized: AssertNormalized<_> = normalized.assert_normalized();
-        
+        let _assert_normalized: AssertNormalized<_> =
+            normalized.assert_normalized();
+
         // Test failure behavior - actually use the fail_on_skipped functionality
         let basic_writer2 = Basic::default();
         let fail_on_skipped = basic_writer2.fail_on_skipped();
         // Verify that fail_on_skipped returns the expected writer type
         assert!(std::mem::size_of_val(&fail_on_skipped) > 0);
-        
+
         // Test writer combinators - actually use the summarized functionality
         let basic_writer3 = Basic::default();
         let repeated = basic_writer3.repeat_failed::<()>();
         let summarized = repeated.summarized();
-        // Verify that summarized returns the expected writer type 
+        // Verify that summarized returns the expected writer type
         assert!(std::mem::size_of_val(&summarized) > 0);
-        
+
         // Test tee functionality (splitting output) - requires proper World type
         // let basic_writer4 = Basic::default();
         // let basic2 = Basic::default();
         // let _teed = basic_writer4.tee::<TestWorld, _>(basic2); // Complex due to World trait requirements
-        
+
         // Test functionality by actually using these writers, not just creating them
         let basic_writer5 = Basic::default();
         let with_coloring = basic_writer5.with_coloring(Coloring::Auto);
         // Use the writer - test that it can be converted to other types
         let normalized_colored = with_coloring.normalized::<()>();
-        
+
         // Validate that the normalized colored writer is indeed normalized
-        fn verify_normalized<T: Normalized>(_writer: &T) -> bool { true }
+        fn verify_normalized<T: Normalized>(_writer: &T) -> bool {
+            true
+        }
         assert!(verify_normalized(&normalized_colored));
-        
+
         // Test basic writer functionality exists
         let basic_writer6 = Basic::default();
         let _basic_test = &basic_writer6; // Use the writer
         assert!(true); // Basic functionality test
-        
+
         // Verify these compile without errors
         assert!(true);
     }
@@ -202,11 +205,11 @@ mod tests {
         let base_writer = Basic::default();
         let _normalized = base_writer.normalized::<()>();
         assert!(true); // Simple functionality test
-        
+
         // Test or combinator for fallback behavior (complex World type matching)
         // let fallback = Basic::default();
         // let _with_fallback = combined.or(fallback);
-        
+
         // Test tee combinator for output splitting - requires proper World type
         // let secondary = Basic::default();
         // let another_base = Basic::default();
@@ -218,37 +221,38 @@ mod tests {
     #[test]
     fn test_writer_context_and_stats_functionality() {
         use self::{
-            ScenarioContext, StepContext, WriterStats, ErrorFormatter, 
-            OutputFormatter, WorldFormatter
+            ErrorFormatter, OutputFormatter, ScenarioContext, StepContext,
+            WorldFormatter, WriterStats,
         };
         use crate::test_utils::common::TestWorld;
-        
+
         // Test ScenarioContext creation requires actual gherkin objects
         // This is complex to test without creating proper gherkin structures
         // let scenario_context = ScenarioContext::new(feature_ref, rule_ref, scenario_ref);
-        
+
         // Context tests require proper gherkin structures, which is complex
         // assert_eq!(scenario_context.feature_name, "Test Feature");
         // assert_eq!(scenario_context.scenario_name, "Test Scenario");
-        
+
         // Test WriterStats functionality
         let mut stats = WriterStats::new();
         stats.increment_passed();
         stats.increment_failed();
         stats.increment_skipped();
-        
+
         assert_eq!(stats.passed(), 1);
         assert_eq!(stats.failed(), 1);
         assert_eq!(stats.skipped(), 1);
         assert_eq!(stats.total(), 3);
-        
+
         // Test formatter traits exist and can be used
         let world = TestWorld;
         let _world_str = WorldFormatter::format_world(&world);
-        
-        let error = std::io::Error::new(std::io::ErrorKind::Other, "test error");
+
+        let error =
+            std::io::Error::new(std::io::ErrorKind::Other, "test error");
         let _error_str = ErrorFormatter::format_error(&error);
-        
+
         // This validates the writer infrastructure works correctly
         assert!(true);
     }

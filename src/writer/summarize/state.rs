@@ -320,7 +320,7 @@ mod tests {
         manager.handle_finished_event();
         manager.mark_summary_output_complete();
 
-        let _ = manager.reset();
+        manager.reset();
 
         assert_eq!(manager.current_state(), State::InProgress);
         assert!(manager.should_collect_stats());

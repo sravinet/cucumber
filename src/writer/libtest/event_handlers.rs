@@ -82,11 +82,9 @@ impl<W: Debug + World, Out: io::Write> Libtest<W, Out> {
         cli: &Cli,
     ) -> WriterResult<()> {
         for ev in self.expand_cucumber_event(event, cli) {
-            let json_str = serde_json::to_string(&ev)
-                .map_err(WriterError::from)?;
-            self.output
-                .write_line(json_str)
-                .map_err(WriterError::from)?;
+            let json_str =
+                serde_json::to_string(&ev).map_err(WriterError::from)?;
+            self.output.write_line(json_str).map_err(WriterError::from)?;
         }
         Ok(())
     }
@@ -500,10 +498,8 @@ mod tests {
             writer.started_at = Some(start_time);
             let finish_time = start_time + Duration::from_secs(1);
 
-            let event = Ok(Event {
-                value: event::Cucumber::Finished,
-                at: finish_time,
-            });
+            let event =
+                Ok(Event { value: event::Cucumber::Finished, at: finish_time });
 
             let events = writer.expand_cucumber_event(event, &cli);
 
@@ -647,7 +643,7 @@ mod tests {
                 Ok(meta.insert(event::Cucumber::ParsingFinished {
                     features: 1,
                     rules: 0,
-                    scenarios: 1, 
+                    scenarios: 1,
                     steps: 5,
                     parser_errors: 0,
                 }));

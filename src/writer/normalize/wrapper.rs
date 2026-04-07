@@ -109,7 +109,10 @@ impl<World, Wr: Writer<World>> Writer<World> for Normalize<World, Wr> {
                         s,
                         meta.wrap(ev),
                     ) {
-                        eprintln!("Warning: Failed to insert scenario event: {}", e);
+                        eprintln!(
+                            "Warning: Failed to insert scenario event: {}",
+                            e
+                        );
                     }
                 }
                 Feature::Finished => {
@@ -120,7 +123,10 @@ impl<World, Wr: Writer<World>> Writer<World> for Normalize<World, Wr> {
                 Feature::Rule(r, ev) => match ev {
                     Rule::Started => {
                         if let Err(e) = self.queue.new_rule(&f, meta.wrap(r)) {
-                            eprintln!("Warning: Failed to create new rule: {}", e);
+                            eprintln!(
+                                "Warning: Failed to create new rule: {}",
+                                e
+                            );
                         }
                     }
                     Rule::Scenario(s, ev) => {
@@ -130,11 +136,16 @@ impl<World, Wr: Writer<World>> Writer<World> for Normalize<World, Wr> {
                             s,
                             meta.wrap(ev),
                         ) {
-                            eprintln!("Warning: Failed to insert scenario event in rule: {}", e);
+                            eprintln!(
+                                "Warning: Failed to insert scenario event in rule: {}",
+                                e
+                            );
                         }
                     }
                     Rule::Finished => {
-                        if let Err(e) = self.queue.rule_finished(&f, meta.wrap(r)) {
+                        if let Err(e) =
+                            self.queue.rule_finished(&f, meta.wrap(r))
+                        {
                             eprintln!("Warning: Failed to finish rule: {}", e);
                         }
                     }

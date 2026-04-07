@@ -256,7 +256,7 @@ mod tests {
 
         assert_eq!(scenario_started_at, Some(SystemTime::UNIX_EPOCH));
         assert_eq!(events.len(), 1);
-        
+
         // Test that handler state was properly modified
         assert!(std::mem::size_of_val(&handler) > 0);
     }
@@ -310,7 +310,7 @@ mod tests {
 
         assert_eq!(events.len(), 1);
         assert!(matches!(events[0].event, event::Scenario::Step(_, _)));
-        
+
         // Test that handler was properly modified during step processing
         assert!(std::mem::size_of_val(&handler) > 0);
     }
@@ -356,7 +356,7 @@ mod tests {
         assert!(scenario_started_at.is_none());
         assert!(events.is_empty());
         assert_eq!(suite.as_ref().unwrap().testcases().len(), 1);
-        
+
         // Test that handler state was properly modified during finish processing
         assert!(std::mem::size_of_val(&handler) > 0);
     }
@@ -417,7 +417,8 @@ mod tests {
                 "File not found",
             ),
         };
-        let parser_error = parser::Error::Parsing(std::sync::Arc::new(parse_error));
+        let parser_error =
+            parser::Error::Parsing(std::sync::Arc::new(parse_error));
 
         EventHandler::<TestWorld, Vec<u8>>::handle_parser_error(
             &mut report,

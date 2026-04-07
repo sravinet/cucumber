@@ -514,7 +514,7 @@ mod tests {
             JUnitTestCaseBuilder::<TestWorld>::new(Verbosity::Default);
         let feature = create_test_feature();
         let scenario = create_test_scenario();
-        
+
         // Use Event structure with metadata
         let events = vec![event::RetryableScenario {
             event: event::Scenario::Started,
@@ -532,5 +532,4 @@ mod tests {
         assert!(!test_case.name().is_empty());
         // This test validates Event import usage in test context
     }
-
 }

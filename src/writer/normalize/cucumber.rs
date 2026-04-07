@@ -41,7 +41,10 @@ impl<World> CucumberQueue<World> {
     /// [`Feature`]s holding the output.
     ///
     /// [`Feature`]: gherkin::Feature
-    pub fn feature_finished(&mut self, feat: Event<&Source<gherkin::Feature>>) -> ExecutionResult<()> {
+    pub fn feature_finished(
+        &mut self,
+        feat: Event<&Source<gherkin::Feature>>,
+    ) -> ExecutionResult<()> {
         let (feat, meta) = feat.split();
         self.fifo
             .get_mut(feat)
@@ -215,11 +218,9 @@ impl<World> FeatureQueue<World> {
         ev: Event<event::RetryableScenario<World>>,
     ) -> ExecutionResult<()> {
         if let Some(r) = rule {
-            match self
-                .fifo
-                .get_mut(&Either::Left(r.clone()))
-                .ok_or_else(|| ExecutionError::rule_not_found(&r.name, "unknown feature"))?
-            {
+            match self.fifo.get_mut(&Either::Left(r.clone())).ok_or_else(
+                || ExecutionError::rule_not_found(&r.name, "unknown feature"),
+            )? {
                 Either::Left(rules) => {
                     rules
                         .fifo
@@ -470,12 +471,14 @@ mod tests {
             event: event::Scenario::<TestWorld>::Started,
             retries: None,
         });
-        queue.insert_scenario_event(
-            &feature,
-            None,
-            scenario.clone(),
-            scenario_event,
-        ).unwrap();
+        queue
+            .insert_scenario_event(
+                &feature,
+                None,
+                scenario.clone(),
+                scenario_event,
+            )
+            .unwrap();
 
         let feature_queue = queue.fifo.get(&feature).unwrap();
         assert!(
@@ -556,12 +559,14 @@ mod tests {
             event: event::Scenario::<TestWorld>::Started,
             retries: None,
         });
-        feature_queue.insert_scenario_event(
-            Some(rule.clone()),
-            scenario.clone(),
-            None,
-            scenario_event,
-        ).unwrap();
+        feature_queue
+            .insert_scenario_event(
+                Some(rule.clone()),
+                scenario.clone(),
+                None,
+                scenario_event,
+            )
+            .unwrap();
 
         // Check that scenario was added to the rule
         let rule_queue = feature_queue.fifo.get(&Either::Left(rule)).unwrap();
@@ -581,12 +586,9 @@ mod tests {
             event: event::Scenario::<TestWorld>::Started,
             retries: None,
         });
-        feature_queue.insert_scenario_event(
-            None,
-            scenario.clone(),
-            None,
-            scenario_event,
-        ).unwrap();
+        feature_queue
+            .insert_scenario_event(None, scenario.clone(), None, scenario_event)
+            .unwrap();
 
         // Check that scenario was added directly to feature
         assert!(

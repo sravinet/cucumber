@@ -17,8 +17,7 @@ use crate::{
     event::{self, Cucumber, Rule},
     parser,
     writer::{
-        self,
-        discard,
+        self, discard,
         ext::Ext as _,
         json::{feature::Feature, handlers::EventHandler},
     },
@@ -235,15 +234,18 @@ mod tests {
     #[tokio::test]
     async fn handle_parsing_error() {
         let mut writer = create_test_json_writer();
-        let error = parser::Error::Parsing(std::sync::Arc::new(gherkin::ParseFileError::Reading {
-            path: std::path::PathBuf::from("test.feature"),
-            source: std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                "File not found",
-            ),
-        }));
+        let error = parser::Error::Parsing(std::sync::Arc::new(
+            gherkin::ParseFileError::Reading {
+                path: std::path::PathBuf::from("test.feature"),
+                source: std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "File not found",
+                ),
+            },
+        ));
 
-        let result: parser::Result<Event<event::Cucumber<TestWorld>>> = Err(error);
+        let result: parser::Result<Event<event::Cucumber<TestWorld>>> =
+            Err(error);
         writer.handle_event(result, &cli::Empty).await;
 
         assert_eq!(writer.feature_count(), 1);
@@ -261,10 +263,12 @@ mod tests {
                 path: Some(std::path::PathBuf::from("examples.feature")),
                 pos: gherkin::LineCol { line: 10, col: 5 },
                 name: "missing_placeholder".to_string(),
-            }.into(),
+            }
+            .into(),
         );
 
-        let result: parser::Result<Event<event::Cucumber<TestWorld>>> = Err(error);
+        let result: parser::Result<Event<event::Cucumber<TestWorld>>> =
+            Err(error);
         writer.handle_event(result, &cli::Empty).await;
 
         assert_eq!(writer.feature_count(), 1);
@@ -280,18 +284,18 @@ mod tests {
         let feature = create_test_gherkin_feature();
         let scenario = create_test_gherkin_scenario();
 
-        let event = Event::new(
-            Cucumber::Feature(
-                crate::event::Source::new(feature),
-                crate::event::Feature::Scenario(
-                    crate::event::Source::new(scenario),
-                    crate::event::RetryableScenario {
-                        event: Scenario::Log::<TestWorld>("Test log message".to_string()),
-                        retries: None,
-                    },
-                ),
+        let event = Event::new(Cucumber::Feature(
+            crate::event::Source::new(feature),
+            crate::event::Feature::Scenario(
+                crate::event::Source::new(scenario),
+                crate::event::RetryableScenario {
+                    event: Scenario::Log::<TestWorld>(
+                        "Test log message".to_string(),
+                    ),
+                    retries: None,
+                },
             ),
-        );
+        ));
 
         writer.handle_event(Ok(event), &cli::Empty).await;
 
@@ -375,7 +379,7 @@ mod tests {
         let scenario = create_test_gherkin_scenario();
 
         let metadata: Metadata = Event::new(());
-        
+
         let event = Event {
             value: event::Cucumber::Feature(
                 event::Source::new(feature),
@@ -392,7 +396,7 @@ mod tests {
 
         // Test that metadata can be created and used
         assert!(std::mem::size_of_val(&metadata) > 0);
-        
+
         writer.handle_event(Ok(event), &cli::Empty).await;
         // The event handler doesn't create features for Started events, only for processing events
         assert_eq!(writer.feature_count(), 0);
@@ -421,7 +425,7 @@ mod tests {
         };
 
         writer.handle_event(Ok(start_event), &cli::Empty).await;
-        
+
         // Test that timing is captured and handled
         // This validates SystemTime usage in event handling
         assert!(writer.feature_count() <= 1);
@@ -437,24 +441,27 @@ mod tests {
                 "File not found",
             ),
         };
-        let parser_result: ParserResult<Event<event::Cucumber<TestWorld>>> = 
+        let parser_result: ParserResult<Event<event::Cucumber<TestWorld>>> =
             Err(parser::Error::Parsing(std::sync::Arc::new(parse_error)));
-        
+
         // Validate error can be processed
         assert!(parser_result.is_err());
         match parser_result {
             Err(parser::Error::Parsing(err)) => {
-                assert!(matches!(err.as_ref(), gherkin::ParseFileError::Reading { .. }));
+                assert!(matches!(
+                    err.as_ref(),
+                    gherkin::ParseFileError::Reading { .. }
+                ));
             }
             _ => panic!("Expected parsing error"),
         }
     }
-    
+
     #[tokio::test]
     async fn test_parser_result_integration() {
         let mut writer = create_test_json_writer();
         let feature = create_test_gherkin_feature();
-        
+
         // Test ParserResult::Ok case
         let ok_result: ParserResult<gherkin::Feature> = Ok(feature.clone());
         match ok_result {
@@ -476,13 +483,18 @@ mod tests {
             }
             Err(_) => panic!("Expected Ok result"),
         }
-        
+
         // Test ParserResult::Err case for completeness
         let parse_error = gherkin::ParseFileError::Reading {
             path: std::path::PathBuf::from("test_error.feature"),
-            source: std::io::Error::new(std::io::ErrorKind::NotFound, "test error"),
+            source: std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "test error",
+            ),
         };
-        let err_result: crate::parser::Result<gherkin::Feature> = Err(crate::parser::Error::Parsing(std::sync::Arc::new(parse_error)));
+        let err_result: crate::parser::Result<gherkin::Feature> = Err(
+            crate::parser::Error::Parsing(std::sync::Arc::new(parse_error)),
+        );
         assert!(err_result.is_err());
     }
 }

@@ -93,7 +93,10 @@ mod tests {
 
         // Start Feature
         let feature_start = Ok(Event {
-            value: Cucumber::Feature(event::Source::new(feature.clone()), FeatureEvent::Started),
+            value: Cucumber::Feature(
+                event::Source::new(feature.clone()),
+                FeatureEvent::Started,
+            ),
             at: SystemTime::UNIX_EPOCH,
         });
         writer.handle_event(feature_start, &cli).await;
@@ -165,7 +168,10 @@ mod tests {
 
         // Finish Feature
         let feature_finish = Ok(Event {
-            value: Cucumber::Feature(event::Source::new(feature.clone()), FeatureEvent::Finished),
+            value: Cucumber::Feature(
+                event::Source::new(feature.clone()),
+                FeatureEvent::Finished,
+            ),
             at: SystemTime::UNIX_EPOCH + std::time::Duration::from_millis(150),
         });
         writer.handle_event(feature_finish, &cli).await;
@@ -325,7 +331,8 @@ mod tests {
                 "File not found",
             ),
         };
-        let error = Err(parser::Error::Parsing(std::sync::Arc::new(parse_error)));
+        let error =
+            Err(parser::Error::Parsing(std::sync::Arc::new(parse_error)));
 
         writer.handle_event(error, &cli).await;
 
