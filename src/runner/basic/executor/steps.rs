@@ -5,8 +5,11 @@ use std::panic::AssertUnwindSafe;
 use futures::FutureExt as _;
 
 use super::super::supporting_structures::{
-    AfterHookEventsMeta, ExecutionFailure, ScenarioId, coerce_into_info,
+    AfterHookEventsMeta, ScenarioId, coerce_into_info,
 };
+
+#[cfg(feature = "tracing")]
+use super::super::supporting_structures::ExecutionFailure;
 use crate::{
     Event, World,
     event::{self, source::Source},
@@ -34,9 +37,7 @@ impl StepExecutor {
     where
         W: World,
     {
-        let mut _passed_steps = 0;
         let mut skipped_steps = 0;
-        let mut _failed_steps = 0;
         let mut step_failed = false;
         let mut last_failure: Option<(
             Option<regex::CaptureLocations>,
@@ -132,46 +133,48 @@ impl StepExecutor {
                     // This shouldn't happen as run_step returns the final result
                     // But we need to handle it for exhaustive matching
                 }
-                event::Step::Passed { .. } => _passed_steps += 1,
+                event::Step::Passed { .. } => {}
                 event::Step::Skipped => {
                     skipped_steps += 1;
-                    
-                    // Create execution failure for potential recovery handling
-                    let _failure = Self::create_step_skipped_failure::<W>(None);
+
+                    #[cfg(feature = "tracing")]
+                    let failure = Self::create_step_skipped_failure::<W>(None);
                     #[cfg(feature = "tracing")]
                     tracing::debug!(
                         scenario_id = ?id,
                         step_text = %step.value,
+                        failure_description = %failure.get_failure_description(),
                         "Step was skipped in scenario execution"
                     );
                 }
                 event::Step::Failed { captures, location, error, .. } => {
-                    _failed_steps += 1;
                     step_failed = true;
-                    last_failure = Some((captures.clone(), location, error.clone()));
-                    
-                    // Create detailed execution failure for error handling
-                    let _failure = Self::create_step_panicked_failure::<W>(
-                        None, // World not available at this level
-                        Source::new(step.clone()),
-                        captures.clone(),
-                        location,
-                        error.clone(),
-                        is_background,
-                    );
-                    
-                    // Use the execution failure creation utility for consistency
-                    let _alt_failure = Self::create_execution_failure_from_step_result::<W>(
-                        &event::Step::Failed { captures: captures.clone(), location, error: error.clone(), world: None },
-                        Source::new(step.clone()),
-                        is_background,
-                    );
-                    
+                    last_failure =
+                        Some((captures.clone(), location, error.clone()));
+
+                    #[cfg(feature = "tracing")]
+                    let failure =
+                        Self::create_execution_failure_from_step_result::<W>(
+                            &event::Step::Failed {
+                                captures: captures.clone(),
+                                location,
+                                error: error.clone(),
+                                world: None,
+                            },
+                            Source::new(step.clone()),
+                            is_background,
+                        );
                     #[cfg(feature = "tracing")]
                     tracing::error!(
                         scenario_id = ?id,
                         step_text = %step.value,
                         is_background = is_background,
+                        failure_description = %failure
+                            .as_ref()
+                            .map_or_else(
+                                || "step failed".to_owned(),
+                                ExecutionFailure::get_failure_description
+                            ),
                         "Step failed during scenario execution"
                     );
                 }
@@ -247,20 +250,42 @@ impl StepExecutor {
                 (result, loc, Some(actual_captures))
             }
             Ok(None) => {
-                return event::Step::Failed {
+                let step_event = event::Step::Failed {
                     captures: None,
                     location: None,
                     world: None,
                     error: event::StepError::NotFound,
                 };
+                Self::emit_finished_step_event(
+                    feature,
+                    rule,
+                    scenario,
+                    step,
+                    step_event.clone(),
+                    retries,
+                    false,
+                    send_event,
+                );
+                return step_event;
             }
             Err(ambiguous_err) => {
-                return event::Step::Failed {
+                let step_event = event::Step::Failed {
                     captures: None,
                     location: None,
                     world: None,
                     error: event::StepError::AmbiguousMatch(ambiguous_err),
                 };
+                Self::emit_finished_step_event(
+                    feature,
+                    rule,
+                    scenario,
+                    step,
+                    step_event.clone(),
+                    retries,
+                    false,
+                    send_event,
+                );
+                return step_event;
             }
         };
 
@@ -292,16 +317,16 @@ impl StepExecutor {
             }
         };
 
-        let event = Event::new(event::Cucumber::scenario(
+        Self::emit_finished_step_event(
             feature,
             rule,
             scenario,
-            event::RetryableScenario {
-                event: event::Scenario::Step(step, step_event.clone()),
-                retries,
-            },
-        ));
-        send_event(event.value);
+            step,
+            step_event.clone(),
+            retries,
+            false,
+            send_event,
+        );
 
         step_event
     }
@@ -357,20 +382,42 @@ impl StepExecutor {
                 (result, loc, Some(actual_captures))
             }
             Ok(None) => {
-                return event::Step::Failed {
+                let step_event = event::Step::Failed {
                     captures: None,
                     location: None,
                     world: None,
                     error: event::StepError::NotFound,
                 };
+                Self::emit_finished_step_event(
+                    feature,
+                    rule,
+                    scenario,
+                    step,
+                    step_event.clone(),
+                    retries,
+                    true,
+                    send_event,
+                );
+                return step_event;
             }
             Err(ambiguous_err) => {
-                return event::Step::Failed {
+                let step_event = event::Step::Failed {
                     captures: None,
                     location: None,
                     world: None,
                     error: event::StepError::AmbiguousMatch(ambiguous_err),
                 };
+                Self::emit_finished_step_event(
+                    feature,
+                    rule,
+                    scenario,
+                    step,
+                    step_event.clone(),
+                    retries,
+                    true,
+                    send_event,
+                );
+                return step_event;
             }
         };
 
@@ -402,19 +449,46 @@ impl StepExecutor {
             }
         };
 
-        // Send background step finished event
+        Self::emit_finished_step_event(
+            feature,
+            rule,
+            scenario,
+            step,
+            step_event.clone(),
+            retries,
+            true,
+            send_event,
+        );
+
+        step_event
+    }
+
+    /// Emits the finished event for either a regular or background step.
+    fn emit_finished_step_event<W>(
+        feature: Source<gherkin::Feature>,
+        rule: Option<Source<gherkin::Rule>>,
+        scenario: Source<gherkin::Scenario>,
+        step: Source<gherkin::Step>,
+        step_event: event::Step<W>,
+        retries: Option<crate::event::Retries>,
+        is_background: bool,
+        send_event: impl Fn(event::Cucumber<W>),
+    ) where
+        W: World,
+    {
+        let scenario_event = if is_background {
+            event::Scenario::Background(step, step_event)
+        } else {
+            event::Scenario::Step(step, step_event)
+        };
+
         let event = Event::new(event::Cucumber::scenario(
             feature,
             rule,
             scenario,
-            event::RetryableScenario {
-                event: event::Scenario::Background(step, step_event.clone()),
-                retries,
-            },
+            event::RetryableScenario { event: scenario_event, retries },
         ));
         send_event(event.value);
-
-        step_event
     }
 
     /// Emits a skipped background step event.
@@ -465,6 +539,7 @@ impl StepExecutor {
         send_event(event.value);
     }
 
+    #[cfg(feature = "tracing")]
     /// Creates an ExecutionFailure::StepSkipped from a skipped step scenario.
     pub(super) fn create_step_skipped_failure<W>(
         world: Option<W>,
@@ -472,6 +547,7 @@ impl StepExecutor {
         ExecutionFailure::StepSkipped(world)
     }
 
+    #[cfg(feature = "tracing")]
     /// Creates an ExecutionFailure::StepPanicked from a failed step.
     pub(super) fn create_step_panicked_failure<W>(
         world: Option<W>,
@@ -492,6 +568,7 @@ impl StepExecutor {
         }
     }
 
+    #[cfg(feature = "tracing")]
     /// Creates an ExecutionFailure based on the step execution result.
     pub(super) fn create_execution_failure_from_step_result<W>(
         step_result: &event::Step<W>,
@@ -636,12 +713,13 @@ mod tests {
         assert!(matches!(meta.finished, _));
     }
 
+    #[cfg(feature = "tracing")]
     #[test]
     fn test_create_execution_failure_from_step_result() {
         use event::source::Source;
 
         let step = create_test_step();
-        
+
         // Test with failed step
         let failed_step = event::Step::<TestWorld>::Failed {
             captures: None,
@@ -649,15 +727,15 @@ mod tests {
             world: None,
             error: event::StepError::NotFound,
         };
-        
+
         let failure = StepExecutor::create_execution_failure_from_step_result(
             &failed_step,
             step.clone(),
             false,
         );
-        
+
         assert!(failure.is_some());
-        
+
         // Test with skipped step
         let skipped_step = event::Step::<TestWorld>::Skipped;
         let failure = StepExecutor::create_execution_failure_from_step_result(
@@ -665,9 +743,9 @@ mod tests {
             step.clone(),
             false,
         );
-        
+
         assert!(failure.is_some());
-        
+
         // Test with passed step (should return None)
         let passed_step = event::Step::<TestWorld>::Passed {
             captures: regex::Regex::new("").unwrap().capture_locations(),
@@ -678,7 +756,7 @@ mod tests {
             step,
             false,
         );
-        
+
         assert!(failure.is_none());
     }
 

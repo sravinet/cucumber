@@ -74,11 +74,13 @@ pub(super) enum ExecutionFailure<World> {
     /// [`crate::step::Step`] was skipped.
     ///
     /// [`crate::step::Step`]: gherkin::Step.
+    #[cfg_attr(not(feature = "tracing"), allow(dead_code))]
     StepSkipped(Option<World>),
 
     /// [`crate::step::Step`] failed.
     ///
     /// [`crate::step::Step`]: gherkin::Step.
+    #[cfg_attr(not(feature = "tracing"), allow(dead_code))]
     StepPanicked {
         /// [`crate::World`] at the time when [`crate::step::Step`] has failed.
         ///
@@ -186,7 +188,8 @@ impl<W> ExecutionFailure<W> {
             }
             Self::StepSkipped(_) => "Step was skipped".to_string(),
             Self::StepPanicked { step, err, is_background, .. } => {
-                let step_type = if *is_background { "Background" } else { "Regular" };
+                let step_type =
+                    if *is_background { "Background" } else { "Regular" };
                 format!("{} step '{}' failed: {:?}", step_type, step.value, err)
             }
             Self::Before => "Before hook failed".to_string(),
@@ -264,7 +267,7 @@ mod tests {
         let before_hook_span = id.hook_span(event::HookType::Before);
         let after_hook_span = id.hook_span(event::HookType::After);
 
-        // Just test that spans are created without errors - metadata might be None without a subscriber  
+        // Just test that spans are created without errors - metadata might be None without a subscriber
         if let Some(metadata) = scenario_span.metadata() {
             assert_eq!(metadata.name(), "scenario");
         }
@@ -280,7 +283,7 @@ mod tests {
         if let Some(metadata) = after_hook_span.metadata() {
             assert_eq!(metadata.name(), "after hook");
         }
-        
+
         // Test that spans can be created regardless of metadata availability
         assert!(std::mem::size_of_val(&scenario_span) > 0);
         assert!(std::mem::size_of_val(&step_span) > 0);
@@ -327,12 +330,12 @@ mod tests {
             scenario_finished: event::ScenarioFinished::StepPassed,
         };
 
-        // Test that structure can be created and has proper metadata  
+        // Test that structure can be created and has proper metadata
         match meta.scenario_finished {
             event::ScenarioFinished::StepPassed => { /* Expected */ }
             _ => panic!("Expected StepPassed scenario finish"),
         }
-        
+
         // Test timing info functionality
         #[cfg(feature = "timestamps")]
         {
@@ -391,23 +394,23 @@ mod tests {
         };
 
         match failure {
-            ExecutionFailure::StepPanicked { 
+            ExecutionFailure::StepPanicked {
                 step: failure_step,
                 meta,
                 is_background,
-                .. 
+                ..
             } => {
                 assert!(!is_background);
                 assert_eq!(failure_step.value, "test step");
                 assert!(matches!(meta, _));
-                
+
                 // Actually use the step field for validation
                 assert_eq!(failure_step.ty, gherkin::StepType::Given);
                 assert_eq!(failure_step.keyword, "Given");
-                
+
                 // Test the is_background field functionality
                 assert!(!is_background);
-                
+
                 // Test the meta field functionality
                 #[cfg(feature = "timestamps")]
                 {
@@ -430,14 +433,14 @@ mod tests {
         };
 
         match failure {
-            ExecutionFailure::BeforeHookPanicked { 
+            ExecutionFailure::BeforeHookPanicked {
                 world,
                 panic_info,
                 meta: hook_meta,
             } => {
                 assert_eq!(world, Some(42));
                 assert!(panic_info.downcast_ref::<&str>().is_some());
-                
+
                 // Actually use the meta field for validation
                 #[cfg(feature = "timestamps")]
                 {
@@ -445,7 +448,7 @@ mod tests {
                     // Check that timestamp is valid and in the past
                     assert!(timestamp.elapsed().is_ok());
                 }
-                
+
                 // Test that metadata can be used for failure analysis
                 assert!(matches!(hook_meta, _));
             }
@@ -456,7 +459,7 @@ mod tests {
     #[test]
     fn test_execution_failure_before_variant_construction() {
         let failure = ExecutionFailure::<()>::Before;
-        
+
         match failure {
             ExecutionFailure::Before => {
                 // Test that the Before variant can be constructed and matched
@@ -504,14 +507,20 @@ mod tests {
 
         match background_failure {
             ExecutionFailure::StepPanicked { is_background, .. } => {
-                assert!(is_background, "Background step should be marked as background");
+                assert!(
+                    is_background,
+                    "Background step should be marked as background"
+                );
             }
             _ => panic!("Expected StepPanicked variant"),
         }
 
         match regular_failure {
             ExecutionFailure::StepPanicked { is_background, .. } => {
-                assert!(!is_background, "Regular step should not be marked as background");
+                assert!(
+                    !is_background,
+                    "Regular step should not be marked as background"
+                );
             }
             _ => panic!("Expected StepPanicked variant"),
         }
@@ -550,7 +559,10 @@ mod tests {
 
         // Test get_step_info method
         assert!(step_failure.get_step_info().is_some());
-        assert_eq!(step_failure.get_step_info().unwrap().value, "I test utility methods");
+        assert_eq!(
+            step_failure.get_step_info().unwrap().value,
+            "I test utility methods"
+        );
         assert!(hook_failure.get_step_info().is_none());
 
         // Test get_metadata method
@@ -582,7 +594,7 @@ mod tests {
         if let Some(failure_meta) = failure.get_metadata() {
             // Test that failure metadata contains valid information
             assert!(std::mem::size_of_val(&failure_meta) > 0);
-            
+
             #[cfg(feature = "timestamps")]
             {
                 let timestamp = failure_meta.at;
