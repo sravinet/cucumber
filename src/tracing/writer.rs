@@ -4,14 +4,14 @@ use std::io;
 
 use tracing_subscriber::fmt::MakeWriter;
 
-use super::{
-    formatter::suffix,
-    types::LogSender,
-};
+use super::{formatter::suffix, types::LogSender};
 
 /// [`io::Write`]r sending [`tracing::Event`]s to a `Collector`.
 #[derive(Clone, Debug)]
-#[expect(clippy::module_name_repetitions, reason = "Writer suffix is conventional for this pattern")]
+#[expect(
+    clippy::module_name_repetitions,
+    reason = "Writer suffix is conventional for this pattern"
+)]
 pub struct CollectorWriter {
     /// Sender for notifying the [`Collector`] about [`tracing::Event`]s.
     ///
@@ -45,16 +45,18 @@ impl io::Write for CollectorWriter {
         // log messages will be able to interleave each other, making the result
         // unreadable.
         let msgs = String::from_utf8_lossy(buf);
-        
+
         // Handle NO_SCENARIO_ID messages (complete format: "message [no-scenario]")
         let mut remaining = msgs.as_ref();
-        while let Some(no_scenario_end) = remaining.find(suffix::NO_SCENARIO_ID) {
+        while let Some(no_scenario_end) = remaining.find(suffix::NO_SCENARIO_ID)
+        {
             let before_msg = &remaining[..no_scenario_end];
-            remaining = &remaining[no_scenario_end + suffix::NO_SCENARIO_ID.len()..];
+            remaining =
+                &remaining[no_scenario_end + suffix::NO_SCENARIO_ID.len()..];
             _ = self.sender.unbounded_send((None, before_msg.to_owned())).ok();
         }
-        
-        // Handle SCENARIO_ID messages (format: "message [scenario-ID]")  
+
+        // Handle SCENARIO_ID messages (format: "message [scenario-ID]")
         for msg in remaining.split_terminator(suffix::END) {
             if msg.is_empty() {
                 continue; // Skip empty parts from split_terminator
@@ -88,7 +90,7 @@ impl io::Write for CollectorWriter {
 mod tests {
     use std::io::Write;
 
-    use futures::{channel::mpsc, TryStreamExt};
+    use futures::{TryStreamExt, channel::mpsc};
 
     use super::*;
     use crate::runner::basic::ScenarioId;
@@ -119,7 +121,7 @@ mod tests {
         // Construct message format that the writer expects: message + NO_SCENARIO_ID
         // NO_SCENARIO_ID already includes the closing ']', so no need to add END
         let message = format!("test log message{}", suffix::NO_SCENARIO_ID);
-        
+
         let written = writer.write(message.as_bytes())?;
 
         assert_eq!(written, message.len());
@@ -138,7 +140,12 @@ mod tests {
         let mut writer = CollectorWriter::new(sender);
 
         // Manually construct expected format using suffix constants
-        let message = format!("test log message{}{}{}", suffix::BEFORE_SCENARIO_ID, 42, suffix::END);
+        let message = format!(
+            "test log message{}{}{}",
+            suffix::BEFORE_SCENARIO_ID,
+            42,
+            suffix::END
+        );
         let written = writer.write(message.as_bytes())?;
 
         assert_eq!(written, message.len());
@@ -158,9 +165,13 @@ mod tests {
 
         // Manually construct expected formats using suffix constants
         // NO_SCENARIO_ID already includes ']', but BEFORE_SCENARIO_ID needs END
-        let combined = format!("message1{}message2{}{}{}", 
+        let combined = format!(
+            "message1{}message2{}{}{}",
             suffix::NO_SCENARIO_ID,
-            suffix::BEFORE_SCENARIO_ID, 123, suffix::END);
+            suffix::BEFORE_SCENARIO_ID,
+            123,
+            suffix::END
+        );
 
         let written = writer.write(combined.as_bytes())?;
         assert_eq!(written, combined.len());
@@ -259,7 +270,8 @@ mod tests {
         let (sender, mut receiver) = mpsc::unbounded();
         let mut writer = CollectorWriter::new(sender);
 
-        let unicode_message = format!("тест 🎯 message{}", suffix::NO_SCENARIO_ID);
+        let unicode_message =
+            format!("тест 🎯 message{}", suffix::NO_SCENARIO_ID);
         let written = writer.write(unicode_message.as_bytes())?;
 
         assert_eq!(written, unicode_message.as_bytes().len());
@@ -304,7 +316,7 @@ mod tests {
     #[tokio::test]
     async fn test_stream_log_processing() {
         use futures::stream;
-        
+
         // Test TryStreamExt functionality for log stream processing
         let log_entries = vec![
             Ok("Log entry 1".to_string()),
@@ -313,22 +325,23 @@ mod tests {
         ];
 
         let log_stream = stream::iter(log_entries);
-        
+
         // Use TryStreamExt to collect successful log entries
         let results: Result<Vec<_>, _> = log_stream.try_collect().await;
-        
+
         // Should fail due to the error in stream
         assert!(results.is_err());
-        
+
         // Test successful log processing
         let success_logs = vec![
             Ok("Success log 1".to_string()),
             Ok("Success log 2".to_string()),
         ];
-        
+
         let success_stream = stream::iter(success_logs);
-        let success_results: Result<Vec<_>, String> = success_stream.try_collect().await;
-        
+        let success_results: Result<Vec<_>, String> =
+            success_stream.try_collect().await;
+
         assert!(success_results.is_ok());
         let logs = success_results.unwrap();
         assert_eq!(logs.len(), 2);

@@ -312,8 +312,9 @@ mod tests {
     #[tokio::test]
     async fn test_stream_processing() {
         use futures::stream;
-        
-        let (logs_sender, logs_receiver) = mpsc::unbounded::<(Option<ScenarioId>, String)>();
+
+        let (logs_sender, logs_receiver) =
+            mpsc::unbounded::<(Option<ScenarioId>, String)>();
         let (span_sender, span_receiver) = mpsc::unbounded::<span::Id>();
 
         // Create a test stream and use TryStreamExt functionality
@@ -325,7 +326,7 @@ mod tests {
 
         // Use TryStreamExt to filter and collect results
         let results: Result<Vec<_>, _> = test_stream.try_collect().await;
-        
+
         // Verify stream processing works (expecting error)
         assert!(results.is_err());
 

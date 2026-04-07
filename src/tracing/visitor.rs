@@ -87,7 +87,7 @@ mod tests {
         assert!(visitor.get_scenario_id().is_none());
     }
 
-    #[test] 
+    #[test]
     fn test_visitor_field_handling() {
         let visitor = GetScenarioId::new();
         // Verify visitor starts with no scenario ID
@@ -121,10 +121,10 @@ mod tests {
         // Test that visitors implement Copy trait
         let visitor1 = GetScenarioId::new();
         let visitor2 = IsScenarioIdSpan::new();
-        
+
         let _copied1 = visitor1;
         let _copied2 = visitor2;
-        
+
         // Should still be able to use original variables
         assert!(visitor1.get_scenario_id().is_none());
         assert!(!visitor2.is_scenario_span());
@@ -134,11 +134,11 @@ mod tests {
     fn test_visitor_debug_implementations() {
         let visitor1 = GetScenarioId::new();
         let visitor2 = IsScenarioIdSpan::new();
-        
+
         // Test that Debug implementations work
         let _debug1 = format!("{:?}", visitor1);
         let _debug2 = format!("{:?}", visitor2);
-        
+
         assert!(true);
     }
 }

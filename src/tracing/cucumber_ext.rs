@@ -156,7 +156,13 @@ mod tests {
     }
 
     impl crate::codegen::StepConstructor<TestWorld> for EmptyGiven {
-        fn inner(&self) -> (crate::step::Location, crate::codegen::LazyRegex, crate::step::Step<TestWorld>) {
+        fn inner(
+            &self,
+        ) -> (
+            crate::step::Location,
+            crate::codegen::LazyRegex,
+            crate::step::Step<TestWorld>,
+        ) {
             unreachable!("Test-only type")
         }
     }
@@ -172,7 +178,13 @@ mod tests {
     }
 
     impl crate::codegen::StepConstructor<TestWorld> for EmptyWhen {
-        fn inner(&self) -> (crate::step::Location, crate::codegen::LazyRegex, crate::step::Step<TestWorld>) {
+        fn inner(
+            &self,
+        ) -> (
+            crate::step::Location,
+            crate::codegen::LazyRegex,
+            crate::step::Step<TestWorld>,
+        ) {
             unreachable!("Test-only type")
         }
     }
@@ -188,7 +200,13 @@ mod tests {
     }
 
     impl crate::codegen::StepConstructor<TestWorld> for EmptyThen {
-        fn inner(&self) -> (crate::step::Location, crate::codegen::LazyRegex, crate::step::Step<TestWorld>) {
+        fn inner(
+            &self,
+        ) -> (
+            crate::step::Location,
+            crate::codegen::LazyRegex,
+            crate::step::Step<TestWorld>,
+        ) {
             unreachable!("Test-only type")
         }
     }
@@ -205,9 +223,10 @@ mod tests {
 
         // This may fail if global tracing is already set (which is fine for parallel tests)
         // Just test that the method exists and compiles
-        let _result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            cucumber.init_tracing()
-        }));
+        let _result =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                cucumber.init_tracing()
+            }));
         // Test passes as long as it compiles
     }
 
@@ -218,16 +237,17 @@ mod tests {
         // Test that the configuration is accepted by the type system
         // The actual initialization may fail if a global subscriber is already set,
         // which is acceptable in a test environment
-        let _result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            cucumber.configure_and_init_tracing(
-                format::DefaultFields::new(),
-                Format::default(),
-                |layer| {
-                    tracing_subscriber::registry()
-                        .with(LevelFilter::DEBUG.and_then(layer))
-                },
-            )
-        }));
+        let _result =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                cucumber.configure_and_init_tracing(
+                    format::DefaultFields::new(),
+                    Format::default(),
+                    |layer| {
+                        tracing_subscriber::registry()
+                            .with(LevelFilter::DEBUG.and_then(layer))
+                    },
+                )
+            }));
         // Test passes if configuration compiles and type checks correctly
     }
 
@@ -237,7 +257,14 @@ mod tests {
         let (span_close_sender, _span_close_receiver) = mpsc::unbounded();
 
         // Test that channels can be created
-        assert!(logs_sender.unbounded_send((None::<crate::runner::basic::ScenarioId>, "test".to_string())).is_ok());
+        assert!(
+            logs_sender
+                .unbounded_send((
+                    None::<crate::runner::basic::ScenarioId>,
+                    "test".to_string()
+                ))
+                .is_ok()
+        );
         assert!(
             span_close_sender
                 .unbounded_send(tracing::span::Id::from_u64(1))

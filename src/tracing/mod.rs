@@ -53,30 +53,30 @@ mod tests {
 
         let scenarios: Scenarios = HashMap::new();
         let span_events: SpanEventsCallbacks = HashMap::new();
-        
+
         // Validate that collections can be used
         assert!(scenarios.is_empty());
         assert!(span_events.is_empty());
 
         let (log_sender, log_receiver): (LogSender, LogReceiver) =
             mpsc::unbounded();
-        let (span_sender, span_receiver): (
-            SpanCloseSender,
-            SpanCloseReceiver,
-        ) = mpsc::unbounded();
+        let (span_sender, span_receiver): (SpanCloseSender, SpanCloseReceiver) =
+            mpsc::unbounded();
 
         let collector = Collector::new(log_receiver, span_receiver);
         let waiter = SpanCloseWaiter::new(mpsc::unbounded().0);
         let layer = RecordScenarioId::new(span_sender);
         let writer = CollectorWriter::new(log_sender);
-        
+
         // Validate that the tracing components can be used
         let _scenario_waiter = collector.scenario_span_event_waiter();
         let _cloned_waiter = waiter.clone();
-        
+
         // Test that writer implements expected traits
         use std::fmt::Debug;
-        fn verify_debug<T: Debug>(_item: &T) -> bool { true }
+        fn verify_debug<T: Debug>(_item: &T) -> bool {
+            true
+        }
         assert!(verify_debug(&layer));
         assert!(verify_debug(&writer));
     }
@@ -85,7 +85,7 @@ mod tests {
     fn test_visitor_types_accessible() {
         let get_visitor = GetScenarioId::new();
         let is_visitor = IsScenarioIdSpan::new();
-        
+
         // Validate that visitors can be used for their intended purpose
         assert!(get_visitor.get_scenario_id().is_none()); // Initially no ID
         assert!(!is_visitor.is_scenario_span()); // Initially not a scenario span
@@ -114,18 +114,19 @@ mod tests {
         let (_callback_sender, _callback_receiver): (Callback, _) =
             futures::channel::oneshot::channel();
         let _log_msg: LogMessage = (None, String::new());
-        
+
         // Test span creation functionality
-        let test_span = span!(tracing::Level::INFO, "test_scenario", scenario_id = 42);
+        let test_span =
+            span!(tracing::Level::INFO, "test_scenario", scenario_id = 42);
         let _span_id = test_span.id();
     }
 
     #[test]
     fn test_module_organization() {
         // Verify all modules are accessible
-        let _ = types::Scenarios::new();
-        let _ = visitor::GetScenarioId::new();
-        let _ = visitor::IsScenarioIdSpan::new();
+        let _scenarios = types::Scenarios::new();
+        let _get_visitor = visitor::GetScenarioId::new();
+        let _is_scenario_visitor = visitor::IsScenarioIdSpan::new();
 
         // Test constants are accessible from their modules
         assert!(formatter::suffix::END.len() > 0);
@@ -140,11 +141,11 @@ mod tests {
         // Test that types work together as expected
         let (log_sender, log_receiver) = mpsc::unbounded();
         let (span_sender, span_receiver) = mpsc::unbounded();
-        
+
         // Test ScenarioId integration with tracing
         let scenario_id = ScenarioId(42);
         let _waiter = waiter::SpanCloseWaiter::new(mpsc::unbounded().0);
-        
+
         // Validate ScenarioId can be used for span identification
         assert_eq!(scenario_id.0, 42);
 

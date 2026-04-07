@@ -31,7 +31,10 @@ impl ScenarioId {
         // `Level::ERROR` is used to minimize the chance of the user-provided
         // filter to skip it.
         if is_background {
-            tracing::error_span!("background step", __cucumber_scenario_id = self.0)
+            tracing::error_span!(
+                "background step",
+                __cucumber_scenario_id = self.0
+            )
         } else {
             tracing::error_span!("step", __cucumber_scenario_id = self.0)
         }
@@ -44,8 +47,14 @@ impl ScenarioId {
         // `Level::ERROR` is used to minimize the chance of the user-provided
         // filter to skip it.
         match hook_ty {
-            HookType::Before => tracing::error_span!("before hook", __cucumber_scenario_id = self.0),
-            HookType::After => tracing::error_span!("after hook", __cucumber_scenario_id = self.0),
+            HookType::Before => tracing::error_span!(
+                "before hook",
+                __cucumber_scenario_id = self.0
+            ),
+            HookType::After => tracing::error_span!(
+                "after hook",
+                __cucumber_scenario_id = self.0
+            ),
         }
     }
 }

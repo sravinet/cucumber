@@ -32,27 +32,26 @@ impl SpanCloseWaiter {
     }
 
     /// Waits for the [`tracing::Span`] being closed.
-    /// 
-    /// ARCHITECTURAL DECISION: Use non-blocking approach that prioritizes 
+    ///
+    /// ARCHITECTURAL DECISION: Use non-blocking approach that prioritizes
     /// test execution flow over strict span synchronization.
-    /// 
-    /// The tracing system is designed to be eventually consistent rather than 
+    ///
+    /// The tracing system is designed to be eventually consistent rather than
     /// strictly synchronous, preventing deadlocks in serial execution mode.
     #[allow(clippy::unused_async)]
     pub async fn wait_for_span_close(&self, _id: span::Id) {
         // Strategic architectural decision: Don't block test execution.
-        // 
+        //
         // The span waiting mechanism was causing architectural incompatibility
         // between serial test execution (@serial) and async span lifecycle.
-        // 
+        //
         // Trade-off:
         // + Test execution reliability (all scenarios run)
-        // + Core tracing functionality preserved (spans created, events collected)  
+        // + Core tracing functionality preserved (spans created, events collected)
         // - Perfect span synchronization (can be improved in future iteration)
         //
         // This ensures production-ready tracing without blocking test flows.
     }
-
 }
 
 #[cfg(test)]
@@ -98,12 +97,13 @@ mod tests {
 
         // No subscription request should be sent with non-blocking approach
         match receiver.try_next() {
-            Ok(None) => {}, // Expected: no messages
-            Err(_) => {}, // Expected: channel empty
-            Ok(Some(_)) => panic!("Non-blocking wait should not send subscription requests"),
+            Ok(None) => {} // Expected: no messages
+            Err(_) => {}   // Expected: channel empty
+            Ok(Some(_)) => panic!(
+                "Non-blocking wait should not send subscription requests"
+            ),
         }
     }
-
 
     #[tokio::test]
     async fn test_multiple_span_waiters() {
@@ -116,7 +116,7 @@ mod tests {
         // Start waiting for spans separately - with non-blocking implementation
         let waiter_1 = waiter.clone();
         let waiter_2 = waiter.clone();
-        
+
         let start_time = std::time::Instant::now();
         let wait_handle_1 = tokio::spawn(async move {
             waiter_1.wait_for_span_close(span_id_1).await;
@@ -131,13 +131,18 @@ mod tests {
         let elapsed = start_time.elapsed();
 
         // Should complete very quickly (non-blocking)
-        assert!(elapsed.as_millis() < 100, "Multiple waits should be non-blocking");
+        assert!(
+            elapsed.as_millis() < 100,
+            "Multiple waits should be non-blocking"
+        );
 
         // No subscription requests should be sent with non-blocking approach
         match receiver.try_next() {
-            Ok(None) => {}, // Expected: no messages
-            Err(_) => {}, // Expected: channel empty
-            Ok(Some(_)) => panic!("Non-blocking wait should not send subscription requests"),
+            Ok(None) => {} // Expected: no messages
+            Err(_) => {}   // Expected: channel empty
+            Ok(Some(_)) => panic!(
+                "Non-blocking wait should not send subscription requests"
+            ),
         }
     }
 

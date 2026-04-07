@@ -1,11 +1,11 @@
 //! Custom formatters for tracing events that handle scenario context appropriately.
 
-use std::fmt::{self, Write};
+use std::fmt;
 
 use tracing::{Event, Subscriber};
 use tracing_subscriber::{
-    fmt::{format, FormatEvent, FormatFields, FmtContext},
     field::RecordFields,
+    fmt::{FmtContext, FormatEvent, FormatFields, format},
     registry::LookupSpan,
 };
 
@@ -75,32 +75,42 @@ where
         event: &Event<'_>,
     ) -> fmt::Result {
         // Try to get scenario ID from current span
-        let scenario_id = ctx
-            .lookup_current()
-            .and_then(|span_ref| {
-                // Try getting from extensions first
-                span_ref.extensions().get::<GetScenarioId>()
-                    .map(|stored| stored.get_scenario_id())
-                    .flatten()
-                    .or_else(|| {
-                        // If not in extensions, try extracting from span metadata
-                        let metadata = span_ref.metadata();
-                        if metadata.fields().iter().any(|f| f.name() == "scenario_id") {
-                            // This span might contain scenario ID, but we can't easily extract it
-                            // without more complex visitor implementation
-                            None
-                        } else {
-                            None
-                        }
-                    })
-            });
+        let scenario_id = ctx.lookup_current().and_then(|span_ref| {
+            // Try getting from extensions first
+            span_ref
+                .extensions()
+                .get::<GetScenarioId>()
+                .map(|stored| stored.get_scenario_id())
+                .flatten()
+                .or_else(|| {
+                    // If not in extensions, try extracting from span metadata
+                    let metadata = span_ref.metadata();
+                    if metadata
+                        .fields()
+                        .iter()
+                        .any(|f| f.name() == "scenario_id")
+                    {
+                        // This span might contain scenario ID, but we can't easily extract it
+                        // without more complex visitor implementation
+                        None
+                    } else {
+                        None
+                    }
+                })
+        });
 
         // Format the inner event first
         self.0.format_event(ctx, writer.by_ref(), event)?;
 
         // Append the appropriate suffix
         match scenario_id {
-            Some(id) => write!(writer, "{}{}{}", suffix::SCENARIO_ID_START, id.0, suffix::END),
+            Some(id) => write!(
+                writer,
+                "{}{}{}",
+                suffix::SCENARIO_ID_START,
+                id.0,
+                suffix::END
+            ),
             None => write!(writer, "{}{}", suffix::NO_SCENARIO_ID, suffix::END),
         }
     }
@@ -110,13 +120,13 @@ where
 pub mod suffix {
     /// Suffix indicating no scenario context is available.
     pub const NO_SCENARIO_ID: &str = " [no-scenario]";
-    
+
     /// Start marker for scenario ID in log output.
     pub const SCENARIO_ID_START: &str = " [scenario-";
-    
+
     /// Before scenario ID marker for parsing.
     pub const BEFORE_SCENARIO_ID: &str = " [scenario-";
-    
+
     /// End marker for scenario context in log output.
     pub const END: &str = "]";
 }
@@ -124,7 +134,7 @@ pub mod suffix {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tracing_subscriber::{fmt::format, registry::Registry};
+    use tracing_subscriber::fmt::format;
 
     /// Simple test writer that captures formatted output.
     #[derive(Default)]
@@ -142,7 +152,7 @@ mod tests {
         }
     }
 
-    impl Write for TestWriter {
+    impl fmt::Write for TestWriter {
         fn write_str(&mut self, s: &str) -> fmt::Result {
             self.content.push_str(s);
             Ok(())
@@ -153,16 +163,19 @@ mod tests {
     fn test_skip_scenario_id_span_creation() {
         let inner_formatter = format::DefaultFields::new();
         let formatter = SkipScenarioIdSpan::new(inner_formatter);
-        
+
         // Test that the formatter can be created
-        assert_eq!(std::mem::size_of_val(&formatter), std::mem::size_of::<format::DefaultFields>());
+        assert_eq!(
+            std::mem::size_of_val(&formatter),
+            std::mem::size_of::<format::DefaultFields>()
+        );
     }
 
     #[test]
     fn test_append_scenario_msg_creation() {
         let inner_formatter = format::Format::default();
         let formatter = AppendScenarioMsg::new(inner_formatter);
-        
+
         // Test that the formatter can be created
         assert!(std::mem::size_of_val(&formatter) > 0);
     }
@@ -173,7 +186,7 @@ mod tests {
         assert!(!suffix::NO_SCENARIO_ID.is_empty());
         assert!(!suffix::SCENARIO_ID_START.is_empty());
         assert!(!suffix::END.is_empty());
-        
+
         // Verify they are distinct
         assert_ne!(suffix::NO_SCENARIO_ID, suffix::SCENARIO_ID_START);
         assert_ne!(suffix::NO_SCENARIO_ID, suffix::END);
@@ -182,7 +195,8 @@ mod tests {
 
     #[test]
     fn test_formatter_wrappers_are_debug() {
-        let fields_formatter = SkipScenarioIdSpan::new(format::DefaultFields::new());
+        let fields_formatter =
+            SkipScenarioIdSpan::new(format::DefaultFields::new());
         let event_formatter = AppendScenarioMsg::new(format::Format::default());
 
         // Test Debug implementations
@@ -193,10 +207,21 @@ mod tests {
     #[test]
     fn test_formatter_basic_functionality() {
         // Basic test that formatters can be constructed and used without panicking
-        let _skip_formatter = SkipScenarioIdSpan::new(format::DefaultFields::new());
-        let _append_formatter = AppendScenarioMsg::new(format::Format::default());
-        
+        let _skip_formatter =
+            SkipScenarioIdSpan::new(format::DefaultFields::new());
+        let _append_formatter =
+            AppendScenarioMsg::new(format::Format::default());
+
         // This test just ensures the types compile and can be created
         assert!(true);
+    }
+
+    #[test]
+    fn test_writer_captures_content() {
+        use std::fmt::Write as _;
+
+        let mut writer = TestWriter::new();
+        write!(&mut writer, "scenario-log").unwrap();
+        assert_eq!(writer.to_string(), "scenario-log");
     }
 }

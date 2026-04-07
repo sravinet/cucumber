@@ -99,7 +99,6 @@ mod tests {
     };
 
     use tracing::{Event, Subscriber};
-    use tracing_subscriber::{layer::Context, registry::Registry};
 
     use super::*;
 
@@ -149,16 +148,19 @@ mod tests {
     fn test_layer_basic_functionality() {
         let (sender, _receiver) = mpsc::unbounded();
         let _layer = RecordScenarioId::new(sender);
-        
+
         // Test basic layer functionality without complex tracing APIs
         let span_id = span::Id::from_u64(42);
         assert_eq!(span_id, span::Id::from_u64(42));
+
+        let subscriber = TestSubscriber::new();
+        assert!(subscriber.spans.lock().unwrap().is_empty());
     }
 
     #[test]
     fn test_span_id_utilities() {
         let (_sender, _receiver) = mpsc::unbounded::<span::Id>();
-        
+
         // Test span ID creation and comparison
         let span_ids = vec![
             span::Id::from_u64(1),
@@ -173,18 +175,18 @@ mod tests {
     #[test]
     fn test_scenario_id_creation() {
         let (_sender, _receiver) = mpsc::unbounded::<span::Id>();
-        
+
         // Test basic scenario ID functionality
         use crate::runner::basic::ScenarioId;
         let scenario_id = ScenarioId(1);
         assert_eq!(scenario_id.0, 1);
     }
 
-    #[test] 
+    #[test]
     fn test_layer_channel_functionality() {
         let (sender, mut receiver) = mpsc::unbounded::<span::Id>();
         let _layer = RecordScenarioId::new(sender);
-        
+
         // Test that the channel is properly configured
         // An empty receiver should return an error (no messages available)
         assert!(receiver.try_next().is_err());
@@ -193,11 +195,11 @@ mod tests {
     #[test]
     fn test_layer_with_closed_channel() {
         let (sender, mut receiver) = mpsc::unbounded::<span::Id>();
-        
+
         // Test that receiver exists and can receive initial state
         assert!(receiver.try_next().is_err()); // Empty receiver
         drop(receiver); // Close receiver
-        
+
         let layer = RecordScenarioId::new(sender);
         let span_id = span::Id::from_u64(42);
 
