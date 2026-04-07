@@ -85,7 +85,8 @@ mod integration_tests {
         assert!(matches!(cucumber_err, CucumberError::Config(_)));
 
         // Test ExecutionError to CucumberError conversion
-        let execution_err = ExecutionError::feature_not_found("missing_feature");
+        let execution_err =
+            ExecutionError::feature_not_found("missing_feature");
         let cucumber_err: CucumberError = execution_err.into();
         assert!(matches!(cucumber_err, CucumberError::Execution(_)));
 
@@ -218,21 +219,21 @@ mod integration_tests {
         // Ensure all original functionality is still accessible through re-exports
 
         // Original error types
-        let _: CucumberError = CucumberError::step_panic("test");
-        let _: StepError = StepError::no_match("test");
-        let _: WorldError = WorldError::invalid_state("test");
-        let _: WriterError = WriterError::unavailable("test");
-        let _: ConfigError = ConfigError::invalid_retry("test");
+        let _cucumber_error: CucumberError = CucumberError::step_panic("test");
+        let _step_error: StepError = StepError::no_match("test");
+        let _world_error: WorldError = WorldError::invalid_state("test");
+        let _writer_error: WriterError = WriterError::unavailable("test");
+        let _config_error: ConfigError = ConfigError::invalid_retry("test");
 
         // Original result types
-        let _: Result<()> = Ok(());
-        let _: StepResult<()> = Ok(());
-        let _: WorldResult<()> = Ok(());
-        let _: WriterResult<()> = Ok(());
-        let _: ConfigResult<()> = Ok(());
+        let _result: Result<()> = Ok(());
+        let _step_result: StepResult<()> = Ok(());
+        let _world_result: WorldResult<()> = Ok(());
+        let _writer_result: WriterResult<()> = Ok(());
+        let _config_result: ConfigResult<()> = Ok(());
 
         // Original traits and extensions
         let result: std::result::Result<i32, io::Error> = Ok(42);
-        let _: Result<i32> = result.with_cucumber_context("test");
+        let _contextualized: Result<i32> = result.with_cucumber_context("test");
     }
 }

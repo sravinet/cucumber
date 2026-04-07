@@ -38,7 +38,9 @@ pub enum ExecutionError {
     },
 
     /// Scenario state inconsistency detected.
-    #[display("Scenario state inconsistency: expected {expected}, found {actual}")]
+    #[display(
+        "Scenario state inconsistency: expected {expected}, found {actual}"
+    )]
     StateInconsistency {
         /// Expected state.
         #[error(not(source))]
@@ -75,9 +77,7 @@ impl ExecutionError {
     /// Creates a new feature not found error.
     #[must_use]
     pub fn feature_not_found(feature_name: impl Into<String>) -> Self {
-        Self::FeatureNotFound {
-            feature_name: feature_name.into(),
-        }
+        Self::FeatureNotFound { feature_name: feature_name.into() }
     }
 
     /// Creates a new rule not found error.
@@ -119,9 +119,7 @@ impl ExecutionError {
     /// Creates a new invalid sequence error.
     #[must_use]
     pub fn invalid_sequence(description: impl Into<String>) -> Self {
-        Self::InvalidSequence {
-            description: description.into(),
-        }
+        Self::InvalidSequence { description: description.into() }
     }
 
     /// Returns true if this is a feature not found error.
@@ -189,31 +187,31 @@ mod tests {
                 .contains("Feature 'test_feature' not found")
         );
 
-        let rule_err = ExecutionError::rule_not_found("test_rule", "test_feature");
+        let rule_err =
+            ExecutionError::rule_not_found("test_rule", "test_feature");
         assert!(rule_err.is_rule_not_found());
         assert_eq!(rule_err.rule_name(), Some("test_rule"));
         assert_eq!(rule_err.feature_name(), Some("test_feature"));
         assert!(
-            rule_err
-                .to_string()
-                .contains("Rule 'test_rule' not found in feature 'test_feature'")
+            rule_err.to_string().contains(
+                "Rule 'test_rule' not found in feature 'test_feature'"
+            )
         );
 
-        let state_err = ExecutionError::state_inconsistency("started", "finished");
+        let state_err =
+            ExecutionError::state_inconsistency("started", "finished");
         assert!(state_err.is_state_inconsistency());
         assert!(
-            state_err
-                .to_string()
-                .contains("expected started, found finished")
+            state_err.to_string().contains("expected started, found finished")
         );
 
         let duplicate_err =
             ExecutionError::duplicate_event("test_scenario", "Started");
         assert!(duplicate_err.is_duplicate_event());
         assert!(
-            duplicate_err
-                .to_string()
-                .contains("Duplicate event for scenario 'test_scenario': Started")
+            duplicate_err.to_string().contains(
+                "Duplicate event for scenario 'test_scenario': Started"
+            )
         );
 
         let sequence_err =
