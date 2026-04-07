@@ -203,6 +203,12 @@ macro_rules! step_attribute {
         ///     assert_eq!(num, 0);
         /// }
         ///
+        /// #[given(regex = r"(\S+) is not (\S+)")]
+        /// fn test_not(w: &mut MyWorld, param: String, param2: String) {
+        ///     assert_eq!(param, "foo");
+        ///     assert_eq!(param2, "bar");
+        /// }
+        ///
         /// #[tokio::main]
         /// async fn main() {
         ///     MyWorld::run("./tests/features/doctests.feature").await;
@@ -252,6 +258,12 @@ macro_rules! step_attribute {
         ///     assert_eq!(matches[0], "foo");
         ///     assert_eq!(matches[1], "bar");
         ///     assert_eq!(s.value, "foo is not bar");
+        /// }
+        /// #
+        /// #[given(regex = r"(\S+) is (\d+)")]
+        /// fn test_is(w: &mut MyWorld, param: String, num: i32) {
+        ///     assert_eq!(param, "foo");
+        ///     assert_eq!(num, 0);
         /// }
         /// #
         /// # #[tokio::main]
@@ -342,6 +354,12 @@ pub fn world(input: TokenStream) -> TokenStream {
 /// fn test(w: &mut MyWorld, param: String, num: CustomU64) {
 ///     assert_eq!(param, "foo");
 ///     assert_eq!(*num, 0);
+/// }
+///
+/// #[given(regex = r"^(\S+) is not (\S+)$")]
+/// fn test_not(w: &mut MyWorld, param: String, param2: String) {
+///     assert_eq!(param, "foo");
+///     assert_eq!(param2, "bar");
 /// }
 ///
 /// #[derive(Deref, FromStr, Parameter)]

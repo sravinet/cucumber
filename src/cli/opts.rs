@@ -30,12 +30,33 @@ use super::compose::Empty;
 /// ```rust
 /// # use std::time::Duration;
 /// #
-/// # use cucumber::{cli, World};
+/// # use cucumber::{cli, given, then, when, World};
 /// # use futures::FutureExt as _;
 /// # use tokio::time;
 /// #
 /// # #[derive(Debug, Default, World)]
-/// # struct MyWorld;
+/// # struct MyWorld {
+/// #     is_hungry: bool,
+/// #     cucumbers_eaten: usize,
+/// # }
+/// #
+/// # #[given("Alice is hungry")]
+/// # fn alice_is_hungry(world: &mut MyWorld) {
+/// #     world.is_hungry = true;
+/// # }
+/// #
+/// # #[when(regex = r"^she eats (\d+) cucumbers?$")]
+/// # fn she_eats_cucumbers(world: &mut MyWorld, count: usize) {
+/// #     world.cucumbers_eaten = count;
+/// #     if count > 0 {
+/// #         world.is_hungry = false;
+/// #     }
+/// # }
+/// #
+/// # #[then("she is full")]
+/// # fn she_is_full(world: &mut MyWorld) {
+/// #     assert!(!world.is_hungry);
+/// # }
 /// #
 /// # #[tokio::main(flavor = "current_thread")]
 /// # async fn main() {
