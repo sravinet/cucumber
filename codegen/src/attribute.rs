@@ -24,8 +24,8 @@ use syn::{
 };
 
 use crate::attribute_ext::{
-    detect_table_param, generate_table_injection, is_data_table_type_from_arg, 
-    is_option_data_table, validate_table_position, DataTableParam,
+    DataTableParam, detect_table_param, generate_table_injection,
+    is_data_table_type_from_arg, is_option_data_table, validate_table_position,
 };
 
 /// Names of default [`Parameter`]s.
@@ -112,7 +112,7 @@ impl Step {
 
         // Check for DataTable parameter
         let table_param = detect_table_param(&self.func);
-        
+
         // Validate DataTable position if present
         if let Some(param) = &table_param {
             validate_table_position(param)?;
@@ -191,7 +191,10 @@ impl Step {
     /// Generates code that prepares function's arguments basing on
     /// [`AttributeArgument`] and additional parsing if it's an
     /// [`AttributeArgument::Regex`].
-    #[expect(clippy::too_many_lines, reason = "Complex argument parsing logic that should be refactored")]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "Complex argument parsing logic that should be refactored"
+    )]
     fn fn_arguments_and_additional_parsing(
         &self,
     ) -> syn::Result<(TokenStream, Option<TokenStream>)> {
@@ -300,16 +303,12 @@ impl Step {
             ))
         } else {
             // Check if there's a DataTable parameter even for literal strings
-            let table_param =
-                detect_table_param(&self.func);
+            let table_param = detect_table_param(&self.func);
             if let Some(param) = table_param {
                 // Validate DataTable position
                 validate_table_position(&param)?;
                 let table_injection =
-                    generate_table_injection(
-                        &param,
-                        &self.func.sig.ident,
-                    );
+                    generate_table_injection(&param, &self.func.sig.ident);
                 let table_ident = &param.ident;
                 Ok((quote! { #table_ident, }, Some(table_injection)))
             } else {
@@ -341,8 +340,7 @@ impl Step {
             self.arg_name_of_step_context.as_ref().is_some_and(|i| i == ident);
 
         // Check if this is a DataTable parameter
-        let is_data_table =
-            is_data_table_type_from_arg(arg);
+        let is_data_table = is_data_table_type_from_arg(arg);
 
         let decl = if is_ctx_arg {
             quote! {

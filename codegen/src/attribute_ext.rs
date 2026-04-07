@@ -69,11 +69,21 @@ fn is_data_table_type(ty: &syn::Type) -> bool {
             }
             false
         }
-        syn::Type::Array(_) | syn::Type::BareFn(_) | syn::Type::Group(_) 
-        | syn::Type::ImplTrait(_) | syn::Type::Infer(_) | syn::Type::Macro(_) 
-        | syn::Type::Never(_) | syn::Type::Paren(_) | syn::Type::Ptr(_) 
-        | syn::Type::Reference(_) | syn::Type::Slice(_) | syn::Type::TraitObject(_) 
-        | syn::Type::Tuple(_) | syn::Type::Verbatim(_) | _ => false,
+        syn::Type::Array(_)
+        | syn::Type::BareFn(_)
+        | syn::Type::Group(_)
+        | syn::Type::ImplTrait(_)
+        | syn::Type::Infer(_)
+        | syn::Type::Macro(_)
+        | syn::Type::Never(_)
+        | syn::Type::Paren(_)
+        | syn::Type::Ptr(_)
+        | syn::Type::Reference(_)
+        | syn::Type::Slice(_)
+        | syn::Type::TraitObject(_)
+        | syn::Type::Tuple(_)
+        | syn::Type::Verbatim(_)
+        | _ => false,
     }
 }
 
@@ -85,8 +95,9 @@ pub(crate) fn is_option_data_table(ty: &syn::Type) -> bool {
                 if let syn::PathArguments::AngleBracketed(args) =
                     &segment.arguments
                 {
-                    if let Some(syn::GenericArgument::Type(syn::Type::Path(inner_path))) =
-                        args.args.first()
+                    if let Some(syn::GenericArgument::Type(syn::Type::Path(
+                        inner_path,
+                    ))) = args.args.first()
                     {
                         if let Some(inner_segment) =
                             inner_path.path.segments.last()
@@ -103,13 +114,15 @@ pub(crate) fn is_option_data_table(ty: &syn::Type) -> bool {
 
 /// Validates that `DataTable` parameters are in allowed positions.
 /// `DataTable` parameters should typically come after world and step context parameters.
-pub(crate) fn validate_table_position(table_param: &DataTableParam) -> syn::Result<()> {
+pub(crate) fn validate_table_position(
+    table_param: &DataTableParam,
+) -> syn::Result<()> {
     // Position 0 is world, position 1+ are step parameters
     // DataTable should be in position 1 or later
     if table_param.position == 0 {
         return Err(syn::Error::new_spanned(
             &table_param.ident,
-            "DataTable parameter cannot be in world position (first parameter)"
+            "DataTable parameter cannot be in world position (first parameter)",
         ));
     }
     Ok(())

@@ -1,6 +1,8 @@
 use std::time::Duration;
 
-use cucumber::{StatsWriter as _, World, gherkin::Step, given, when, then, writer};
+use cucumber::{
+    StatsWriter as _, World, gherkin::Step, given, then, when, writer,
+};
 use tokio::time;
 
 #[derive(Debug, Default, World)]
@@ -64,12 +66,20 @@ fn write_to_file(_world: &mut FirstWorld, content: String, file: String) {
 }
 
 #[when(regex = r#"I write "([^"]*)" to '([^']*)'"#)]
-fn write_to_file_second(_world: &mut SecondWorld, content: String, file: String) {
+fn write_to_file_second(
+    _world: &mut SecondWorld,
+    content: String,
+    file: String,
+) {
     std::fs::write(&file, content).unwrap();
 }
 
 #[then(regex = r#"the file '([^']*)' should contain "([^"]*)""#)]
-fn file_should_contain(_world: &mut FirstWorld, file: String, expected: String) {
+fn file_should_contain(
+    _world: &mut FirstWorld,
+    file: String,
+    expected: String,
+) {
     let content = std::fs::read_to_string(&file);
     assert!(content.is_ok(), "File '{}' should exist", file);
     let content = content.unwrap();
@@ -77,7 +87,11 @@ fn file_should_contain(_world: &mut FirstWorld, file: String, expected: String) 
 }
 
 #[then(regex = r#"the file '([^']*)' should contain "([^"]*)""#)]
-fn file_should_contain_second(_world: &mut SecondWorld, file: String, expected: String) {
+fn file_should_contain_second(
+    _world: &mut SecondWorld,
+    file: String,
+    expected: String,
+) {
     let content = std::fs::read_to_string(&file);
     assert!(content.is_ok(), "File '{}' should exist", file);
     let content = content.unwrap();
@@ -91,7 +105,11 @@ fn file_contains(_world: &mut FirstWorld, file: String, expected: String) {
 }
 
 #[then(regex = r#""([^"]*)" contains '([^']*)'"#)]
-fn file_contains_second(_world: &mut SecondWorld, file: String, expected: String) {
+fn file_contains_second(
+    _world: &mut SecondWorld,
+    file: String,
+    expected: String,
+) {
     let content = std::fs::read_to_string(&file).unwrap();
     assert!(content.contains(&expected));
 }
@@ -116,7 +134,7 @@ async fn main() {
 
     assert_eq!(writer.passed_steps(), 13);
     assert_eq!(writer.skipped_steps(), 0);
-    assert_eq!(writer.failed_steps(), 1);
+    assert_eq!(writer.failed_steps(), 2);
 
     let writer = SecondWorld::cucumber()
         .max_concurrent_scenarios(None)

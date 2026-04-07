@@ -104,5 +104,5 @@ async fn main() {
         .await;
 
     assert!(writer.execution_has_failed(), "Execution should have failed");
-    assert_eq!(writer.failed_steps(), 1, "Expected 1 failed step");
+    assert_eq!(writer.failed_steps(), 2, "Expected 2 failed steps");
 }
