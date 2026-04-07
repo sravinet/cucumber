@@ -1,10 +1,12 @@
 //! Step definition functionality for Cucumber executor.
 
-use regex::Regex;
 use futures::future::LocalBoxFuture;
+use regex::Regex;
 
 use super::core::Cucumber;
-use crate::{Parser, Step, World, Writer, runner, step, event::ScenarioFinished};
+use crate::{
+    Parser, Step, World, Writer, event::ScenarioFinished, runner, step,
+};
 
 impl<W, I, P, Wr, F, B, A, Cli>
     Cucumber<W, P, I, runner::Basic<W, F, B, A>, Wr, Cli>

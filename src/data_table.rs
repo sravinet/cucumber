@@ -41,7 +41,7 @@ use std::{collections::HashMap, fmt};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DataTable {
     /// Raw table data as a 2D vector of strings
-    /// 
+    ///
     /// Contains all rows including headers (if present). Each inner vector
     /// represents a row of cells in the table.
     rows: Vec<Vec<String>>,

@@ -4,15 +4,10 @@ use futures::channel::mpsc;
 #[cfg(feature = "observability")]
 use std::sync::{Arc, Mutex};
 
-use crate::{
-    Event, World, event, parser,
-};
+use crate::{Event, World, event, parser};
 
 #[cfg(feature = "observability")]
-use crate::{
-    event::source::Source,
-    runner::basic::ScenarioId,
-};
+use crate::{event::source::Source, runner::basic::ScenarioId};
 
 /// Event sending functionality for the Executor.
 #[cfg(not(feature = "observability"))]
@@ -115,10 +110,10 @@ impl<W: World> EventSender<W> {
     pub(super) fn send_event(&self, event: event::Cucumber<W>) {
         // Send the event through the channel
         let event_wrapper = Event::new(event.clone());
-        if let Err(e) = self.sender
-            .unbounded_send(Ok(event_wrapper.clone()))
-        {
-            eprintln!("Warning: Failed to send Cucumber event, receiver may have been dropped: {e}");
+        if let Err(e) = self.sender.unbounded_send(Ok(event_wrapper.clone())) {
+            eprintln!(
+                "Warning: Failed to send Cucumber event, receiver may have been dropped: {e}"
+            );
             return;
         }
 
@@ -137,37 +132,55 @@ impl<W: World> EventSender<W> {
         if let Ok(context) = self.current_context.lock() {
             if let Some(ref ctx) = *context {
                 // Build observation context from scenario context
-                let mut observation_context = crate::observer::ObservationContext {
-                    scenario_id: Some(ctx.scenario_id.0),
-                    feature_name: ctx.feature.name.clone(),
-                    rule_name: ctx.rule.as_ref().map(|r| r.name.clone()),
-                    scenario_name: ctx.scenario.name.clone(),
-                    retry_info: ctx.retries.clone(),
-                    tags: ctx.scenario.tags.clone(),
-                    timestamp: std::time::Instant::now(),
-                };
+                let mut observation_context =
+                    crate::observer::ObservationContext {
+                        scenario_id: Some(ctx.scenario_id.0),
+                        feature_name: ctx.feature.name.clone(),
+                        rule_name: ctx.rule.as_ref().map(|r| r.name.clone()),
+                        scenario_name: ctx.scenario.name.clone(),
+                        retry_info: ctx.retries.clone(),
+                        tags: ctx.scenario.tags.clone(),
+                        timestamp: std::time::Instant::now(),
+                    };
 
                 // Extract additional context from the event itself for more accurate reporting
                 match event {
                     event::Cucumber::Feature(feature_src, feature_event) => {
                         // Update feature name from actual event if different
-                        observation_context.feature_name = feature_src.name.clone();
-                        
+                        observation_context.feature_name =
+                            feature_src.name.clone();
+
                         // Extract scenario-specific information from event
                         match feature_event {
-                            event::Feature::Scenario(scenario_src, retryable) => {
-                                observation_context.scenario_name = scenario_src.name.clone();
-                                observation_context.retry_info = retryable.retries.clone();
-                                observation_context.tags = scenario_src.tags.iter()
+                            event::Feature::Scenario(
+                                scenario_src,
+                                retryable,
+                            ) => {
+                                observation_context.scenario_name =
+                                    scenario_src.name.clone();
+                                observation_context.retry_info =
+                                    retryable.retries.clone();
+                                observation_context.tags = scenario_src
+                                    .tags
+                                    .iter()
                                     .map(|t| t.to_string())
                                     .collect();
                             }
                             event::Feature::Rule(rule_src, rule_event) => {
-                                observation_context.rule_name = Some(rule_src.name.clone());
-                                if let event::Rule::Scenario(scenario_src, retryable) = rule_event {
-                                    observation_context.scenario_name = scenario_src.name.clone();
-                                    observation_context.retry_info = retryable.retries.clone();
-                                    observation_context.tags = scenario_src.tags.iter()
+                                observation_context.rule_name =
+                                    Some(rule_src.name.clone());
+                                if let event::Rule::Scenario(
+                                    scenario_src,
+                                    retryable,
+                                ) = rule_event
+                                {
+                                    observation_context.scenario_name =
+                                        scenario_src.name.clone();
+                                    observation_context.retry_info =
+                                        retryable.retries.clone();
+                                    observation_context.tags = scenario_src
+                                        .tags
+                                        .iter()
                                         .map(|t| t.to_string())
                                         .collect();
                                 }
@@ -197,7 +210,7 @@ impl<W: World> EventSender<W> {
     }
 
     /// Sends an event with additional metadata.
-    /// 
+    ///
     /// This method is used for events that need specific timing or context metadata,
     /// such as hook execution timing or step duration measurements.
     pub(super) fn send_event_with_meta(
@@ -209,10 +222,11 @@ impl<W: World> EventSender<W> {
         let event_with_meta = meta.wrap(event.clone());
 
         // Send through normal channel with metadata
-        if let Err(e) = self.sender
-            .unbounded_send(Ok(event_with_meta.clone()))
+        if let Err(e) = self.sender.unbounded_send(Ok(event_with_meta.clone()))
         {
-            eprintln!("Warning: Failed to send Cucumber event with metadata, receiver may have been dropped: {e}");
+            eprintln!(
+                "Warning: Failed to send Cucumber event with metadata, receiver may have been dropped: {e}"
+            );
             return;
         }
 
@@ -296,7 +310,7 @@ mod tests {
 
         let event = event::Cucumber::<TestWorld>::Started;
         // Should handle gracefully without panicking
-        event_sender.send_event(event); 
+        event_sender.send_event(event);
         // Test passes if no panic occurs
     }
 
@@ -332,7 +346,7 @@ mod tests {
         // Should receive the event with metadata
         let received = receiver.try_next().unwrap().unwrap().unwrap();
         assert!(matches!(received.value, event::Cucumber::Started));
-        
+
         // Verify the event has metadata (indicates send_event_with_meta worked)
         #[cfg(feature = "timestamps")]
         {
@@ -365,7 +379,7 @@ mod tests {
     #[tokio::test]
     async fn test_event_stream_processing() {
         use futures::stream;
-        
+
         // Test TryStreamExt functionality for event stream processing
         let events = vec![
             Ok(event::Cucumber::<TestWorld>::Started),
@@ -380,22 +394,23 @@ mod tests {
         ];
 
         let event_stream = stream::iter(events);
-        
+
         // Use TryStreamExt to process successful events
         let results: Result<Vec<_>, _> = event_stream.try_collect().await;
-        
+
         // Should fail due to the error in stream
         assert!(results.is_err());
-        
+
         // Test successful stream
         let success_events = vec![
             Ok(event::Cucumber::<TestWorld>::Started),
             Ok(event::Cucumber::Finished),
         ];
-        
+
         let success_stream = stream::iter(success_events);
-        let success_results: Result<Vec<_>, parser::Error> = success_stream.try_collect().await;
-        
+        let success_results: Result<Vec<_>, parser::Error> =
+            success_stream.try_collect().await;
+
         assert!(success_results.is_ok());
         assert_eq!(success_results.unwrap().len(), 2);
     }

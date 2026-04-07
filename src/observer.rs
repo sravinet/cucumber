@@ -53,7 +53,7 @@ impl<W: World> TestObserver<W> for NullObserver {
 }
 
 /// Registry for managing multiple observers
-/// 
+///
 /// Provides efficient batch notification to all registered observers
 /// with minimal overhead when no observers are registered.
 pub struct ObserverRegistry<W> {
@@ -63,7 +63,7 @@ pub struct ObserverRegistry<W> {
 
 impl<W> ObserverRegistry<W> {
     /// Creates a new empty observer registry
-    /// 
+    ///
     /// The registry starts with no observers and is initially disabled
     /// for optimal performance when observation is not needed.
     pub fn new() -> Self {
@@ -71,7 +71,7 @@ impl<W> ObserverRegistry<W> {
     }
 
     /// Registers a new observer with the registry
-    /// 
+    ///
     /// Once an observer is registered, the registry is automatically
     /// enabled and will notify all observers of future events.
     pub fn register(&mut self, observer: Box<dyn TestObserver<W>>)
@@ -83,7 +83,7 @@ impl<W> ObserverRegistry<W> {
     }
 
     /// Notifies all registered observers about an event
-    /// 
+    ///
     /// This method is optimized to skip all processing when no
     /// observers are registered, providing zero-cost observation
     /// when not in use.

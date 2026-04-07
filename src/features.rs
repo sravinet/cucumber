@@ -30,9 +30,31 @@ pub mod tracing {
 /// available for documentation examples.
 #[cfg(test)]
 pub mod test_deps {
-    pub use rand as _;
-    pub use tempfile as _;
-    pub use tokio as _;
+    use std::{future::Future, ops::Range, time::Duration};
+
+    use rand::Rng;
+
+    /// Generates a random `u32` in the provided range.
+    #[must_use]
+    pub fn random_u32(range: Range<u32>) -> u32 {
+        rand::rng().random_range(range)
+    }
+
+    /// Runs a future with a timeout and returns the completed value.
+    pub async fn with_timeout<F, T>(
+        duration: Duration,
+        future: F,
+    ) -> Result<T, tokio::time::error::Elapsed>
+    where
+        F: Future<Output = T>,
+    {
+        tokio::time::timeout(duration, future).await
+    }
+
+    /// Creates a new temporary file for tests.
+    pub fn named_temp_file() -> std::io::Result<tempfile::NamedTempFile> {
+        tempfile::NamedTempFile::new()
+    }
 }
 
 /// Checks if the "macros" feature is enabled at compile time.
@@ -48,7 +70,7 @@ pub const fn has_tracing_feature() -> bool {
 }
 
 /// Returns a list of enabled features as a static string slice.
-/// 
+///
 /// This can be evaluated at compile time, providing zero-runtime-cost
 /// feature detection for conditional behavior.
 #[must_use]
@@ -93,8 +115,10 @@ mod tests {
     #[test]
     fn test_enabled_returns_slice() {
         let features = enabled();
-        // Test that we get a slice (may be empty)
-        assert!(features.len() >= 0);
+        // Test that iterating over entries is always valid.
+        for feature in features {
+            assert!(!feature.is_empty());
+        }
     }
 
     #[test]
@@ -141,41 +165,29 @@ mod tests {
 
     #[test]
     fn test_test_deps_are_accessible() {
-        // Test that test dependencies are available and functional
-        use test_deps::*;
-        
-        // Use rand to generate test data
-        let mut rng = rand::thread_rng();
-        use rand::Rng;
-        let random_value: u32 = rng.gen_range(1..100);
+        // Test that test dependencies are available and functional.
+        let random_value = test_deps::random_u32(1..100);
         assert!(random_value >= 1 && random_value < 100);
-        
-        // Test passes if this compiles and runs without error
     }
 
     #[tokio::test]
     async fn test_async_feature_detection() {
-        // Use tokio dependency for async feature testing
-        use test_deps::*;
-        
-        // Test async capabilities with tokio
-        let result = tokio::time::timeout(
+        // Test async capabilities via the helper that wraps tokio timeout.
+        let result = test_deps::with_timeout(
             std::time::Duration::from_millis(100),
-            async { enabled().len() }
-        ).await;
-        
+            async { enabled().len() },
+        )
+        .await;
+
         assert!(result.is_ok());
     }
 
-    #[test] 
+    #[test]
     fn test_temporary_file_support() {
-        // Use tempfile dependency for testing file operations
-        use test_deps::*;
-        
-        // Test temporary file creation for feature testing
-        let temp_file = tempfile::NamedTempFile::new().unwrap();
+        // Test temporary file creation for feature testing.
+        let temp_file = test_deps::named_temp_file().unwrap();
         assert!(temp_file.path().exists());
-        
+
         // Write feature list to temp file
         use std::io::Write;
         let mut file = temp_file.reopen().unwrap();

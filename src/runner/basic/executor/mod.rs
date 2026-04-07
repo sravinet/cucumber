@@ -168,7 +168,7 @@ mod integration_tests {
     #[tokio::test]
     async fn test_executor_stream_integration() {
         use futures::stream;
-        
+
         // Test TryStreamExt functionality for executor integration
         let mock_results = vec![
             Ok(Event::new(event::Cucumber::<TestWorld>::Started)),
@@ -183,22 +183,23 @@ mod integration_tests {
         ];
 
         let result_stream = stream::iter(mock_results);
-        
+
         // Use TryStreamExt to filter and collect successful results
         let collected: Result<Vec<_>, _> = result_stream.try_collect().await;
-        
+
         // Should fail due to error in stream
         assert!(collected.is_err());
-        
+
         // Test successful integration
         let success_results = vec![
             Ok(Event::new(event::Cucumber::<TestWorld>::Started)),
             Ok(Event::new(event::Cucumber::Finished)),
         ];
-        
+
         let success_stream = stream::iter(success_results);
-        let success_collected: Result<Vec<_>, parser::Error> = success_stream.try_collect().await;
-        
+        let success_collected: Result<Vec<_>, parser::Error> =
+            success_stream.try_collect().await;
+
         assert!(success_collected.is_ok());
         let events = success_collected.unwrap();
         assert_eq!(events.len(), 2);

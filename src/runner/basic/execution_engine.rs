@@ -3,9 +3,9 @@
 use std::{ops::ControlFlow, panic, thread};
 
 use futures::{
-    Stream, StreamExt as _,
+    FutureExt as _, Stream, StreamExt as _,
     channel::{mpsc, oneshot},
-    future, pin_mut, stream, FutureExt as _,
+    future, pin_mut, stream,
 };
 
 use super::{
@@ -253,9 +253,11 @@ pub(super) async fn execute<W, Before, After>(
             storage.finished_receiver_mut().next().now_or_never()
         {
             if let Some(rule) = rule {
-                if let Some(f) =
-                    storage.rule_scenario_finished::<W>(feat.clone(), rule, retried)
-                {
+                if let Some(f) = storage.rule_scenario_finished::<W>(
+                    feat.clone(),
+                    rule,
+                    retried,
+                ) {
                     executor.send_event(f);
                 }
             }
@@ -266,7 +268,7 @@ pub(super) async fn execute<W, Before, After>(
             {
                 if let Some(coll) = logs_collector.as_mut() {
                     coll.finish_scenario(id);
-                    
+
                     // Ensure proper span cleanup by waiting for span completion if needed
                     if let Some(waiter) = waiter.as_ref() {
                         // The waiter will handle any pending span cleanup for this scenario
@@ -540,15 +542,17 @@ mod tests {
         let execution_count_clone = Arc::clone(&execution_count);
 
         // Simulate concurrent execution scenario
-        let handles = (0..5).map(|_| {
-            let count = Arc::clone(&execution_count);
-            tokio::spawn(async move {
-                // Simulate execution engine work
-                let mut counter = count.lock().unwrap();
-                *counter += 1;
-                drop(counter);
+        let handles = (0..5)
+            .map(|_| {
+                let count = Arc::clone(&execution_count);
+                tokio::spawn(async move {
+                    // Simulate execution engine work
+                    let mut counter = count.lock().unwrap();
+                    *counter += 1;
+                    drop(counter);
+                })
             })
-        }).collect::<Vec<_>>();
+            .collect::<Vec<_>>();
 
         // Wait for all tasks to complete
         for handle in handles {
@@ -560,7 +564,7 @@ mod tests {
         assert_eq!(final_count, 5);
     }
 
-    #[test] 
+    #[test]
     fn test_execution_engine_state_sharing() {
         // Test Mutex-protected state sharing in execution engine context
         let shared_state = Arc::new(Mutex::new(Vec::<String>::new()));

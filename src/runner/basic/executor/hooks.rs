@@ -41,7 +41,7 @@ impl HookExecutor {
         if let Some(before_hook) = hook {
             // Use scenario ID for debugging context - aids in hook correlation
             let _scenario_context = id; // Keep reference for potential debugging
-            
+
             let hook_start_event = event::Cucumber::scenario(
                 feature.clone(),
                 rule.clone(),
@@ -54,7 +54,7 @@ impl HookExecutor {
                     retries: None,
                 },
             );
-            
+
             let event = Event::new(hook_start_event);
             send_event(event.value);
 
@@ -116,7 +116,7 @@ impl HookExecutor {
                             retries: None,
                         },
                     );
-                    
+
                     // Use the metadata for precise timing information
                     // This demonstrates the use of the previously unused meta field
                     #[cfg(all(feature = "timestamps", feature = "tracing"))]
@@ -125,7 +125,7 @@ impl HookExecutor {
                         hook_failure_timestamp = ?meta.at,
                         "Before hook failed with timing metadata"
                     );
-                    
+
                     send_event(event);
 
                     return Err(failure);
@@ -219,7 +219,7 @@ impl HookExecutor {
                 Ok(()) => event::Hook::Passed,
                 Err(err) => {
                     let info = coerce_into_info(err);
-                    
+
                     // Log failure details for debugging using scenario ID
                     #[cfg(feature = "tracing")]
                     tracing::error!(
@@ -228,7 +228,7 @@ impl HookExecutor {
                         feature_name = %feature.name,
                         "After hook failed with panic"
                     );
-                    
+
                     event::Hook::Failed(None, info)
                 }
             };

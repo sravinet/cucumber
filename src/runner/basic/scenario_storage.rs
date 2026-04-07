@@ -369,9 +369,11 @@ impl FinishedRulesAndFeatures {
             finished_receiver,
         }
     }
-    
+
     /// Returns a mutable reference to the finished receiver for scenario completion notifications.
-    pub(super) fn finished_receiver_mut(&mut self) -> &mut FinishedFeaturesReceiver {
+    pub(super) fn finished_receiver_mut(
+        &mut self,
+    ) -> &mut FinishedFeaturesReceiver {
         &mut self.finished_receiver
     }
 
@@ -397,7 +399,10 @@ impl FinishedRulesAndFeatures {
         {
             Some(count) => count,
             None => {
-                eprintln!("Warning: Rule '{}' not found in scenario storage, skipping finish tracking", rule.name);
+                eprintln!(
+                    "Warning: Rule '{}' not found in scenario storage, skipping finish tracking",
+                    rule.name
+                );
                 return None;
             }
         };
@@ -431,7 +436,10 @@ impl FinishedRulesAndFeatures {
         {
             Some(count) => count,
             None => {
-                eprintln!("Warning: Feature '{}' not found in scenario storage, skipping finish tracking", feature.name);
+                eprintln!(
+                    "Warning: Feature '{}' not found in scenario storage, skipping finish tracking",
+                    feature.name
+                );
                 return None;
             }
         };

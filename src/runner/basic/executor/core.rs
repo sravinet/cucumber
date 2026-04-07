@@ -209,10 +209,10 @@ where
                         retries,
                     },
                 );
-                
+
                 // Use send_event_with_meta for precise timing of critical failure events
                 self.event_sender.send_event_with_meta(started_event, &meta);
-                
+
                 // Handle the failure using the Before variant for world creation failures
                 self.handle_execution_failure(
                     ExecutionFailure::Before,
@@ -509,16 +509,16 @@ where
     ) {
         // Extract world state from failure for potential recovery or debugging
         let recovered_world = failure.take_world();
-        
+
         // Use scenario ID for failure correlation and debugging context
         let _failure_context = id; // Keep reference for debugging and error correlation
-        
+
         // Get detailed failure information using utility methods
         let failure_description = failure.get_failure_description();
         let is_background_failure = failure.is_background_step();
         let failure_metadata = failure.get_metadata();
         let step_info = failure.get_step_info();
-        
+
         // Use failure description for enhanced error reporting
         #[cfg(feature = "tracing")]
         {
@@ -533,9 +533,10 @@ where
                 has_step_info = step_info.is_some(),
                 "Handling execution failure for scenario"
             );
-            
+
             // Use metadata for detailed timing analysis if available
-            #[allow(unused_variables)] // meta used conditionally in cfg features
+            #[allow(unused_variables)]
+            // meta used conditionally in cfg features
             if let Some(meta) = failure_metadata {
                 #[cfg(feature = "timestamps")]
                 tracing::debug!(
@@ -544,7 +545,7 @@ where
                     "Failure occurred with timing metadata"
                 );
             }
-            
+
             // Log step-specific information if available
             if let Some(step) = step_info {
                 tracing::debug!(
@@ -556,7 +557,7 @@ where
                 );
             }
         }
-        
+
         // Use failure information for non-tracing builds as well
         #[cfg(not(feature = "tracing"))]
         {
@@ -566,7 +567,7 @@ where
             let _has_step = step_info.is_some();
             let _background_step = is_background_failure;
         }
-        
+
         // Implement recovery logic if world was extracted
         if let Some(_world) = recovered_world {
             #[cfg(feature = "tracing")]
@@ -575,7 +576,7 @@ where
                 "World state recovered from failure - available for cleanup or recovery operations"
             );
         }
-        
+
         // Failure events are already emitted by the respective modules
         // (hooks module for hook failures, steps module for step failures)
         // This method just sends the finished event
@@ -603,7 +604,7 @@ where
             // Create wrapped event and clone for observers only when observability is enabled
             let event_wrapped = Event::new(event.clone());
             let event_for_obs = event.clone(); // Clone for context building
-            
+
             if let Ok(mut registry) = self.observers.lock() {
                 // Build context from current event information
                 let context = match &event_for_obs {
@@ -770,8 +771,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_stream_processing_functionality() {
-        use futures::stream;
         use futures::TryStreamExt;
+        use futures::stream;
 
         // Test that TryStreamExt functionality works for event stream processing
         let events = vec![
@@ -784,7 +785,7 @@ mod tests {
 
         // Use TryStreamExt to collect successful events
         let collected: Result<Vec<_>, _> = event_stream.try_collect().await;
-        
+
         // Should fail due to the error in the stream
         assert!(collected.is_err());
 
@@ -793,10 +794,11 @@ mod tests {
             Ok(event::Cucumber::<TestWorld>::Started),
             Ok(event::Cucumber::Finished),
         ];
-        
+
         let success_stream = stream::iter(success_events);
-        let success_collected: Result<Vec<_>, String> = success_stream.try_collect().await;
-        
+        let success_collected: Result<Vec<_>, String> =
+            success_stream.try_collect().await;
+
         assert!(success_collected.is_ok());
         assert_eq!(success_collected.unwrap().len(), 2);
     }
@@ -899,19 +901,17 @@ mod tests {
         struct MockObserver {
             events_received: Arc<Mutex<usize>>,
         }
-        
+
         impl MockObserver {
             fn new() -> Self {
-                Self {
-                    events_received: Arc::new(Mutex::new(0)),
-                }
+                Self { events_received: Arc::new(Mutex::new(0)) }
             }
-            
+
             fn get_events_count(&self) -> usize {
                 *self.events_received.lock().unwrap()
             }
         }
-        
+
         impl TestObserver<TestWorld> for MockObserver {
             fn on_event(
                 &mut self,
@@ -925,17 +925,17 @@ mod tests {
         let (executor, mut receiver) = create_test_executor();
         let observer = MockObserver::new();
         let observer_clone = observer.clone();
-        
+
         // Register the observer - tests the register_observer functionality
         executor.register_observer(Box::new(observer));
-        
+
         // Send an event to trigger the observer pipeline
         let test_event = event::Cucumber::<TestWorld>::Started;
         executor.send_event(test_event);
-        
+
         // Keep receiver alive during test by consuming events
         let _event = receiver.try_next().ok();
-        
+
         // Verify observer functionality works (may receive events through observer registry)
         let _events_count = observer_clone.get_events_count();
         // The actual count depends on internal implementation, but registration should work

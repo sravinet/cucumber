@@ -4,11 +4,10 @@
 //! that are used across multiple test modules.
 
 #[cfg(test)]
+/// Shared test helper types used across unit and integration tests.
 pub mod common {
-    use std::future::Future;
-
     /// Empty CLI implementation for tests that don't need CLI arguments.
-    #[derive(Debug, Default, Clone)]
+    #[derive(Debug, Default, Clone, Copy)]
     pub struct EmptyCli;
 
     impl clap::FromArgMatches for EmptyCli {
@@ -35,7 +34,7 @@ pub mod common {
     }
 
     /// Standard test world implementation.
-    #[derive(Debug, Default, Clone)]
+    #[derive(Debug, Default, Clone, Copy)]
     pub struct TestWorld;
 
     impl crate::World for TestWorld {

@@ -13,9 +13,14 @@
 //! This module contains the core World trait that represents shared user-defined
 //! state for Cucumber test runs, along with its associated methods and functionality.
 
+use std::{
+    error::Error,
+    fmt::{Display, Formatter, Result as FmtResult},
+    future::Future,
+    result::Result,
+};
 #[cfg(feature = "macros")]
 use std::{fmt::Debug, path::Path};
-use std::{fmt::{Display, Formatter, Result as FmtResult}, future::Future, error::Error, result::Result};
 
 #[cfg(feature = "macros")]
 use crate::{
@@ -131,7 +136,10 @@ pub trait World: Sized + 'static {
 
 /// A simple error type for World creation failures.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[expect(clippy::module_name_repetitions, reason = "WorldError is a descriptive name for this module")]
+#[expect(
+    clippy::module_name_repetitions,
+    reason = "WorldError is a descriptive name for this module"
+)]
 pub struct WorldError {
     /// The error message.
     pub message: String,
@@ -160,7 +168,10 @@ pub trait AsyncWorldInit: World {
 }
 
 /// Helper trait for World implementations that need cleanup.
-#[expect(clippy::module_name_repetitions, reason = "Trait provides additional cleanup functionality for World")]
+#[expect(
+    clippy::module_name_repetitions,
+    reason = "Trait provides additional cleanup functionality for World"
+)]
 pub trait WorldCleanup: World {
     /// Performs cleanup of the World state.
     fn cleanup(&mut self) -> impl Future<Output = Result<(), Self::Error>>;

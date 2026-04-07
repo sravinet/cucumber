@@ -112,14 +112,12 @@ mod tests {
     #[test]
     fn test_core_exports_accessible() {
         // Test that core types are accessible through exports
-        use crate::exports::{
-            CucumberError, Event, Parser, Step,
-        };
+        use crate::exports::{CucumberError, Event, Parser, Step};
 
         // Test that these types can be referenced (compilation test)
-        let _: Option<CucumberError> = None;
-        let _: Option<Event<()>> = None;
-        let _: Option<
+        let _cucumber_error: Option<CucumberError> = None;
+        let _event: Option<Event<()>> = None;
+        let _parser: Option<
             Box<
                 dyn Parser<
                         (),
@@ -135,9 +133,9 @@ mod tests {
                     >,
             >,
         > = None;
-        let _: Option<crate::runner::Basic<()>> = None;
-        let _: Option<Step<()>> = None;
-        let _: Option<crate::writer::Basic> = None;
+        let _runner: Option<crate::runner::Basic<()>> = None;
+        let _step: Option<Step<()>> = None;
+        let _writer: Option<crate::writer::Basic> = None;
     }
 
     #[test]
@@ -145,9 +143,9 @@ mod tests {
         use crate::exports::prelude::*;
 
         // Test that prelude provides easy access to common types
-        let _: Option<CucumberError> = None;
-        let _: Option<Event<()>> = None;
-        let _: Option<
+        let _cucumber_error: Option<CucumberError> = None;
+        let _event: Option<Event<()>> = None;
+        let _parser: Option<
             Box<
                 dyn Parser<
                         (),
@@ -163,9 +161,9 @@ mod tests {
                     >,
             >,
         > = None;
-        let _: Option<crate::runner::Basic<()>> = None;
-        let _: Option<Step<()>> = None;
-        let _: Option<crate::writer::Basic> = None;
+        let _runner: Option<crate::runner::Basic<()>> = None;
+        let _step: Option<Step<()>> = None;
+        let _writer: Option<crate::writer::Basic> = None;
     }
 
     #[test]

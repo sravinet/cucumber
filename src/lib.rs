@@ -194,7 +194,7 @@ pub mod prelude;
 pub mod codegen;
 #[cfg(feature = "observability")]
 /// Observability infrastructure for test execution monitoring.
-/// 
+///
 /// This module provides utilities for observing test execution events
 /// and integrating with external monitoring systems.
 pub mod observer;
