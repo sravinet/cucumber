@@ -28,6 +28,10 @@ lint-strict:
 test:
     cargo test --workspace --all-features
 
+# Run tests with only the tracing feature (covers ExecutionFailure helpers)
+test-tracing:
+    cargo test --workspace --features tracing
+
 # Run tests with careful (requires nightly)
 test-careful:
     #!/usr/bin/env bash

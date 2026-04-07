@@ -172,6 +172,8 @@ mod feature_matrix_tests {
 }
 ```
 
+Additional note: helper utilities that build `ExecutionFailure` payloads and their dedicated unit test are gated under `#[cfg(feature = "tracing")]`. This keeps builds without tracing clean of dead code while the existing tracing/observability entries in the feature matrix continue to exercise those helpers for production-quality failure telemetry.
+
 ### 4. CI/CD Integration
 
 ```yaml
