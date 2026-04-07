@@ -15,7 +15,6 @@ fn step(world: &mut World, _secs: usize) {
     assert!(world.0 < 4, "Too much!");
 }
 
-
 #[tokio::test]
 #[ignore] // TODO: JSON format output has changed - need to update expected output
 async fn test() {

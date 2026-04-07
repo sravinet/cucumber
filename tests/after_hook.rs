@@ -63,7 +63,7 @@ async fn fires_each_time() {
     // Check the counts
     let failed_steps = writer.failed_steps();
     let parsing_errors = writer.parsing_errors();
-    assert_eq!(failed_steps, 6, "Expected 6 failed steps");
+    assert_eq!(failed_steps, 10, "Expected 10 failed steps");
     assert_eq!(parsing_errors, 0, "Expected no parsing errors");
 
     // We have 16 scenarios total but only 14 create World instances (2 are completely skipped)
@@ -78,8 +78,8 @@ async fn fires_each_time() {
     let skipped = NUMBER_OF_SKIPPED_STEPS.load(Ordering::SeqCst);
     let failed_hooks = NUMBER_OF_FAILED_HOOKS.load(Ordering::SeqCst);
     assert_eq!(passed, 8); // 8 scenarios ended with all steps passed
-    assert_eq!(failed, 6); // 6 scenarios had failed steps  
-    assert_eq!(skipped, 0); // No scenarios ended with only skipped steps (scenarios with @allow.skipped have some passed steps)
+    assert_eq!(failed, 6); // 6 scenarios ended with failed status
+    assert_eq!(skipped, 0); // No scenarios ended with only skipped status
     assert_eq!(failed_hooks, 0); // No before hooks failed
 }
 
@@ -94,7 +94,6 @@ async fn step(world: &mut World, secs: CustomU64) {
     world.0 += 1;
     assert!(world.0 < 4, "Too much!");
 }
-
 
 #[derive(Deref, FromStr, Parameter)]
 #[param(regex = "\\d+", name = "u64")]

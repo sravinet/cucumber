@@ -58,7 +58,6 @@ async fn unknown(_world: &mut World) {
     panic!("Unknown step executed");
 }
 
-
 // Removed CustomU64 - using native usize with expression-based step definitions
 
 #[derive(Clone, Copy, Debug, Default, cucumber::World)]

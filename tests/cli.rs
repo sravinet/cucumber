@@ -38,7 +38,8 @@ async fn tags_option_filters_all_scenarios_with_subcommand() {
     ])
     .expect("Invalid command line");
 
-    let writer = World::cucumber().with_cli(cli).run("tests/features/cli").await;
+    let writer =
+        World::cucumber().with_cli(cli).run("tests/features/cli").await;
 
     assert!(writer.execution_has_failed(), "Cucumber should have failed");
     assert_eq!(writer.failed_steps(), 2, "Expected 2 failed steps");
@@ -56,7 +57,8 @@ async fn tags_option_filters_scenario1_with_subcommand() {
     ])
     .expect("Invalid command line");
 
-    let writer = World::cucumber().with_cli(cli).run("tests/features/cli").await;
+    let writer =
+        World::cucumber().with_cli(cli).run("tests/features/cli").await;
 
     assert!(writer.execution_has_failed(), "Cucumber should have failed");
     assert_eq!(writer.failed_steps(), 1, "Expected 1 failed step");
@@ -72,7 +74,8 @@ async fn tags_option_filters_scenario1_no_subcommand() {
     ])
     .expect("Invalid command line");
 
-    let writer = World::cucumber().with_cli(cli).run("tests/features/cli").await;
+    let writer =
+        World::cucumber().with_cli(cli).run("tests/features/cli").await;
 
     assert!(writer.execution_has_failed(), "Cucumber should have failed");
     assert_eq!(writer.failed_steps(), 1, "Expected 1 failed step");
