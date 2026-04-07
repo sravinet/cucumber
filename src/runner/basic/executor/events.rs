@@ -351,7 +351,9 @@ mod tests {
         #[cfg(feature = "timestamps")]
         {
             let event_timestamp = received.at;
-            assert!(event_timestamp.elapsed().unwrap().as_nanos() > 0);
+            // Ensure timestamp is in the past (elapsed time is non-negative)
+            // We don't check for > 0 as it might be 0 on very fast systems
+            assert!(event_timestamp.elapsed().is_ok());
         }
     }
 
