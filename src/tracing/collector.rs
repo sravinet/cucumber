@@ -1,8 +1,10 @@
 //! Event collector for gathering tracing events and managing scenario spans.
 
 use std::collections::HashMap;
+use std::task::{Context, Poll, Waker};
 
 use futures::channel::mpsc;
+use futures::stream::Stream;
 use itertools::Either;
 use tracing::span;
 
@@ -109,35 +111,43 @@ impl Collector {
     ) -> Option<Vec<event::Cucumber<W>>> {
         self.notify_about_closing_spans();
 
-        self.logs_receiver.try_next().ok().flatten().map(|(id, msg)| {
-            id.and_then(|k| self.scenarios.get(&k))
-                .map_or_else(
-                    || Either::Left(self.scenarios.values()),
-                    |p| Either::Right(std::iter::once(p)),
-                )
-                .map(|(f, r, s, opt)| {
-                    event::Cucumber::scenario(
-                        f.clone(),
-                        r.clone(),
-                        s.clone(),
-                        event::RetryableScenario {
-                            event: event::Scenario::Log(msg.clone()),
-                            retries: opt.map(|o| o.retries),
-                        },
-                    )
-                })
-                .collect()
-        })
+        let waker = Waker::noop();
+        let mut cx = Context::from_waker(&waker);
+        match std::pin::Pin::new(&mut self.logs_receiver).poll_next(&mut cx) {
+            Poll::Ready(Some((id, msg))) => {
+                let scenarios_iter = id.and_then(|k| self.scenarios.get(&k))
+                    .map_or_else(
+                        || Either::Left(self.scenarios.values()),
+                        |p| Either::Right(std::iter::once(p)),
+                    );
+                
+                Some(scenarios_iter
+                    .map(|(f, r, s, opt)| {
+                        event::Cucumber::scenario(
+                            f.clone(),
+                            r.clone(),
+                            s.clone(),
+                            event::RetryableScenario {
+                                event: event::Scenario::Log(msg.clone()),
+                                retries: opt.map(|o| o.retries),
+                            },
+                        )
+                    })
+                    .collect::<Vec<_>>())
+            },
+            _ => None,
+        }
     }
 
     /// Notifies all its subscribers about closing [`Span`]s via [`Callback`]s.
     fn notify_about_closing_spans(&mut self) {
-        if let Some(id) = self.span_close_receiver.try_next().ok().flatten() {
+        let waker = Waker::noop();
+        let mut cx = Context::from_waker(&waker);
+        
+        if let Poll::Ready(Some(id)) = std::pin::Pin::new(&mut self.span_close_receiver).poll_next(&mut cx) {
             self.span_events.entry(id).or_default().1 = true;
         }
-        while let Some((id, callback)) =
-            self.wait_span_event_receiver.try_next().ok().flatten()
-        {
+        while let Poll::Ready(Some((id, callback))) = std::pin::Pin::new(&mut self.wait_span_event_receiver).poll_next(&mut cx) {
             self.span_events
                 .entry(id)
                 .or_default()
