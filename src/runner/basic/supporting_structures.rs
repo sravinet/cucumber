@@ -74,13 +74,13 @@ pub(super) enum ExecutionFailure<World> {
     /// [`crate::step::Step`] was skipped.
     ///
     /// [`crate::step::Step`]: gherkin::Step.
-    #[cfg_attr(not(feature = "tracing"), allow(dead_code))]
+    #[cfg_attr(not(feature = "tracing"), expect(dead_code, reason = "Only used when tracing feature is enabled"))]
     StepSkipped(Option<World>),
 
     /// [`crate::step::Step`] failed.
     ///
     /// [`crate::step::Step`]: gherkin::Step.
-    #[cfg_attr(not(feature = "tracing"), allow(dead_code))]
+    #[cfg_attr(not(feature = "tracing"), expect(dead_code, reason = "Only used when tracing feature is enabled"))]
     StepPanicked {
         /// [`crate::World`] at the time when [`crate::step::Step`] has failed.
         ///
