@@ -13,6 +13,8 @@
 //! This module defines errors that can occur during configuration parsing,
 //! validation, and CLI argument processing.
 
+use std::result::Result;
+
 use derive_more::with_trait::{Display, Error};
 
 /// Configuration and validation errors.
@@ -56,7 +58,7 @@ pub enum ConfigError {
 }
 
 /// Result type alias for configuration operations.
-pub type ConfigResult<T> = std::result::Result<T, ConfigError>;
+pub type ConfigResult<T> = Result<T, ConfigError>;
 
 impl ConfigError {
     /// Creates a new invalid retry error.
@@ -85,25 +87,25 @@ impl ConfigError {
 
     /// Returns true if this is an invalid retry error.
     #[must_use]
-    pub fn is_invalid_retry(&self) -> bool {
+    pub const fn is_invalid_retry(&self) -> bool {
         matches!(self, Self::InvalidRetry { .. })
     }
 
     /// Returns true if this is an invalid tag filter error.
     #[must_use]
-    pub fn is_invalid_tag_filter(&self) -> bool {
+    pub const fn is_invalid_tag_filter(&self) -> bool {
         matches!(self, Self::InvalidTagFilter { .. })
     }
 
     /// Returns true if this is a feature file not found error.
     #[must_use]
-    pub fn is_feature_file_not_found(&self) -> bool {
+    pub const fn is_feature_file_not_found(&self) -> bool {
         matches!(self, Self::FeatureFileNotFound { .. })
     }
 
     /// Returns true if this is an invalid CLI arguments error.
     #[must_use]
-    pub fn is_invalid_cli_args(&self) -> bool {
+    pub const fn is_invalid_cli_args(&self) -> bool {
         matches!(self, Self::InvalidCliArgs { .. })
     }
 
