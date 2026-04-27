@@ -345,6 +345,11 @@ fn test_duplicate_event_handling() {
 3. **Error Documentation**: Auto-generated error handling guides
 4. **Performance Monitoring**: Track error-related performance impact
 
+## Related Work
+
+Code quality improvements implemented in:
+- ADR-0036: Error module const method improvements and import simplification
+
 ## References
 
 - Addresses critical reliability gaps from comprehensive test analysis

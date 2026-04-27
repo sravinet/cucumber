@@ -156,6 +156,11 @@ assert_eq!(res.retried_steps(), 0); // NotFound errors are not counted as retrie
 3. **Performance Optimization**: Optimize span lifecycle management for high-throughput scenarios
 4. **Monitoring Integration**: Add observability for span lifecycle debugging
 
+## Related Work
+
+Follow-up improvements implemented in:
+- ADR-0036: Async stream processing modernization in tracing collector
+
 ## References
 
 - Builds on ADR-0026 (Test Remediation and Production Readiness Achievement)

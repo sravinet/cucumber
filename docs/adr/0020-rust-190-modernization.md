@@ -93,6 +93,11 @@ Changes were applied across the codebase, primarily in:
 
 All changes maintain backward compatibility at the API level while modernizing internal implementation.
 
+## Related Work
+
+Additional modernization implemented in:
+- ADR-0036: Further import simplification and const method improvements
+
 ## References
 
 - [Rust 1.70 Release Notes - is_some_and](https://blog.rust-lang.org/2023/06/01/Rust-1.70.0.html)
