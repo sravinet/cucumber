@@ -283,7 +283,7 @@ impl DataTable {
     /// Returns 0 if the table is empty.
     #[must_use]
     pub fn width(&self) -> usize {
-        self.rows.first().map_or(0, std::vec::Vec::len)
+        self.rows.first().map_or(0, Vec::len)
     }
 }
 

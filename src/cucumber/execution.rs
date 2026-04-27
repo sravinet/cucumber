@@ -1,6 +1,6 @@
 //! Execution methods for Cucumber executor.
 
-use std::mem;
+use std::{mem, process};
 
 use futures::StreamExt as _;
 
@@ -261,7 +261,7 @@ where
             }
 
             eprintln!("{}", msg.join(", "));
-            std::process::exit(1);
+            process::exit(1);
         }
     }
 }
