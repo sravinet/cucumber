@@ -31,8 +31,18 @@ The traditional approach accesses the raw Gherkin table:
 #
 # use std::collections::HashMap;
 #
-use cucumber::{World, gherkin::Step, given, then, when};
+use cucumber::{World, gherkin::Step, given};
 
+# #[derive(Debug, Default)]
+# struct Animal {
+#     pub hungry: bool,
+# }
+#
+# #[derive(Debug, Default, World)]
+# pub struct AnimalWorld {
+#     animals: HashMap<String, Animal>,
+# }
+#
 #[given(regex = r"^a (hungry|satiated) animal$")]
 async fn hungry_animal(world: &mut AnimalWorld, step: &Step, state: String) {
     let state = match state.as_str() {
@@ -53,6 +63,8 @@ async fn hungry_animal(world: &mut AnimalWorld, step: &Step, state: String) {
         }
     }
 }
+#
+# fn main() {}
 ```
 
 ## Using the DataTable API
@@ -62,14 +74,29 @@ async fn hungry_animal(world: &mut AnimalWorld, step: &Step, state: String) {
 The most canonical approach is to receive `DataTable` directly as a parameter:
 
 ```rust
-use cucumber::{DataTable, given};
+# extern crate cucumber;
+# extern crate tokio;
+#
+# use std::collections::HashMap;
+#
+use cucumber::{DataTable, World, given, when};
 
+# #[derive(Debug, Default)]
+# struct Animal {
+#     pub hungry: bool,
+# }
+#
+# #[derive(Debug, Default, World)]
+# pub struct AnimalWorld {
+#     animals: HashMap<String, Animal>,
+# }
+#
 #[given(regex = r"^a (hungry|satiated) animal$")]
 async fn hungry_animal(world: &mut AnimalWorld, state: String, table: DataTable) {
     // DataTable is provided directly - no manual extraction needed
     for animal_data in table.hashes() {
         let animal_name = animal_data.get("animal").unwrap();
-        
+
         world.animals
             .entry(animal_name.clone())
             .or_insert(Animal::default())
@@ -79,16 +106,18 @@ async fn hungry_animal(world: &mut AnimalWorld, state: String, table: DataTable)
 
 // Optional tables are also supported
 #[when("I perform operations")]
-async fn operations(world: &mut World, table: Option<DataTable>) {
+async fn operations(world: &mut AnimalWorld, table: Option<DataTable>) {
     if let Some(table) = table {
         // Process table data
         for row in table.hashes() {
-            // ...
+            let _ = row;
         }
     } else {
         // Handle case when no table is provided
     }
 }
+#
+# fn main() {}
 ```
 
 ### Alternative: Manual Extraction via Step
@@ -96,17 +125,32 @@ async fn operations(world: &mut World, table: Option<DataTable>) {
 For backward compatibility, you can still access tables through the `Step` parameter:
 
 ```rust
-use cucumber::{DataTable, gherkin::Step, given};
+# extern crate cucumber;
+# extern crate tokio;
+#
+# use std::collections::HashMap;
+#
+use cucumber::{DataTable, World, gherkin::Step, given};
 
+# #[derive(Debug, Default)]
+# struct Animal {
+#     pub hungry: bool,
+# }
+#
+# #[derive(Debug, Default, World)]
+# pub struct AnimalWorld {
+#     animals: HashMap<String, Animal>,
+# }
+#
 #[given(regex = r"^a (hungry|satiated) animal$")]
 async fn hungry_animal(world: &mut AnimalWorld, step: &Step, state: String) {
     if let Some(table) = step.table.as_ref() {
         let data_table = DataTable::from(table);
-        
+
         // Use hashes() for convenient column access
         for animal_data in data_table.hashes() {
             let animal_name = animal_data.get("animal").unwrap();
-            
+
             world.animals
                 .entry(animal_name.clone())
                 .or_insert(Animal::default())
@@ -114,7 +158,8 @@ async fn hungry_animal(world: &mut AnimalWorld, step: &Step, state: String) {
         }
     }
 }
-
+#
+# fn main() {}
 ```
 
 ## DataTable Methods
@@ -124,42 +169,86 @@ The `DataTable` type provides several useful methods:
 ### `hashes()` - Array of HashMaps
 Converts rows to hashmaps using the first row as keys:
 ```rust
+# extern crate cucumber;
+#
+# use cucumber::DataTable;
+#
+# fn main() {
+# let table = vec![vec!["name", "value"], vec!["timeout", "30"]];
 let data_table = DataTable::from(table);
 for item in data_table.hashes() {
     let name = item.get("name").unwrap();
     let value = item.get("value").unwrap();
 }
+# }
 ```
 
 ### `rows()` - Rows without header
 Returns all rows except the header:
 ```rust
+# extern crate cucumber;
+#
+# use cucumber::DataTable;
+#
+# fn main() {
+# let table = vec![vec!["name", "value"], vec!["timeout", "30"]];
 let data_table = DataTable::from(table);
 for row in data_table.rows() {
     let first_col = &row[0];
     let second_col = &row[1];
 }
+# }
 ```
 
 ### `rows_hash()` - Two-column table as HashMap
 Converts a two-column table to a key-value hashmap:
 ```rust
+# extern crate cucumber;
+#
+# use cucumber::DataTable;
+#
+# fn main() {
+# let data_table = DataTable::from(vec![
+#     vec!["timeout", "30"],
+#     vec!["retries", "3"],
+# ]);
 if let Some(config) = data_table.rows_hash() {
     let timeout = config.get("timeout").unwrap();
     let retries = config.get("retries").unwrap();
 }
+# }
 ```
 
 ### `transpose()` - Swap rows and columns
 ```rust
+# extern crate cucumber;
+#
+# use cucumber::DataTable;
+#
+# fn main() {
+# let data_table = DataTable::from(vec![
+#     vec!["name", "quantity"],
+#     vec!["cat", "2"],
+# ]);
 let transposed = data_table.transpose();
 // Rows are now columns and vice versa
+# }
 ```
 
 ### `columns()` - Select specific columns
 ```rust
+# extern crate cucumber;
+#
+# use cucumber::DataTable;
+#
+# fn main() {
+# let data_table = DataTable::from(vec![
+#     vec!["name", "quantity", "colour"],
+#     vec!["cat", "2", "black"],
+# ]);
 let subset = data_table.columns(&["name", "quantity"]);
 // Returns new DataTable with only specified columns
+# }
 ```
 
 ## Complete Example
@@ -167,17 +256,21 @@ let subset = data_table.columns(&["name", "quantity"]);
 Here's the complete animal feeding example using direct DataTable parameters:
 
 ```rust
-use cucumber::{DataTable, given, when, then, World};
+# extern crate cucumber;
+# extern crate tokio;
+#
 use std::collections::HashMap;
+
+use cucumber::{DataTable, World, given, then, when};
 
 #[given(regex = r"^a (hungry|satiated) animal$")]
 async fn hungry_animal(world: &mut AnimalWorld, state: String, table: DataTable) {
     let is_hungry = state == "hungry";
-    
+
     // Direct DataTable access - clean and canonical
     for animal_data in table.hashes() {
         let animal_name = animal_data.get("animal").unwrap();
-        
+
         world.animals
             .entry(animal_name.clone())
             .or_insert(Animal::default())
@@ -191,9 +284,11 @@ async fn feed_animal(world: &mut AnimalWorld, table: DataTable) {
     for feeding in table.hashes() {
         let animal = feeding.get("animal").unwrap();
         let times: usize = feeding.get("times").unwrap().parse().unwrap();
-        
+
         for _ in 0..times {
-            world.animals.get_mut(animal).map(Animal::feed);
+            if let Some(animal) = world.animals.get_mut(animal) {
+                animal.feed();
+            }
         }
     }
 }

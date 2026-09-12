@@ -1,5 +1,6 @@
 Feature: Basic
 
+  @serial
   Scenario: deny skipped
     Given step 1
 

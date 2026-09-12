@@ -15,6 +15,8 @@
 
 #![cfg(test)]
 
+use std::{error::Error, io};
+
 use cucumber::{
     World,
     error::{
@@ -22,7 +24,6 @@ use cucumber::{
         WriterResult,
     },
 };
-use std::{error::Error, io};
 
 /// Test world for error recovery scenarios.
 #[derive(Debug, Default)]
@@ -456,8 +457,9 @@ mod integration_error_recovery {
 
 /// Performance tests for error recovery overhead.
 mod error_recovery_performance {
-    use super::*;
     use std::time::{Duration, Instant};
+
+    use super::*;
 
     #[test]
     fn test_error_creation_performance() {

@@ -18,7 +18,7 @@ use quote::quote;
 pub(crate) struct DataTableParam {
     /// Name of the parameter.
     pub ident: syn::Ident,
-    /// Whether it's optional (Option<DataTable>).
+    /// Whether it's optional (`Option<DataTable>`).
     pub is_optional: bool,
     /// Position in the function arguments.
     // TODO: Implement DataTable position validation - ensure DataTable params are at correct positions
@@ -87,7 +87,7 @@ fn is_data_table_type(ty: &syn::Type) -> bool {
     }
 }
 
-/// Checks if a type is Option<DataTable>.
+/// Checks if a type is `Option<DataTable>`.
 pub(crate) fn is_option_data_table(ty: &syn::Type) -> bool {
     if let syn::Type::Path(type_path) = ty {
         if let Some(segment) = type_path.path.segments.last() {

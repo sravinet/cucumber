@@ -2,8 +2,7 @@ use std::io::Read as _;
 
 use cucumber::{World as _, given, then, when, writer};
 use futures::FutureExt as _;
-use quick_xml::Reader;
-use quick_xml::events::Event;
+use quick_xml::{Reader, events::Event};
 use tempfile::NamedTempFile;
 use tracing_subscriber::{
     Layer as _,
@@ -78,10 +77,10 @@ fn validate_junit_structure(xml_content: &str) {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(ref e)) => {
                 match e.name().as_ref() {
-                    b"testsuites" => {
+                    "testsuites" => {
                         in_testsuites = true;
                     }
-                    b"testsuite" => {
+                    "testsuite" => {
                         assert!(
                             in_testsuites,
                             "testsuite must be inside testsuites"
@@ -89,7 +88,7 @@ fn validate_junit_structure(xml_content: &str) {
                         in_testsuite = true;
                         testsuite_count += 1;
                     }
-                    b"testcase" => {
+                    "testcase" => {
                         assert!(
                             in_testsuite,
                             "testcase must be inside testsuite"
@@ -102,16 +101,16 @@ fn validate_junit_structure(xml_content: &str) {
                         // Validate testcase has required name attribute
                         let has_name = e.attributes().any(|attr| {
                             attr.as_ref()
-                                .map(|a| a.key.as_ref() == b"name")
+                                .map(|a| a.key.as_ref() == "name")
                                 .unwrap_or(false)
                         });
                         assert!(has_name, "testcase must have name attribute");
                     }
-                    b"failure" => {
+                    "failure" => {
                         assert!(in_testcase, "failure must be inside testcase");
                         current_testcase_has_failure = true;
                     }
-                    b"skipped" => {
+                    "skipped" => {
                         assert!(in_testcase, "skipped must be inside testcase");
                         current_testcase_has_skipped = true;
                     }
@@ -119,13 +118,13 @@ fn validate_junit_structure(xml_content: &str) {
                 }
             }
             Ok(Event::End(ref e)) => match e.name().as_ref() {
-                b"testsuites" => {
+                "testsuites" => {
                     in_testsuites = false;
                 }
-                b"testsuite" => {
+                "testsuite" => {
                     in_testsuite = false;
                 }
-                b"testcase" => {
+                "testcase" => {
                     in_testcase = false;
                     if current_testcase_has_failure {
                         failure_count += 1;

@@ -1,25 +1,44 @@
 name: Security audit
 
+# Runs on GitHub-hosted runners only.
+
 on:
   push:
     branches: ["main"]
     tags: ["v*"]
     paths: ["**/Cargo.toml"]
   pull_request:
-    branches: ["main"]
     paths: ["**/Cargo.toml"]
   schedule:
     - cron: "7 7 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   cargo-audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      # Needed to file/update advisory issues from scheduled runs.
+      issues: write
+      checks: write
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: stable
 
-      - uses: actions-rs/audit-check@v1
+      # These are libraries, so no `Cargo.lock` is committed, while
+      # `cargo audit` reads exactly that file.
+      - run: cargo generate-lockfile
+
+      - uses: rustsec/audit-check@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

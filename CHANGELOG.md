@@ -14,6 +14,9 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 ### BC Breaks
 
 - Bumped up [MSRV] to 1.87 to get rid of `once_cell` crate, for `#[expect]` attribute usage, and because of migration to 2024 edition. ([4010c1ad], [f1307038], [b46930c3], [9705253b], [0c7dfc3c])
+- Bumped up [MSRV] to 1.88, as the minimum supported `gherkin` 0.15 requires it.
+- Bumped up minimum supported `serde_json` version to 1.0.93, as earlier ones cannot serialize 128-bit integers used by the JSON writer.
+- Bumped up `junit-report` dependency to 0.9, whose types are exposed by `writer::junit`, so that it pulls in a `quick-xml` free of [RUSTSEC-2026-0194](https://rustsec.org/advisories/RUSTSEC-2026-0194) and [RUSTSEC-2026-0195](https://rustsec.org/advisories/RUSTSEC-2026-0195).
 - Replaced `Arc` with `PartialEq`/`Hash` pointer-optimized `Source` in `event`s: ([#352])
     - `Source<gherkin::Feature>` in `event::Cucumber::Feature`.
     - `Source<gherkin::Rule>` in `event::Feature::Rule`.

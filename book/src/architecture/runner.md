@@ -151,13 +151,13 @@ impl CustomRunner {
                 .catch_unwind()
                 .await
             {
-                Ok(()) => event::Step::Passed(captures, loc),
-                Err(e) => event::Step::Failed(
-                    Some(captures),
-                    loc,
-                    Some(Arc::new(world.clone())),
-                    event::StepError::Panic(e.into()),
-                ),
+                Ok(()) => event::Step::Passed { captures, location: loc },
+                Err(e) => event::Step::Failed {
+                    captures: Some(captures),
+                    location: loc,
+                    world: Some(Arc::new(world.clone())),
+                    error: event::StepError::Panic(e.into()),
+                },
             }
         } else {
             event::Step::Skipped
@@ -185,7 +185,7 @@ impl CustomRunner {
         for step in scenario.steps.clone() {
             let (w, ev) = Self::execute_step(world, step.clone()).await;
             world = w;
-            let should_stop = matches!(ev, event::Step::Failed(..));
+            let should_stop = matches!(ev, event::Step::Failed { .. });
             steps.push((step, ev));
             if should_stop {
                 break;

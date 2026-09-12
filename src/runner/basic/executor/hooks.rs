@@ -61,24 +61,25 @@ impl HookExecutor {
             #[cfg(feature = "tracing")]
             let span = id.hook_span(HookType::Before);
             #[cfg(feature = "tracing")]
-            let _guard = span.enter();
+            let span_id = span.id();
 
-            let result = AssertUnwindSafe(before_hook(
+            let run = AssertUnwindSafe(before_hook(
                 &*feature,
                 rule.as_ref().map(|r| &**r),
                 &*scenario,
                 world,
             ))
-            .catch_unwind()
-            .await;
+            .catch_unwind();
+            // Instrumenting the future, rather than entering the `Span`, is
+            // what keeps concurrently running `Scenario`s out of it.
+            #[cfg(feature = "tracing")]
+            let run = tracing::Instrument::instrument(run, span);
+            let result = run.await;
 
             #[cfg(feature = "tracing")]
             {
-                drop(_guard);
-                if let Some(waiter) = waiter {
-                    if let Some(span_id) = span.id() {
-                        waiter.wait_for_span_close(span_id).await;
-                    }
+                if let Some((waiter, span_id)) = waiter.zip(span_id) {
+                    waiter.wait_for_span_close(span_id).await;
                 }
             }
 
@@ -193,25 +194,24 @@ impl HookExecutor {
             #[cfg(feature = "tracing")]
             let span = id.hook_span(HookType::After);
             #[cfg(feature = "tracing")]
-            let _guard = span.enter();
+            let span_id = span.id();
 
-            let result = AssertUnwindSafe(after_hook(
+            let run = AssertUnwindSafe(after_hook(
                 &*feature,
                 rule.as_ref().map(|r| &**r),
                 &*scenario,
                 scenario_finished,
                 world,
             ))
-            .catch_unwind()
-            .await;
+            .catch_unwind();
+            #[cfg(feature = "tracing")]
+            let run = tracing::Instrument::instrument(run, span);
+            let result = run.await;
 
             #[cfg(feature = "tracing")]
             {
-                drop(_guard);
-                if let Some(waiter) = waiter {
-                    if let Some(span_id) = span.id() {
-                        waiter.wait_for_span_close(span_id).await;
-                    }
+                if let Some((waiter, span_id)) = waiter.zip(span_id) {
+                    waiter.wait_for_span_close(span_id).await;
                 }
             }
 

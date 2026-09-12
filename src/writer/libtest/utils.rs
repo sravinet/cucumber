@@ -22,13 +22,12 @@ use super::{
     cli::{Cli, ReportTime},
     writer::Libtest,
 };
+#[cfg(test)]
+use crate::Event;
 use crate::{
     event::{self, Metadata, Retries},
     writer::basic::trim_path,
 };
-
-#[cfg(test)]
-use crate::Event;
 
 /// Indicator, whether a [`crate::step::Step`] is [`Background`] or not.
 ///

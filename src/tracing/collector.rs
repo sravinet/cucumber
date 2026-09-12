@@ -1,10 +1,11 @@
 //! Event collector for gathering tracing events and managing scenario spans.
 
-use std::collections::HashMap;
-use std::task::{Context, Poll, Waker};
+use std::{
+    collections::HashMap,
+    task::{Context, Poll, Waker},
+};
 
-use futures::channel::mpsc;
-use futures::stream::Stream;
+use futures::{channel::mpsc, stream::Stream};
 use itertools::Either;
 use tracing::span;
 
@@ -31,17 +32,17 @@ pub struct Collector {
     /// [`ScenarioId`].
     logs_receiver: LogReceiver,
 
-    /// All [`Callback`]s for [`Span`]s closing events with their completion
-    /// status.
+    /// All [`Callback`]s for [`tracing::Span`]s closing events with their
+    /// completion status.
     span_events: SpanEventsCallbacks,
 
-    /// Receiver of a [`Span`] closing event.
+    /// Receiver of a [`tracing::Span`] closing event.
     span_close_receiver: SpanCloseReceiver,
 
-    /// Sender for subscribing to a [`Span`] closing event.
+    /// Sender for subscribing to a [`tracing::Span`] closing event.
     wait_span_event_sender: mpsc::UnboundedSender<(span::Id, Callback)>,
 
-    /// Receiver for subscribing to a [`Span`] closing event.
+    /// Receiver for subscribing to a [`tracing::Span`] closing event.
     wait_span_event_receiver: mpsc::UnboundedReceiver<(span::Id, Callback)>,
 }
 
@@ -102,7 +103,8 @@ impl Collector {
     /// last called.
     ///
     /// In case a received [`tracing::Event`] doesn't contain a [`gherkin::Scenario`]'s
-    /// [`Span`], such [`tracing::Event`] will be forwarded to all active
+    /// [`tracing::Span`], such [`tracing::Event`] will be forwarded to all
+    /// active
     /// [`gherkin::Scenario`]s.
     ///
     /// [`gherkin::Scenario`]: gherkin::Scenario
@@ -115,39 +117,47 @@ impl Collector {
         let mut cx = Context::from_waker(&waker);
         match std::pin::Pin::new(&mut self.logs_receiver).poll_next(&mut cx) {
             Poll::Ready(Some((id, msg))) => {
-                let scenarios_iter = id.and_then(|k| self.scenarios.get(&k))
-                    .map_or_else(
+                let scenarios_iter =
+                    id.and_then(|k| self.scenarios.get(&k)).map_or_else(
                         || Either::Left(self.scenarios.values()),
                         |p| Either::Right(std::iter::once(p)),
                     );
-                
-                Some(scenarios_iter
-                    .map(|(f, r, s, opt)| {
-                        event::Cucumber::scenario(
-                            f.clone(),
-                            r.clone(),
-                            s.clone(),
-                            event::RetryableScenario {
-                                event: event::Scenario::Log(msg.clone()),
-                                retries: opt.map(|o| o.retries),
-                            },
-                        )
-                    })
-                    .collect::<Vec<_>>())
-            },
+
+                Some(
+                    scenarios_iter
+                        .map(|(f, r, s, opt)| {
+                            event::Cucumber::scenario(
+                                f.clone(),
+                                r.clone(),
+                                s.clone(),
+                                event::RetryableScenario {
+                                    event: event::Scenario::Log(msg.clone()),
+                                    retries: opt.map(|o| o.retries),
+                                },
+                            )
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            }
             _ => None,
         }
     }
 
-    /// Notifies all its subscribers about closing [`Span`]s via [`Callback`]s.
+    /// Notifies all its subscribers about closing [`tracing::Span`]s via
+    /// [`Callback`]s.
     fn notify_about_closing_spans(&mut self) {
         let waker = Waker::noop();
         let mut cx = Context::from_waker(&waker);
-        
-        if let Poll::Ready(Some(id)) = std::pin::Pin::new(&mut self.span_close_receiver).poll_next(&mut cx) {
+
+        if let Poll::Ready(Some(id)) =
+            std::pin::Pin::new(&mut self.span_close_receiver).poll_next(&mut cx)
+        {
             self.span_events.entry(id).or_default().1 = true;
         }
-        while let Poll::Ready(Some((id, callback))) = std::pin::Pin::new(&mut self.wait_span_event_receiver).poll_next(&mut cx) {
+        while let Poll::Ready(Some((id, callback))) =
+            std::pin::Pin::new(&mut self.wait_span_event_receiver)
+                .poll_next(&mut cx)
+        {
             self.span_events
                 .entry(id)
                 .or_default()

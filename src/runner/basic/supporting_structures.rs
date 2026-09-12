@@ -50,37 +50,49 @@ pub(super) type IsFailed = bool;
 /// [`gherkin::Scenario`]: gherkin::Scenario
 pub(super) type IsRetried = bool;
 
-/// Failure encountered during execution of [`HookType::Before`] or [`crate::step::Step`].
-/// See [`Executor::emit_failed_events()`] for more info.
+/// Failure encountered during execution of [`event::HookType::Before`] or
+/// [`crate::step::Step`].
 ///
-/// [`Executor::emit_failed_events()`]: super::executor::Executor::emit_failed_events
 /// [`crate::step::Step`]: gherkin::Step
 #[derive(Debug)]
 pub(super) enum ExecutionFailure<World> {
-    /// [`HookType::Before`] panicked.
+    /// [`event::HookType::Before`] panicked.
     BeforeHookPanicked {
-        /// [`crate::World`] at the time [`HookType::Before`] has panicked.
+        /// [`crate::World`] at the time [`event::HookType::Before`] has
+        /// panicked.
         world: Option<World>,
 
-        /// [`catch_unwind()`] of the [`HookType::Before`] panic.
+        /// [`catch_unwind()`] of the [`event::HookType::Before`] panic.
         ///
         /// [`catch_unwind()`]: std::panic::catch_unwind
         panic_info: Info,
 
-        /// [`Metadata`] at the time [`HookType::Before`] panicked.
+        /// [`Metadata`] at the time [`event::HookType::Before`] panicked.
         meta: Metadata,
     },
 
     /// [`crate::step::Step`] was skipped.
     ///
     /// [`crate::step::Step`]: gherkin::Step.
-    #[cfg_attr(not(feature = "tracing"), expect(dead_code, reason = "Only used when tracing feature is enabled"))]
+    #[cfg_attr(
+        not(feature = "tracing"),
+        expect(
+            dead_code,
+            reason = "Only used when tracing feature is enabled"
+        )
+    )]
     StepSkipped(Option<World>),
 
     /// [`crate::step::Step`] failed.
     ///
     /// [`crate::step::Step`]: gherkin::Step.
-    #[cfg_attr(not(feature = "tracing"), expect(dead_code, reason = "Only used when tracing feature is enabled"))]
+    #[cfg_attr(
+        not(feature = "tracing"),
+        expect(
+            dead_code,
+            reason = "Only used when tracing feature is enabled"
+        )
+    )]
     StepPanicked {
         /// [`crate::World`] at the time when [`crate::step::Step`] has failed.
         ///
@@ -120,7 +132,7 @@ pub(super) enum ExecutionFailure<World> {
         is_background: bool,
     },
 
-    /// [`HookType::Before`] failed.
+    /// [`event::HookType::Before`] failed.
     Before,
 }
 
@@ -197,12 +209,12 @@ impl<W> ExecutionFailure<W> {
     }
 }
 
-/// [`Metadata`] of [`HookType::After`] events.
+/// [`Metadata`] of [`event::HookType::After`] events.
 pub(super) struct AfterHookEventsMeta {
-    /// [`Metadata`] at the time [`HookType::After`] started.
+    /// [`Metadata`] at the time [`event::HookType::After`] started.
     pub(super) started: Metadata,
 
-    /// [`Metadata`] at the time [`HookType::After`] finished.
+    /// [`Metadata`] at the time [`event::HookType::After`] finished.
     pub(super) finished: Metadata,
 
     /// The outcome of the scenario execution.

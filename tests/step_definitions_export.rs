@@ -38,15 +38,16 @@ fn every_definition_is_exported_with_its_pattern_and_location() {
     assert!(defs[1].location.line < defs[2].location.line);
 
     assert_eq!(defs[0].pattern, r"^a (\d+)$", "a regex is exported verbatim");
-    let compiled =
-        regex::Regex::new(&defs[1].pattern).expect("the expression compiled to a regex");
+    let compiled = regex::Regex::new(&defs[1].pattern)
+        .expect("the expression compiled to a regex");
     assert!(compiled.is_match("b foo"), "{}", defs[1].pattern);
     assert!(
         !compiled.is_match("b foo bar"),
         "`{{word}}` takes one word: {}",
         defs[1].pattern
     );
-    let literal = regex::Regex::new(&defs[2].pattern).expect("a literal compiles");
+    let literal =
+        regex::Regex::new(&defs[2].pattern).expect("a literal compiles");
     assert!(literal.is_match("c"));
 }
 
