@@ -104,5 +104,7 @@ async fn main() {
         .await;
 
     assert!(writer.execution_has_failed(), "Execution should have failed");
-    assert_eq!(writer.failed_steps(), 2, "Expected 2 failed steps");
+    // The `Step` matching no function is skipped, and skipping aborts its
+    // `Scenario`, so the single failing `Step` is the only failure.
+    assert_eq!(writer.failed_steps(), 1, "Expected 1 failed step");
 }

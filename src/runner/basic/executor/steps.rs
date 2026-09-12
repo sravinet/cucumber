@@ -38,6 +38,9 @@ impl StepExecutor {
     {
         let mut skipped_steps = 0;
         let mut step_failed = false;
+        // A `Step` matching no function aborts the `Scenario`, exactly like a
+        // failing one does, so the `Step`s after it are never run.
+        let mut step_skipped = false;
         let mut last_failure: Option<(
             Option<regex::CaptureLocations>,
             Option<step::Location>,
@@ -135,6 +138,7 @@ impl StepExecutor {
                 event::Step::Passed { .. } => {}
                 event::Step::Skipped => {
                     skipped_steps += 1;
+                    step_skipped = true;
 
                     #[cfg(feature = "tracing")]
                     let failure = Self::create_step_skipped_failure::<W>(None);
@@ -177,6 +181,10 @@ impl StepExecutor {
                         "Step failed during scenario execution"
                     );
                 }
+            }
+
+            if step_skipped {
+                break;
             }
         }
 
@@ -235,7 +243,7 @@ impl StepExecutor {
         #[cfg(feature = "tracing")]
         let span = _id.step_span(false);
         #[cfg(feature = "tracing")]
-        let _guard = span.enter();
+        let span_id = span.id();
 
         let step_fn = collection.find(&*step);
         let (result, location, step_captures) = match step_fn {
@@ -243,18 +251,22 @@ impl StepExecutor {
                 // Extract the actual capture locations for the event
                 let actual_captures = captures.clone();
 
-                let result =
-                    AssertUnwindSafe(step_fn(world, ctx)).catch_unwind().await;
+                let run = AssertUnwindSafe(step_fn(world, ctx)).catch_unwind();
+                // Instrumenting the future, rather than entering the `Span`,
+                // is what keeps concurrently running `Scenario`s out of it:
+                // an entered guard stays on the thread across `.await`s, so
+                // every `Span` opened meanwhile would nest inside this one.
+                #[cfg(feature = "tracing")]
+                let run = tracing::Instrument::instrument(run, span);
+                let result = run.await;
 
                 (result, loc, Some(actual_captures))
             }
             Ok(None) => {
-                let step_event = event::Step::Failed {
-                    captures: None,
-                    location: None,
-                    world: None,
-                    error: event::StepError::NotFound,
-                };
+                // A `Step` matching no function is skipped, not failed.
+                // `WriterExt::fail_on_skipped()` is what turns this into a
+                // `StepError::NotFound` failure, when that's wanted.
+                let step_event = event::Step::Skipped;
                 Self::emit_finished_step_event(
                     feature,
                     rule,
@@ -289,13 +301,8 @@ impl StepExecutor {
         };
 
         #[cfg(feature = "tracing")]
-        {
-            drop(_guard);
-            if let Some(waiter) = waiter {
-                if let Some(span_id) = span.id() {
-                    waiter.wait_for_span_close(span_id).await;
-                }
-            }
+        if let Some((waiter, span_id)) = waiter.zip(span_id) {
+            waiter.wait_for_span_close(span_id).await;
         }
 
         let step_event = match result {
@@ -366,7 +373,7 @@ impl StepExecutor {
         #[cfg(feature = "tracing")]
         let span = _id.step_span(true); // true for background
         #[cfg(feature = "tracing")]
-        let _guard = span.enter();
+        let span_id = span.id();
 
         // Run the actual step (same logic as run_step)
         let step_fn = collection.find(&*step);
@@ -375,18 +382,18 @@ impl StepExecutor {
                 // Extract the actual capture locations for the event
                 let actual_captures = captures.clone();
 
-                let result =
-                    AssertUnwindSafe(step_fn(world, ctx)).catch_unwind().await;
+                let run = AssertUnwindSafe(step_fn(world, ctx)).catch_unwind();
+                #[cfg(feature = "tracing")]
+                let run = tracing::Instrument::instrument(run, span);
+                let result = run.await;
 
                 (result, loc, Some(actual_captures))
             }
             Ok(None) => {
-                let step_event = event::Step::Failed {
-                    captures: None,
-                    location: None,
-                    world: None,
-                    error: event::StepError::NotFound,
-                };
+                // A `Step` matching no function is skipped, not failed.
+                // `WriterExt::fail_on_skipped()` is what turns this into a
+                // `StepError::NotFound` failure, when that's wanted.
+                let step_event = event::Step::Skipped;
                 Self::emit_finished_step_event(
                     feature,
                     rule,
@@ -421,13 +428,8 @@ impl StepExecutor {
         };
 
         #[cfg(feature = "tracing")]
-        {
-            drop(_guard);
-            if let Some(waiter) = waiter {
-                if let Some(span_id) = span.id() {
-                    waiter.wait_for_span_close(span_id).await;
-                }
-            }
+        if let Some((waiter, span_id)) = waiter.zip(span_id) {
+            waiter.wait_for_span_close(span_id).await;
         }
 
         let step_event = match result {

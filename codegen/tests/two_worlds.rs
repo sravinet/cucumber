@@ -133,8 +133,9 @@ async fn main() {
         .await;
 
     assert_eq!(writer.passed_steps(), 13);
-    assert_eq!(writer.skipped_steps(), 0);
-    assert_eq!(writer.failed_steps(), 2);
+    // The `Step` matching no `FirstWorld` function is skipped, not failed.
+    assert_eq!(writer.skipped_steps(), 1);
+    assert_eq!(writer.failed_steps(), 1);
 
     let writer = SecondWorld::cucumber()
         .max_concurrent_scenarios(None)

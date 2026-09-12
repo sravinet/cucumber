@@ -276,30 +276,30 @@ where
         #[cfg(feature = "tracing")]
         let scenario_span = id.scenario_span();
         #[cfg(feature = "tracing")]
-        let _scenario_guard = scenario_span.enter();
+        let scenario_span_id = scenario_span.id();
 
         // Execute the scenario with tracing
-        let execution_result = self
-            .execute_scenario_steps(
-                id,
-                feature.clone(),
-                rule.clone(),
-                scenario.clone(),
-                &mut world,
-                retries,
-                #[cfg(feature = "tracing")]
-                waiter,
-            )
-            .await;
+        let run = self.execute_scenario_steps(
+            id,
+            feature.clone(),
+            rule.clone(),
+            scenario.clone(),
+            &mut world,
+            retries,
+            #[cfg(feature = "tracing")]
+            waiter,
+        );
+        // Instrumenting the future, rather than entering the `Span`, is what
+        // keeps concurrently running `Scenario`s out of it: an entered guard
+        // stays on the thread across `.await`s, so every `Span` opened
+        // meanwhile would nest inside this one.
+        #[cfg(feature = "tracing")]
+        let run = tracing::Instrument::instrument(run, scenario_span);
+        let execution_result = run.await;
 
         #[cfg(feature = "tracing")]
-        {
-            drop(_scenario_guard);
-            if let Some(waiter) = waiter {
-                if let Some(span_id) = scenario_span.id() {
-                    waiter.wait_for_span_close(span_id).await;
-                }
-            }
+        if let Some((waiter, span_id)) = waiter.zip(scenario_span_id) {
+            waiter.wait_for_span_close(span_id).await;
         }
 
         // Handle the scenario completion

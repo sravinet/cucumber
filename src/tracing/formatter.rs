@@ -9,7 +9,8 @@ use tracing_subscriber::{
     registry::LookupSpan,
 };
 
-use super::visitor::{GetScenarioId, IsScenarioIdSpan};
+use super::visitor::IsScenarioIdSpan;
+use crate::runner::basic::ScenarioId;
 
 /// [`FormatFields`] implementation that skips formatting fields if the span
 /// contains a scenario ID field.
@@ -74,29 +75,14 @@ where
         mut writer: format::Writer<'_>,
         event: &Event<'_>,
     ) -> fmt::Result {
-        // Try to get scenario ID from current span
-        let scenario_id = ctx.lookup_current().and_then(|span_ref| {
-            // Try getting from extensions first
-            span_ref
-                .extensions()
-                .get::<GetScenarioId>()
-                .map(|stored| stored.get_scenario_id())
-                .flatten()
-                .or_else(|| {
-                    // If not in extensions, try extracting from span metadata
-                    let metadata = span_ref.metadata();
-                    if metadata
-                        .fields()
-                        .iter()
-                        .any(|f| f.name() == "scenario_id")
-                    {
-                        // This span might contain scenario ID, but we can't easily extract it
-                        // without more complex visitor implementation
-                        None
-                    } else {
-                        None
-                    }
-                })
+        // The `ScenarioId` is recorded by `RecordScenarioId` into the
+        // `Extensions` of the `Span` it's opened with, so it's looked up in
+        // the `Span`s this `Event` belongs to, rather than in whatever `Span`
+        // happens to be entered on this thread.
+        let scenario_id = ctx.event_scope().and_then(|scope| {
+            scope
+                .from_root()
+                .find_map(|span| span.extensions().get::<ScenarioId>().copied())
         });
 
         // Format the inner event first

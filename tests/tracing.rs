@@ -52,18 +52,36 @@ async fn main() {
     // Required to strip out non-deterministic parts of output, so we could
     // compare them well.
     let non_deterministic = Regex::new(
-        " ([^\"\\n\\s]*)[/\\\\]([A-z1-9-_]*)\\.(feature|rs)(:\\d+:\\d+)?\
-             |\\s?\n",
+        " ([^\"\\n\\s]*)[/\\\\]([A-z1-9-_]*)\\.(feature|rs)(:\\d+:\\d+)?",
     )
     .unwrap();
+    // The task logging outside any `Span` does so on a wall-clock interval,
+    // so how many of its `Event`s are forwarded into each `gherkin::Scenario`
+    // depends on how loaded the machine is. Erasing their counter and
+    // collapsing repeats keeps the assertion on what is deterministic: the
+    // order of the `gherkin::Scenario`/`Step` lines, and each `Step`'s log
+    // being emitted inside its own `Span`, before the `Step` finishes.
+    let outside_span = Regex::new("not in span: \\d+").unwrap();
+    let normalize = |output: &str| {
+        let mut lines = Vec::<String>::new();
+        for line in output.lines() {
+            let line = non_deterministic.replace_all(line, "");
+            let line = outside_span.replace_all(&line, "not in span: N");
+            if line.ends_with("not in span: N")
+                && lines.last().is_some_and(|last| *last == line)
+            {
+                continue;
+            }
+            lines.push(line.into_owned());
+        }
+        lines
+    };
 
     assert_eq!(
-        non_deterministic
-            .replace_all(String::from_utf8_lossy(&out).as_ref(), ""),
-        non_deterministic.replace_all(
+        normalize(String::from_utf8_lossy(&out).as_ref()),
+        normalize(
             &fs::read_to_string("tests/features/tracing/correct.stdout")
                 .unwrap(),
-            "",
         ),
     );
 }
