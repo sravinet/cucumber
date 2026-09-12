@@ -615,17 +615,18 @@ mod tests {
         };
         assert!(opts_no_instant.left_until_retry().is_none());
 
-        // With both duration and instant
+        // With both duration and instant. The deadline is far enough away
+        // that a loaded machine cannot cross it while this test runs.
         let now = Instant::now();
         let opts_with_instant = RetryOptionsWithDeadline {
             retries: Retries::initial(1),
-            after: Some((Duration::from_millis(100), Some(now))),
+            after: Some((Duration::from_secs(60), Some(now))),
         };
 
         // Should have some time left
         let left = opts_with_instant.left_until_retry();
         assert!(left.is_some());
-        assert!(left.unwrap() <= Duration::from_millis(100));
+        assert!(left.unwrap() <= Duration::from_secs(60));
 
         // Wait a bit and check again
         thread::sleep(Duration::from_millis(50));
@@ -633,10 +634,13 @@ mod tests {
         assert!(left_after.is_some());
         assert!(left_after.unwrap() < left.unwrap());
 
-        // Wait until after deadline
-        thread::sleep(Duration::from_millis(60));
-        let left_expired = opts_with_instant.left_until_retry();
-        assert!(left_expired.is_none()); // Duration has passed
+        // A deadline in the past leaves nothing, whatever the scheduling
+        // delays are: any elapsed time at all exceeds a zero duration.
+        let expired = RetryOptionsWithDeadline {
+            retries: Retries::initial(1),
+            after: Some((Duration::ZERO, Some(now))),
+        };
+        assert!(expired.left_until_retry().is_none());
     }
 
     #[test]

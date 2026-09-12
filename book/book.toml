@@ -2,7 +2,6 @@
 title = "Cucumber Rust Book"
 description = "User guide for Cucumber Rust"
 language = "en"
-multilingual = false
 authors = [
     "Olga Gaponenko (@alvskar)",
     "Ilya Solovyiov (@ilslv)",
@@ -15,7 +14,7 @@ build-dir = "_rendered"
 create-missing = false
 
 [output.html]
-git_repository_url = "https://github.com/cucumber-rs/cucumber"
+git-repository-url = "https://github.com/cucumber-rs/cucumber"
 
 [rust]
 edition = "2024"

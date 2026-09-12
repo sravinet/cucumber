@@ -232,6 +232,10 @@ jobs:
         with:
           key: book
       - uses: peaceiris/actions-mdbook@v2
+        with:
+          # Pinned: mdBook 0.5 renamed `book.toml` keys, so an unpinned
+          # `latest` can break the Book build without a commit here.
+          mdbook-version: "0.5.4"
 
       - run: make test.book
 
@@ -359,6 +363,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: peaceiris/actions-mdbook@v2
+        with:
+          # Pinned: mdBook 0.5 renamed `book.toml` keys, so an unpinned
+          # `latest` can break the Book build without a commit here.
+          mdbook-version: "0.5.4"
 
       - run: make book.build
                   out=gh-pages/${{ (github.ref == 'refs/heads/main'
