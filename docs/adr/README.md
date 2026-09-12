@@ -44,7 +44,10 @@ An Architecture Decision Record captures an important architectural decision mad
 | [0032](0032-panic-free-error-handling-architecture.md) | Panic-Free Error Handling Architecture | Implemented | Eliminate production panics and implement robust error handling |
 | [0033](0033-feature-flag-test-matrix-strategy.md) | Feature Flag Test Matrix Strategy | Accepted | Comprehensive testing across all feature combinations |
 | [0034](0034-async-runtime-compilation-fixes.md) | Async Runtime Compilation Fixes | Implemented | Fix critical compilation errors blocking production deployment |
-| [0037](0037-ci-on-github-hosted-runners.md) | CI on GitHub-Hosted Runners | Implemented | Make every CI gate satisfiable and run the whole suite on GitHub-hosted runners |
+| [0035](0035-expression-based-step-definitions.md) | Expression-Based Step Definitions | Accepted | Cucumber expressions as an alternative to regex in step attributes |
+| [0036](0036-code-modernization-and-async-improvements.md) | Code Modernization and Async Improvements | Accepted | `#[expect]` lint attributes and modernised async stream handling |
+| [0037](0037-step-definitions-as-data.md) | Step Definitions Are Readable as Data | Accepted | Enumerate the registered step definitions, with pattern and location, without running the suite |
+| [0038](0038-ci-on-github-hosted-runners.md) | CI on GitHub-Hosted Runners | Implemented | Make every CI gate satisfiable and run the whole suite on GitHub-hosted runners |
 
 ## ADR Template
 

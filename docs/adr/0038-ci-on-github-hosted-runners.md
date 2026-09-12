@@ -1,4 +1,4 @@
-# ADR-0037: CI on GitHub-Hosted Runners
+# ADR-0038: CI on GitHub-Hosted Runners
 
 ## Status
 Implemented
