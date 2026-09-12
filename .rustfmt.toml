@@ -13,7 +13,12 @@ format_code_in_doc_comments = true
 format_macro_matchers = true
 use_try_shorthand = true
 
-error_on_line_overflow = true
-error_on_unformatted = true
+# Comments and string literals that exceed `max_width` cannot be re-wrapped by
+# rustfmt itself, so erroring on them would make `cargo fmt --check` (the CI
+# `rustfmt` job) unfixable by running `cargo fmt`. Code layout is still fully
+# enforced: `cargo fmt --check` fails on any source that `cargo fmt` would
+# rewrite.
+error_on_line_overflow = false
+error_on_unformatted = false
 
 unstable_features = true

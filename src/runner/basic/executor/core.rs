@@ -771,8 +771,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_stream_processing_functionality() {
-        use futures::TryStreamExt;
-        use futures::stream;
+        use futures::{TryStreamExt, stream};
 
         // Test that TryStreamExt functionality works for event stream processing
         let events = vec![
@@ -894,8 +893,9 @@ mod tests {
     #[cfg(feature = "observability")]
     #[test]
     fn test_register_observer() {
-        use crate::observer::{ObservationContext, TestObserver};
         use std::sync::{Arc, Mutex};
+
+        use crate::observer::{ObservationContext, TestObserver};
 
         #[derive(Clone)]
         struct MockObserver {

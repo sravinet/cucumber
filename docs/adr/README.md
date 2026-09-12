@@ -44,6 +44,7 @@ An Architecture Decision Record captures an important architectural decision mad
 | [0032](0032-panic-free-error-handling-architecture.md) | Panic-Free Error Handling Architecture | Implemented | Eliminate production panics and implement robust error handling |
 | [0033](0033-feature-flag-test-matrix-strategy.md) | Feature Flag Test Matrix Strategy | Accepted | Comprehensive testing across all feature combinations |
 | [0034](0034-async-runtime-compilation-fixes.md) | Async Runtime Compilation Fixes | Implemented | Fix critical compilation errors blocking production deployment |
+| [0037](0037-ci-on-github-hosted-runners.md) | CI on GitHub-Hosted Runners | Implemented | Make every CI gate satisfiable and run the whole suite on GitHub-hosted runners |
 
 ## ADR Template
 

@@ -17,7 +17,7 @@ use super::types::Callback;
 /// [`Subscriber`]: tracing::Subscriber
 #[derive(Clone, Debug)]
 pub struct SpanCloseWaiter {
-    /// Sender for subscribing to the [`Span`] closing.
+    /// Sender for subscribing to the [`tracing::Span`] closing.
     #[allow(dead_code)] // Used in collector, false positive warning
     wait_span_event_sender: mpsc::UnboundedSender<(span::Id, Callback)>,
 }

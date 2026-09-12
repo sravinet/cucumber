@@ -32,9 +32,12 @@
 //! # Usage
 //!
 //! ```rust,no_run
-//! use cucumber::writer::{Basic, Normalize};
-//! use cucumber::World;
 //! use std::io;
+//!
+//! use cucumber::{
+//!     World,
+//!     writer::{Basic, Normalize},
+//! };
 //!
 //! #[derive(World, Debug, Default)]
 //! struct MyWorld;

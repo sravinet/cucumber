@@ -36,12 +36,13 @@ where
     /// [`Feature`]: gherkin::Feature
     pub(super) parser: P,
 
-    /// [`crate::runner::Runner`] executing [`gherkin::Scenario`]s and producing [`event`]s.
+    /// [`crate::runner::Runner`] executing [`gherkin::Scenario`]s and
+    /// producing [`crate::event`]s.
     ///
     /// [`gherkin::Scenario`]: gherkin::Scenario
     pub(crate) runner: R,
 
-    /// [`crate::Writer`] outputting [`event`]s to some output.
+    /// [`crate::Writer`] outputting [`crate::event`]s to some output.
     pub(super) writer: Wr,
 
     /// CLI options this [`Cucumber`] has been run with.

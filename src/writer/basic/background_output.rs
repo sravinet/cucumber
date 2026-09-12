@@ -66,7 +66,8 @@ impl<Out: io::Write> Basic<Out> {
 
     /// Outputs the [started] [`Background`] [`crate::step::Step`].
     ///
-    /// The [`crate::step::Step`] is printed only if [`Coloring`] is enabled and gets
+    /// The [`crate::step::Step`] is printed only if
+    /// [`crate::writer::Coloring`] is enabled and gets
     /// overwritten by later [passed]/[skipped]/[failed] events.
     ///
     /// [failed]: event::Step::Failed

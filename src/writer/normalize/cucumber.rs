@@ -12,13 +12,12 @@
 
 use either::Either;
 
-use crate::error::{ExecutionError, ExecutionResult};
-
 // Forward declarations for circular dependencies
 use super::rules::RulesQueue;
 use super::{emitter::Emitter, queue::Queue, scenarios::ScenariosQueue};
 use crate::{
     Event, Writer,
+    error::{ExecutionError, ExecutionResult},
     event::{self, Retries, Source},
 };
 

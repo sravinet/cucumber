@@ -133,8 +133,9 @@ pub mod suffix {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tracing_subscriber::fmt::format;
+
+    use super::*;
 
     /// Simple test writer that captures formatted output.
     #[derive(Default)]

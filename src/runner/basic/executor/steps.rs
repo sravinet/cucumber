@@ -4,12 +4,11 @@ use std::panic::AssertUnwindSafe;
 
 use futures::FutureExt as _;
 
+#[cfg(feature = "tracing")]
+use super::super::supporting_structures::ExecutionFailure;
 use super::super::supporting_structures::{
     AfterHookEventsMeta, ScenarioId, coerce_into_info,
 };
-
-#[cfg(feature = "tracing")]
-use super::super::supporting_structures::ExecutionFailure;
 use crate::{
     Event, World,
     event::{self, source::Source},

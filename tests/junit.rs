@@ -2,8 +2,7 @@ use std::io::Read as _;
 
 use cucumber::{World as _, given, then, when, writer};
 use futures::FutureExt as _;
-use quick_xml::Reader;
-use quick_xml::events::Event;
+use quick_xml::{Reader, events::Event};
 use tempfile::NamedTempFile;
 use tracing_subscriber::{
     Layer as _,

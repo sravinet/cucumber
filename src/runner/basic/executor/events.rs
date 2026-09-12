@@ -1,11 +1,11 @@
 //! Event sending logic for the Basic executor.
 
-use futures::channel::mpsc;
 #[cfg(feature = "observability")]
 use std::sync::{Arc, Mutex};
 
-use crate::{Event, World, event, parser};
+use futures::channel::mpsc;
 
+use crate::{Event, World, event, parser};
 #[cfg(feature = "observability")]
 use crate::{event::source::Source, runner::basic::ScenarioId};
 

@@ -2,7 +2,7 @@
 name = "cucumber"
 version = "0.21.1"
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.88"
 description = """\
     Cucumber testing framework for Rust, with async support. \
     Fully native, no external test runners or dependencies.\
@@ -94,7 +94,7 @@ base64 = { version = "0.22", optional = true }
 Inflector = { version = "0.11", default-features = false, optional = true }
 mime = { version = "0.3.16", optional = true }
 serde = { version = "1.0.157", features = ["derive"], optional = true }
-serde_json = { version = "1.0.18", optional = true }
+serde_json = { version = "1.0.93", optional = true }
 serde_with = { version = "3.0", optional = true }
 
 # "output-junit" feature dependencies.
@@ -108,7 +108,7 @@ tracing-subscriber = { version = "0.3.16", optional = true }
 [dev-dependencies]
 quick-xml = "0.35"
 rand = "0.9"
-serde_json = "1.0"
+serde_json = "1.0.93"
 tempfile = "3.2"
 tokio = { version = "1.40", features = ["macros", "rt-multi-thread", "sync", "time"] }
 

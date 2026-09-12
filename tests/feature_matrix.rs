@@ -193,8 +193,9 @@ mod core_functionality_tests {
     // Only compile step macros when macros feature is enabled
     #[cfg(feature = "macros")]
     mod with_macros {
-        use super::*;
         use cucumber::{World, given, then, when};
+
+        use super::*;
 
         #[derive(Debug, Default, World)]
         struct MacroTestWorld {
@@ -264,8 +265,9 @@ mod core_functionality_tests {
     feature = "libtest"
 ))]
 mod output_features_tests {
-    use super::*;
     use std::io;
+
+    use super::*;
 
     // Basic test world for output testing
     #[derive(Debug, Default)]
@@ -448,8 +450,9 @@ mod observability_tests {
     )
 ))]
 mod integration_tests {
-    use super::*;
     use std::io;
+
+    use super::*;
 
     // Integration test world that implements World
     #[derive(Debug, Default)]
@@ -555,8 +558,9 @@ mod integration_tests {
 /// Macro feature tests.
 #[cfg(feature = "macros")]
 mod macro_tests {
-    use super::*;
     use cucumber::{World, given, then, when};
+
+    use super::*;
 
     #[derive(Debug, Default, World)]
     struct MacroTestWorld {

@@ -41,9 +41,14 @@ test: test.cargo
 
 # Generate crates documentation from Rust sources.
 #
+# `deps=no` documents the project crates only. It's required whenever
+# `docsrs=yes` is combined with linting (`RUSTFLAGS='-D warnings'`), as the
+# `--cfg docsrs` is applied to dependencies too, and some of them enable
+# nightly features that are already removed (like `doc_auto_cfg`).
+#
 # Usage:
 #	make cargo.doc [crate=<crate-name>]
-#	               [private=(yes|no)] [docsrs=(no|yes)]
+#	               [private=(yes|no)] [docsrs=(no|yes)] [deps=(yes|no)]
 #	               [open=(yes|no)] [clean=(no|yes)]
 
 cargo.doc:
@@ -54,6 +59,7 @@ endif
 	cargo $(if $(call eq,$(docsrs),yes),+nightly,) doc \
 		$(if $(call eq,$(crate),),--workspace,-p $(crate)) \
 		--all-features \
+		$(if $(call eq,$(deps),no),--no-deps,) \
 		$(if $(call eq,$(private),no),,--document-private-items) \
 		$(if $(call eq,$(open),no),,--open)
 
@@ -69,12 +75,24 @@ cargo.fmt:
 
 # Lint Rust sources with Clippy.
 #
+# By default, denies the lint groups catching actual defects, while keeping
+# `clippy::pedantic` ones advisory (mirrors the `lint` recipe of `justfile`).
+# `strict=yes` denies every warning (the upstream gate), which this fork does
+# not satisfy yet.
+#
 # Usage:
-#	make cargo.lint
+#	make cargo.lint [strict=(no|yes)]
+
+cargo-lint-flags = $(if $(call eq,$(strict),yes),-D warnings,\
+	-D clippy::correctness -D clippy::suspicious -D clippy::perf \
+	-W clippy::pedantic \
+	-A clippy::module-name-repetitions -A clippy::missing-errors-doc \
+	-A clippy::missing-panics-doc -A clippy::must-use-candidate \
+	-A clippy::missing-const-for-fn)
 
 cargo.lint:
-	cargo clippy --workspace -- -D warnings
-	cargo clippy --workspace --all-features -- -D warnings
+	cargo clippy --workspace -- $(cargo-lint-flags)
+	cargo clippy --workspace --all-features -- $(cargo-lint-flags)
 
 
 

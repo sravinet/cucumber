@@ -11,8 +11,7 @@
 //! RulesQueue implementation for event normalization.
 
 // Forward declaration to avoid circular dependency
-use super::scenarios::ScenariosQueue;
-use super::{emitter::Emitter, queue::Queue};
+use super::{emitter::Emitter, queue::Queue, scenarios::ScenariosQueue};
 use crate::{
     Writer,
     event::{self, Retries, Source},
