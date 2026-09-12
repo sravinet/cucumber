@@ -35,6 +35,10 @@ jobs:
         with:
           toolchain: stable
 
+      # These are libraries, so no `Cargo.lock` is committed, while
+      # `cargo audit` reads exactly that file.
+      - run: cargo generate-lockfile
+
       - uses: rustsec/audit-check@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
