@@ -23,12 +23,15 @@
 //! - [`location`]: File location tracking for step definitions
 //! - [`regex`]: Hashable regex wrapper utilities
 //! - [`builder`]: Modular step builder traits for enterprise-scale BDD
+//! - [`definitions`]: Enumerating the registered step definitions as data
 //!
 //! [`crate::step::Step`]: gherkin::Step
 
 pub mod builder;
 pub mod collection;
 pub mod context;
+#[cfg(feature = "macros")]
+pub mod definitions;
 pub mod error;
 pub mod location;
 pub mod regex;
@@ -38,6 +41,8 @@ pub mod table;
 pub use builder::{StepBuilder, compose_step_builders};
 pub use collection::{Collection, WithContext};
 pub use context::{CaptureName, Context};
+#[cfg(feature = "macros")]
+pub use definitions::StepDefinition;
 pub use error::AmbiguousMatchError;
 // Type aliases that depend on other modules
 use futures::future::LocalBoxFuture;
