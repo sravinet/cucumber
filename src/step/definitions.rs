@@ -97,10 +97,8 @@ pub fn all<W: WorldInventory>() -> Vec<StepDefinition> {
 /// The whole registry as a JSON array — the file the graph loader reads.
 #[must_use]
 pub fn json<W: WorldInventory>() -> String {
-    let items = all::<W>()
-        .iter()
-        .map(StepDefinition::to_json)
-        .collect::<Vec<_>>();
+    let items =
+        all::<W>().iter().map(StepDefinition::to_json).collect::<Vec<_>>();
     format!("[\n  {}\n]", items.join(",\n  "))
 }
 
@@ -109,11 +107,7 @@ fn definition<W>(
     keyword: StepType,
     (location, regex, _): (Location, LazyRegex, crate::Step<W>),
 ) -> StepDefinition {
-    StepDefinition {
-        keyword,
-        pattern: regex().as_str().to_owned(),
-        location,
-    }
+    StepDefinition { keyword, pattern: regex().as_str().to_owned(), location }
 }
 
 /// A total order over [`StepType`], which derives none.
