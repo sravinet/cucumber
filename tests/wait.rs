@@ -35,8 +35,12 @@ async fn main() {
         .await;
 
     assert!(writer.execution_has_failed(), "Cucumber should have failed");
-    assert_eq!(writer.failed_steps(), 10, "Expected 10 failed steps");
-    assert_eq!(writer.parsing_errors(), 0, "Expected no parsing errors");
+    // 6 `Scenario`s fail on a `Step`, and a failing `Step` ends its
+    // `Scenario`: the `Step`s after it are never run, so they're never
+    // reported as skipped (and so never failed by `fail_on_skipped()`).
+    assert_eq!(writer.failed_steps(), 6, "Expected 6 failed steps");
+    // `invalid.feature` is there to be unparseable.
+    assert_eq!(writer.parsing_errors(), 1, "Expected 1 parsing error");
 }
 
 #[given(expr = "{int} sec")]

@@ -1,1 +1,2 @@
+not allowed
 Feature: invalid

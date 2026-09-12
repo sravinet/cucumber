@@ -9,12 +9,8 @@ use std::{
 };
 
 use derive_more::with_trait::{Display, FromStr};
-use regex::CaptureLocations;
 
-use crate::{
-    event::{self, Info, Metadata, source::Source},
-    step,
-};
+use crate::event::{self, Info};
 
 /// ID of a [`gherkin::Scenario`], uniquely identifying it.
 ///
@@ -50,175 +46,29 @@ pub(super) type IsFailed = bool;
 /// [`gherkin::Scenario`]: gherkin::Scenario
 pub(super) type IsRetried = bool;
 
-/// Failure encountered during execution of [`event::HookType::Before`] or
-/// [`crate::step::Step`].
+/// Panic of an [`event::HookType::Before`] hook, aborting its
+/// [`gherkin::Scenario`].
+///
+/// [`crate::step::Step`] failures don't travel this way: they're reported by
+/// the `steps` module as it runs, and are carried out of it as an
+/// [`event::ScenarioFinished`].
 ///
 /// [`crate::step::Step`]: gherkin::Step
 #[derive(Debug)]
-pub(super) enum ExecutionFailure<World> {
-    /// [`event::HookType::Before`] panicked.
-    BeforeHookPanicked {
-        /// [`crate::World`] at the time [`event::HookType::Before`] has
-        /// panicked.
-        world: Option<World>,
-
-        /// [`catch_unwind()`] of the [`event::HookType::Before`] panic.
-        ///
-        /// [`catch_unwind()`]: std::panic::catch_unwind
-        panic_info: Info,
-
-        /// [`Metadata`] at the time [`event::HookType::Before`] panicked.
-        meta: Metadata,
-    },
-
-    /// [`crate::step::Step`] was skipped.
+pub(super) struct BeforeHookPanicked {
+    /// [`catch_unwind()`] of the [`event::HookType::Before`] panic.
     ///
-    /// [`crate::step::Step`]: gherkin::Step.
-    #[cfg_attr(
-        not(feature = "tracing"),
-        expect(
-            dead_code,
-            reason = "Only used when tracing feature is enabled"
-        )
-    )]
-    StepSkipped(Option<World>),
-
-    /// [`crate::step::Step`] failed.
-    ///
-    /// [`crate::step::Step`]: gherkin::Step.
-    #[cfg_attr(
-        not(feature = "tracing"),
-        expect(
-            dead_code,
-            reason = "Only used when tracing feature is enabled"
-        )
-    )]
-    StepPanicked {
-        /// [`crate::World`] at the time when [`crate::step::Step`] has failed.
-        ///
-        /// [`crate::step::Step`]: gherkin::Step
-        world: Option<World>,
-
-        /// [`crate::step::Step`] itself.
-        ///
-        /// [`crate::step::Step`]: gherkin::Step
-        step: Source<gherkin::Step>,
-
-        /// [`crate::step::Step`]s [`regex`] [`CaptureLocations`].
-        ///
-        /// [`crate::step::Step`]: gherkin::Step
-        captures: Option<CaptureLocations>,
-
-        /// [`Location`] of the [`fn`] that matched this [`crate::step::Step`].
-        ///
-        /// [`Location`]: step::Location
-        /// [`crate::step::Step`]: gherkin::Step
-        loc: Option<step::Location>,
-
-        /// [`StepError`] of the [`crate::step::Step`].
-        ///
-        /// [`crate::step::Step`]: gherkin::Step
-        /// [`StepError`]: event::StepError
-        err: event::StepError,
-
-        /// [`Metadata`] at the time when [`crate::step::Step`] failed.
-        ///
-        /// [`crate::step::Step`]: gherkin::Step.
-        meta: Metadata,
-
-        /// Indicator whether the [`crate::step::Step`] was background or not.
-        ///
-        /// [`crate::step::Step`]: gherkin::Step
-        is_background: bool,
-    },
-
-    /// [`event::HookType::Before`] failed.
-    Before,
+    /// [`catch_unwind()`]: std::panic::catch_unwind
+    pub(super) panic_info: Info,
 }
 
-impl<W> ExecutionFailure<W> {
-    /// Takes the [`crate::World`] leaving a [`None`] in its place.
-    pub(super) const fn take_world(&mut self) -> Option<W> {
-        match self {
-            Self::BeforeHookPanicked { world, .. }
-            | Self::StepSkipped(world)
-            | Self::StepPanicked { world, .. } => world.take(),
-            Self::Before => None,
-        }
+impl BeforeHookPanicked {
+    /// Creates an [`event::ScenarioFinished`] out of this panic, describing
+    /// the [`gherkin::Scenario`] outcome to the [`event::HookType::After`]
+    /// hook.
+    pub(super) fn scenario_finished_event(&self) -> event::ScenarioFinished {
+        event::ScenarioFinished::BeforeHookFailed(Arc::clone(&self.panic_info))
     }
-
-    /// Creates an [`event::ScenarioFinished`] from this [`ExecutionFailure`].
-    pub(super) fn get_scenario_finished_event(
-        &self,
-    ) -> event::ScenarioFinished {
-        use event::ScenarioFinished::{
-            BeforeHookFailed, StepFailed, StepSkipped,
-        };
-
-        match self {
-            Self::BeforeHookPanicked { panic_info, .. } => {
-                BeforeHookFailed(Arc::clone(panic_info))
-            }
-            Self::StepSkipped(_) => StepSkipped,
-            Self::StepPanicked { captures, loc, err, .. } => {
-                StepFailed(captures.clone(), *loc, err.clone())
-            }
-            Self::Before => BeforeHookFailed(Arc::new("Before hook failed")),
-        }
-    }
-
-    /// Gets the step information from this [`ExecutionFailure`] if it's a step-related failure.
-    pub(super) fn get_step_info(&self) -> Option<&Source<gherkin::Step>> {
-        match self {
-            Self::StepPanicked { step, .. } => Some(step),
-            _ => None,
-        }
-    }
-
-    /// Gets the timing metadata from this [`ExecutionFailure`].
-    pub(super) fn get_metadata(&self) -> Option<&Metadata> {
-        match self {
-            Self::BeforeHookPanicked { meta, .. } => Some(meta),
-            Self::StepPanicked { meta, .. } => Some(meta),
-            _ => None,
-        }
-    }
-
-    /// Checks if this failure is from a background step.
-    pub(super) fn is_background_step(&self) -> bool {
-        match self {
-            Self::StepPanicked { is_background, .. } => *is_background,
-            _ => false,
-        }
-    }
-
-    /// Gets a detailed failure description for debugging.
-    pub(super) fn get_failure_description(&self) -> String {
-        match self {
-            Self::BeforeHookPanicked { panic_info, .. } => {
-                format!("Before hook panicked: {:?}", panic_info)
-            }
-            Self::StepSkipped(_) => "Step was skipped".to_string(),
-            Self::StepPanicked { step, err, is_background, .. } => {
-                let step_type =
-                    if *is_background { "Background" } else { "Regular" };
-                format!("{} step '{}' failed: {:?}", step_type, step.value, err)
-            }
-            Self::Before => "Before hook failed".to_string(),
-        }
-    }
-}
-
-/// [`Metadata`] of [`event::HookType::After`] events.
-pub(super) struct AfterHookEventsMeta {
-    /// [`Metadata`] at the time [`event::HookType::After`] started.
-    pub(super) started: Metadata,
-
-    /// [`Metadata`] at the time [`event::HookType::After`] finished.
-    pub(super) finished: Metadata,
-
-    /// The outcome of the scenario execution.
-    pub(super) scenario_finished: event::ScenarioFinished,
 }
 
 /// Coerces the given `value` into a type-erased [`Info`].
@@ -305,28 +155,6 @@ mod tests {
     }
 
     #[test]
-    fn test_execution_failure_world_take() {
-        #[derive(Debug, PartialEq)]
-        struct TestWorld(i32);
-
-        let mut failure = ExecutionFailure::StepSkipped(Some(TestWorld(42)));
-        let world = failure.take_world();
-
-        assert_eq!(world, Some(TestWorld(42)));
-        assert_eq!(failure.take_world(), None); // Should be None after taking
-    }
-
-    #[test]
-    fn test_execution_failure_scenario_finished_event() {
-        use event::ScenarioFinished;
-
-        let failure = ExecutionFailure::<()>::StepSkipped(None);
-        let event = failure.get_scenario_finished_event();
-
-        assert!(matches!(event, ScenarioFinished::StepSkipped));
-    }
-
-    #[test]
     fn test_coerce_into_info() {
         let info = coerce_into_info("test string");
 
@@ -335,286 +163,19 @@ mod tests {
     }
 
     #[test]
-    fn test_after_hook_events_meta() {
-        let meta = AfterHookEventsMeta {
-            started: Metadata::new(()),
-            finished: Metadata::new(()),
-            scenario_finished: event::ScenarioFinished::StepPassed,
+    fn test_before_hook_panicked_scenario_finished_event() {
+        let failure = BeforeHookPanicked {
+            panic_info: coerce_into_info("panic message"),
         };
 
-        // Test that structure can be created and has proper metadata
-        match meta.scenario_finished {
-            event::ScenarioFinished::StepPassed => { /* Expected */ }
-            _ => panic!("Expected StepPassed scenario finish"),
-        }
-
-        // Test timing info functionality
-        #[cfg(feature = "timestamps")]
-        {
-            let started_time = meta.started.at;
-            let finished_time = meta.finished.at;
-            // Check that times are in the past (elapsed time is >= 0)
-            assert!(started_time.elapsed().is_ok());
-            assert!(finished_time.elapsed().is_ok());
-        }
-    }
-
-    #[test]
-    fn test_execution_failure_before_hook_panicked() {
-        let info = coerce_into_info("panic message");
-        let meta = Metadata::new(());
-
-        let failure = ExecutionFailure::<i32>::BeforeHookPanicked {
-            world: Some(42),
-            panic_info: info.clone(),
-            meta,
-        };
-
-        match failure {
-            ExecutionFailure::BeforeHookPanicked {
-                world, panic_info, ..
-            } => {
-                assert_eq!(world, Some(42));
-                assert!(panic_info.downcast_ref::<&str>().is_some());
-            }
-            _ => panic!("Expected BeforeHookPanicked variant"),
-        }
-    }
-
-    #[test]
-    fn test_execution_failure_step_panicked() {
-        use crate::event::source::Source;
-
-        let step = Source::new(gherkin::Step {
-            ty: gherkin::StepType::Given,
-            value: "test step".to_string(),
-            docstring: None,
-            table: None,
-            span: gherkin::Span { start: 0, end: 0 },
-            keyword: "Given".to_string(),
-            position: gherkin::LineCol { line: 1, col: 1 },
-        });
-
-        let failure = ExecutionFailure::<()>::StepPanicked {
-            world: None,
-            step: step.clone(),
-            captures: None,
-            loc: None,
-            err: event::StepError::Panic(coerce_into_info("step panic")),
-            meta: Metadata::new(()),
-            is_background: false,
-        };
-
-        match failure {
-            ExecutionFailure::StepPanicked {
-                step: failure_step,
-                meta,
-                is_background,
-                ..
-            } => {
-                assert!(!is_background);
-                assert_eq!(failure_step.value, "test step");
-                assert!(matches!(meta, _));
-
-                // Actually use the step field for validation
-                assert_eq!(failure_step.ty, gherkin::StepType::Given);
-                assert_eq!(failure_step.keyword, "Given");
-
-                // Test the is_background field functionality
-                assert!(!is_background);
-
-                // Test the meta field functionality
-                #[cfg(feature = "timestamps")]
-                {
-                    let timestamp = meta.at;
-                    // Check that timestamp is valid and in the past
-                    assert!(timestamp.elapsed().is_ok());
-                }
-            }
-            _ => panic!("Expected StepPanicked variant"),
-        }
-    }
-
-    #[test]
-    fn test_execution_failure_before_hook_panicked_field_usage() {
-        let meta = Metadata::new(());
-        let failure = ExecutionFailure::<i32>::BeforeHookPanicked {
-            world: Some(42),
-            panic_info: coerce_into_info("test panic"),
-            meta,
-        };
-
-        match failure {
-            ExecutionFailure::BeforeHookPanicked {
-                world,
-                panic_info,
-                meta: hook_meta,
-            } => {
-                assert_eq!(world, Some(42));
-                assert!(panic_info.downcast_ref::<&str>().is_some());
-
-                // Actually use the meta field for validation
-                #[cfg(feature = "timestamps")]
-                {
-                    let timestamp = hook_meta.at;
-                    // Check that timestamp is valid and in the past
-                    assert!(timestamp.elapsed().is_ok());
-                }
-
-                // Test that metadata can be used for failure analysis
-                assert!(matches!(hook_meta, _));
-            }
-            _ => panic!("Expected BeforeHookPanicked variant"),
-        }
-    }
-
-    #[test]
-    fn test_execution_failure_before_variant_construction() {
-        let failure = ExecutionFailure::<()>::Before;
-
-        match failure {
-            ExecutionFailure::Before => {
-                // Test that the Before variant can be constructed and matched
-                assert!(true);
-            }
-            _ => panic!("Expected Before variant"),
-        }
-    }
-
-    #[test]
-    fn test_execution_failure_background_step_distinction() {
-        use crate::event::source::Source;
-
-        let step = Source::new(gherkin::Step {
-            ty: gherkin::StepType::Given,
-            value: "background step".to_string(),
-            docstring: None,
-            table: None,
-            span: gherkin::Span { start: 0, end: 0 },
-            keyword: "Given".to_string(),
-            position: gherkin::LineCol { line: 1, col: 1 },
-        });
-
-        // Test background step failure
-        let background_failure = ExecutionFailure::<()>::StepPanicked {
-            world: None,
-            step: step.clone(),
-            captures: None,
-            loc: None,
-            err: event::StepError::NotFound,
-            meta: Metadata::new(()),
-            is_background: true,
-        };
-
-        // Test regular step failure
-        let regular_failure = ExecutionFailure::<()>::StepPanicked {
-            world: None,
-            step,
-            captures: None,
-            loc: None,
-            err: event::StepError::NotFound,
-            meta: Metadata::new(()),
-            is_background: false,
-        };
-
-        match background_failure {
-            ExecutionFailure::StepPanicked { is_background, .. } => {
-                assert!(
-                    is_background,
-                    "Background step should be marked as background"
+        match failure.scenario_finished_event() {
+            event::ScenarioFinished::BeforeHookFailed(info) => {
+                assert_eq!(
+                    info.downcast_ref::<&str>().copied(),
+                    Some("panic message"),
                 );
             }
-            _ => panic!("Expected StepPanicked variant"),
-        }
-
-        match regular_failure {
-            ExecutionFailure::StepPanicked { is_background, .. } => {
-                assert!(
-                    !is_background,
-                    "Regular step should not be marked as background"
-                );
-            }
-            _ => panic!("Expected StepPanicked variant"),
-        }
-    }
-
-    #[test]
-    fn test_execution_failure_utility_methods() {
-        use crate::event::source::Source;
-
-        let step = Source::new(gherkin::Step {
-            ty: gherkin::StepType::When,
-            value: "I test utility methods".to_string(),
-            docstring: None,
-            table: None,
-            span: gherkin::Span { start: 0, end: 0 },
-            keyword: "When".to_string(),
-            position: gherkin::LineCol { line: 3, col: 5 },
-        });
-
-        let meta = Metadata::new(());
-        let step_failure = ExecutionFailure::<()>::StepPanicked {
-            world: None,
-            step: step.clone(),
-            captures: None,
-            loc: None,
-            err: event::StepError::NotFound,
-            meta: meta.clone(),
-            is_background: true,
-        };
-
-        let hook_failure = ExecutionFailure::<()>::BeforeHookPanicked {
-            world: None,
-            panic_info: coerce_into_info("hook panic"),
-            meta: meta.clone(),
-        };
-
-        // Test get_step_info method
-        assert!(step_failure.get_step_info().is_some());
-        assert_eq!(
-            step_failure.get_step_info().unwrap().value,
-            "I test utility methods"
-        );
-        assert!(hook_failure.get_step_info().is_none());
-
-        // Test get_metadata method
-        assert!(step_failure.get_metadata().is_some());
-        assert!(hook_failure.get_metadata().is_some());
-
-        // Test is_background_step method
-        assert!(step_failure.is_background_step());
-        assert!(!hook_failure.is_background_step());
-
-        // Test get_failure_description method
-        let step_desc = step_failure.get_failure_description();
-        let hook_desc = hook_failure.get_failure_description();
-
-        assert!(step_desc.contains("Background step"));
-        assert!(step_desc.contains("I test utility methods"));
-        assert!(hook_desc.contains("Before hook panicked"));
-    }
-
-    #[test]
-    fn test_execution_failure_metadata_timing() {
-        let meta = Metadata::new(());
-        let failure = ExecutionFailure::<()>::BeforeHookPanicked {
-            world: None,
-            panic_info: coerce_into_info("timing test"),
-            meta,
-        };
-
-        if let Some(failure_meta) = failure.get_metadata() {
-            // Test that failure metadata contains valid information
-            assert!(std::mem::size_of_val(&failure_meta) > 0);
-
-            #[cfg(feature = "timestamps")]
-            {
-                let timestamp = failure_meta.at;
-                // Check that timestamp is valid and in the past
-                assert!(timestamp.elapsed().is_ok());
-            }
-        } else {
-            panic!("Expected metadata to be available");
+            _ => panic!("Expected `BeforeHookFailed` outcome"),
         }
     }
 }

@@ -5,7 +5,7 @@ use std::panic::AssertUnwindSafe;
 use futures::{FutureExt as _, future::LocalBoxFuture};
 
 use super::super::supporting_structures::{
-    AfterHookEventsMeta, ExecutionFailure, ScenarioId, coerce_into_info,
+    BeforeHookPanicked, ScenarioId, coerce_into_info,
 };
 use crate::{
     Event, World,
@@ -28,7 +28,7 @@ impl HookExecutor {
         #[cfg(feature = "tracing")] waiter: Option<
             &crate::tracing::SpanCloseWaiter,
         >,
-    ) -> Result<(), ExecutionFailure<W>>
+    ) -> Result<(), BeforeHookPanicked>
     where
         W: World,
         Before: for<'a> Fn(
@@ -88,23 +88,6 @@ impl HookExecutor {
                 Err(err) => {
                     let info = coerce_into_info(err);
 
-                    // Log failure details for debugging using scenario ID
-                    #[cfg(feature = "tracing")]
-                    tracing::error!(
-                        scenario_id = ?id,
-                        scenario_name = %scenario.name,
-                        feature_name = %feature.name,
-                        "Before hook failed with panic"
-                    );
-
-                    // Create BeforeHookPanicked failure with proper timing metadata
-                    let meta = crate::event::Metadata::new(());
-                    let failure = ExecutionFailure::BeforeHookPanicked {
-                        world: None, // World is not extractable at this point
-                        panic_info: info.clone(),
-                        meta: meta.clone(),
-                    };
-
                     let event = event::Cucumber::scenario(
                         feature,
                         rule,
@@ -112,24 +95,15 @@ impl HookExecutor {
                         event::RetryableScenario {
                             event: event::Scenario::Hook(
                                 HookType::Before,
-                                event::Hook::Failed(None, info),
+                                event::Hook::Failed(None, info.clone()),
                             ),
                             retries: None,
                         },
                     );
 
-                    // Use the metadata for precise timing information
-                    // This demonstrates the use of the previously unused meta field
-                    #[cfg(all(feature = "timestamps", feature = "tracing"))]
-                    tracing::debug!(
-                        scenario_id = ?id,
-                        hook_failure_timestamp = ?meta.at,
-                        "Before hook failed with timing metadata"
-                    );
-
                     send_event(event);
 
-                    return Err(failure);
+                    return Err(BeforeHookPanicked { panic_info: info });
                 }
             };
 
@@ -161,8 +135,7 @@ impl HookExecutor {
         #[cfg(feature = "tracing")] waiter: Option<
             &crate::tracing::SpanCloseWaiter,
         >,
-    ) -> AfterHookEventsMeta
-    where
+    ) where
         W: World,
         After: for<'a> Fn(
             &'a gherkin::Feature,
@@ -173,7 +146,6 @@ impl HookExecutor {
         ) -> LocalBoxFuture<'a, ()>,
     {
         // Capture the start time for metadata and use scenario ID for correlation
-        let started_meta = crate::event::Metadata::new(());
         let _scenario_context = id; // Keep reference for debugging and potential correlation
 
         if let Some(after_hook) = hook {
@@ -220,15 +192,6 @@ impl HookExecutor {
                 Err(err) => {
                     let info = coerce_into_info(err);
 
-                    // Log failure details for debugging using scenario ID
-                    #[cfg(feature = "tracing")]
-                    tracing::error!(
-                        scenario_id = ?id,
-                        scenario_name = %scenario.name,
-                        feature_name = %feature.name,
-                        "After hook failed with panic"
-                    );
-
                     event::Hook::Failed(None, info)
                 }
             };
@@ -243,15 +206,6 @@ impl HookExecutor {
                 },
             ));
             send_event(event.value);
-        }
-
-        // Capture the finish time and create AfterHookEventsMeta
-        let finished_meta = crate::event::Metadata::new(());
-
-        AfterHookEventsMeta {
-            started: started_meta,
-            finished: finished_meta,
-            scenario_finished: scenario_finished.clone(),
         }
     }
 }

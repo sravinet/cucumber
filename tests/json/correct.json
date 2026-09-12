@@ -164,7 +164,13 @@
             "result": {
               "status": "passed",
               "duration": 565000
-            }
+            },
+            "embeddings": [
+              {
+                "data": "IElORk8gc2NlbmFyaW86YWZ0ZXIgaG9vazoganNvbjogYWZ0ZXIK",
+                "mime_type": "text/x.cucumber.log+plain"
+              }
+            ]
           }
         ],
         "before": [
@@ -247,10 +253,6 @@
               },
               {
                 "data": "IElORk8gc2NlbmFyaW86c3RlcDoganNvbjogd29ybGQ6IFdvcmxkKDQpCg==",
-                "mime_type": "text/x.cucumber.log+plain"
-              },
-              {
-                "data": "IElORk8gc2NlbmFyaW86YWZ0ZXIgaG9vazoganNvbjogYWZ0ZXIK",
                 "mime_type": "text/x.cucumber.log+plain"
               }
             ]
@@ -554,7 +556,13 @@
             "result": {
               "status": "passed",
               "duration": 453000
-            }
+            },
+            "embeddings": [
+              {
+                "data": "IElORk8gc2NlbmFyaW86YWZ0ZXIgaG9vazoganNvbjogYWZ0ZXIK",
+                "mime_type": "text/x.cucumber.log+plain"
+              }
+            ]
           }
         ],
         "before": [
@@ -637,10 +645,6 @@
               },
               {
                 "data": "IElORk8gc2NlbmFyaW86c3RlcDoganNvbjogd29ybGQ6IFdvcmxkKDQpCg==",
-                "mime_type": "text/x.cucumber.log+plain"
-              },
-              {
-                "data": "IElORk8gc2NlbmFyaW86YWZ0ZXIgaG9vazoganNvbjogYWZ0ZXIK",
                 "mime_type": "text/x.cucumber.log+plain"
               }
             ]

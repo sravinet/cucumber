@@ -4,11 +4,7 @@ use std::panic::AssertUnwindSafe;
 
 use futures::FutureExt as _;
 
-#[cfg(feature = "tracing")]
-use super::super::supporting_structures::ExecutionFailure;
-use super::super::supporting_structures::{
-    AfterHookEventsMeta, ScenarioId, coerce_into_info,
-};
+use super::super::supporting_structures::{ScenarioId, coerce_into_info};
 use crate::{
     Event, World,
     event::{self, source::Source},
@@ -32,7 +28,7 @@ impl StepExecutor {
         #[cfg(feature = "tracing")] waiter: Option<
             &crate::tracing::SpanCloseWaiter,
         >,
-    ) -> AfterHookEventsMeta
+    ) -> event::ScenarioFinished
     where
         W: World,
     {
@@ -71,33 +67,10 @@ impl StepExecutor {
             all_steps.push((step.clone(), false)); // false = regular step
         }
 
-        // Execute all steps
+        // Execute all steps. A `Step` that fails or is skipped ends its
+        // `Scenario`: the `Step`s after it are neither run nor reported,
+        // so a `Scenario` yields exactly one terminal `Step` event.
         for (step, is_background) in all_steps {
-            if step_failed {
-                // Skip remaining steps if one has already failed
-                skipped_steps += 1;
-                if is_background {
-                    Self::emit_skipped_background_step_event(
-                        feature.clone(),
-                        rule.clone(),
-                        scenario.clone(),
-                        Source::new(step.clone()),
-                        retries,
-                        &send_event,
-                    );
-                } else {
-                    Self::emit_skipped_step_event(
-                        feature.clone(),
-                        rule.clone(),
-                        scenario.clone(),
-                        Source::new(step.clone()),
-                        retries,
-                        &send_event,
-                    );
-                }
-                continue;
-            }
-
             let step_result = if is_background {
                 Self::run_background_step(
                     collection,
@@ -139,51 +112,15 @@ impl StepExecutor {
                 event::Step::Skipped => {
                     skipped_steps += 1;
                     step_skipped = true;
-
-                    #[cfg(feature = "tracing")]
-                    let failure = Self::create_step_skipped_failure::<W>(None);
-                    #[cfg(feature = "tracing")]
-                    tracing::debug!(
-                        scenario_id = ?id,
-                        step_text = %step.value,
-                        failure_description = %failure.get_failure_description(),
-                        "Step was skipped in scenario execution"
-                    );
                 }
                 event::Step::Failed { captures, location, error, .. } => {
                     step_failed = true;
                     last_failure =
                         Some((captures.clone(), location, error.clone()));
-
-                    #[cfg(feature = "tracing")]
-                    let failure =
-                        Self::create_execution_failure_from_step_result::<W>(
-                            &event::Step::Failed {
-                                captures: captures.clone(),
-                                location,
-                                error: error.clone(),
-                                world: None,
-                            },
-                            Source::new(step.clone()),
-                            is_background,
-                        );
-                    #[cfg(feature = "tracing")]
-                    tracing::error!(
-                        scenario_id = ?id,
-                        step_text = %step.value,
-                        is_background = is_background,
-                        failure_description = %failure
-                            .as_ref()
-                            .map_or_else(
-                                || "step failed".to_owned(),
-                                ExecutionFailure::get_failure_description
-                            ),
-                        "Step failed during scenario execution"
-                    );
                 }
             }
 
-            if step_skipped {
+            if step_skipped || step_failed {
                 break;
             }
         }
@@ -192,19 +129,12 @@ impl StepExecutor {
         // 1. If any step failed -> StepFailed
         // 2. If any step was skipped (but none failed) -> StepSkipped
         // 3. If all steps passed -> StepPassed
-        let scenario_finished =
-            if let Some((captures, location, error)) = last_failure {
-                event::ScenarioFinished::StepFailed(captures, location, error)
-            } else if skipped_steps > 0 {
-                event::ScenarioFinished::StepSkipped
-            } else {
-                event::ScenarioFinished::StepPassed
-            };
-
-        AfterHookEventsMeta {
-            started: event::Metadata::new(()),
-            finished: event::Metadata::new(()),
-            scenario_finished,
+        if let Some((captures, location, error)) = last_failure {
+            event::ScenarioFinished::StepFailed(captures, location, error)
+        } else if skipped_steps > 0 {
+            event::ScenarioFinished::StepSkipped
+        } else {
+            event::ScenarioFinished::StepPassed
         }
     }
 
@@ -491,108 +421,6 @@ impl StepExecutor {
         ));
         send_event(event.value);
     }
-
-    /// Emits a skipped background step event.
-    fn emit_skipped_background_step_event<W>(
-        feature: Source<gherkin::Feature>,
-        rule: Option<Source<gherkin::Rule>>,
-        scenario: Source<gherkin::Scenario>,
-        step: Source<gherkin::Step>,
-        retries: Option<crate::event::Retries>,
-        send_event: &impl Fn(event::Cucumber<W>),
-    ) where
-        W: World,
-    {
-        let event = Event::new(event::Cucumber::scenario(
-            feature,
-            rule,
-            scenario,
-            event::RetryableScenario {
-                event: event::Scenario::Background(step, event::Step::Skipped),
-                retries,
-            },
-        ));
-        send_event(event.value);
-    }
-
-    /// Emits a skipped step event.
-    fn emit_skipped_step_event<W>(
-        feature: Source<gherkin::Feature>,
-        rule: Option<Source<gherkin::Rule>>,
-        scenario: Source<gherkin::Scenario>,
-        step: Source<gherkin::Step>,
-        retries: Option<crate::event::Retries>,
-        send_event: &impl Fn(event::Cucumber<W>),
-    ) where
-        W: World,
-    {
-        let step_event = event::Step::Skipped;
-
-        let event = Event::new(event::Cucumber::scenario(
-            feature,
-            rule,
-            scenario,
-            event::RetryableScenario {
-                event: event::Scenario::Step(step, step_event),
-                retries,
-            },
-        ));
-        send_event(event.value);
-    }
-
-    #[cfg(feature = "tracing")]
-    /// Creates an ExecutionFailure::StepSkipped from a skipped step scenario.
-    pub(super) fn create_step_skipped_failure<W>(
-        world: Option<W>,
-    ) -> ExecutionFailure<W> {
-        ExecutionFailure::StepSkipped(world)
-    }
-
-    #[cfg(feature = "tracing")]
-    /// Creates an ExecutionFailure::StepPanicked from a failed step.
-    pub(super) fn create_step_panicked_failure<W>(
-        world: Option<W>,
-        step: Source<gherkin::Step>,
-        captures: Option<regex::CaptureLocations>,
-        loc: Option<step::Location>,
-        err: event::StepError,
-        is_background: bool,
-    ) -> ExecutionFailure<W> {
-        ExecutionFailure::StepPanicked {
-            world,
-            step,
-            captures,
-            loc,
-            err,
-            meta: event::Metadata::new(()),
-            is_background,
-        }
-    }
-
-    #[cfg(feature = "tracing")]
-    /// Creates an ExecutionFailure based on the step execution result.
-    pub(super) fn create_execution_failure_from_step_result<W>(
-        step_result: &event::Step<W>,
-        step: Source<gherkin::Step>,
-        is_background: bool,
-    ) -> Option<ExecutionFailure<W>> {
-        match step_result {
-            event::Step::Failed { captures, location, error, .. } => {
-                Some(Self::create_step_panicked_failure(
-                    None, // World is not available here
-                    step,
-                    captures.clone(),
-                    *location,
-                    error.clone(),
-                    is_background,
-                ))
-            }
-            event::Step::Skipped => {
-                Some(Self::create_step_skipped_failure(None))
-            }
-            _ => None,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -611,7 +439,7 @@ mod tests {
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
 
-        let meta = StepExecutor::run_steps(
+        let scenario_finished = StepExecutor::run_steps(
             &collection,
             id,
             feature,
@@ -625,13 +453,11 @@ mod tests {
         )
         .await;
 
-        // AfterHookEventsMeta only contains timing metadata
-        // Test that it was properly created
-        #[cfg(feature = "timestamps")]
-        {
-            let _ = meta.started.at;
-            let _ = meta.finished.at;
-        }
+        // A `Scenario` without `Step`s has nothing to fail or skip.
+        assert!(matches!(
+            scenario_finished,
+            event::ScenarioFinished::StepPassed,
+        ));
     }
 
     #[tokio::test]
@@ -643,7 +469,7 @@ mod tests {
         let events = Arc::new(Mutex::new(Vec::new()));
         let events_clone = events.clone();
 
-        let meta = StepExecutor::run_steps(
+        let scenario_finished = StepExecutor::run_steps(
             &collection,
             id,
             feature,
@@ -657,108 +483,12 @@ mod tests {
         )
         .await;
 
-        // AfterHookEventsMeta only contains timing metadata
-        // Just verify it was created
-        #[cfg(feature = "timestamps")]
-        {
-            let _ = meta.started.at;
-            let _ = meta.finished.at;
-        }
-    }
-
-    #[test]
-    fn test_step_executor_emit_skipped_event() {
-        let (feature, scenario) = create_test_feature_and_scenario();
-        let step = create_test_step();
-        let events = Arc::new(Mutex::new(Vec::new()));
-        let events_clone = events.clone();
-
-        StepExecutor::emit_skipped_step_event(
-            feature,
-            None,
-            scenario,
-            step,
-            None, // retries
-            &move |event: event::Cucumber<TestWorld>| {
-                events_clone.lock().unwrap().push(event)
-            },
-        );
-
-        let captured_events = events.lock().unwrap();
-        assert_eq!(captured_events.len(), 1);
-    }
-
-    #[test]
-    fn test_after_hook_events_meta_creation() {
-        let meta = AfterHookEventsMeta {
-            started: event::Metadata::new(()),
-            finished: event::Metadata::new(()),
-            scenario_finished: event::ScenarioFinished::StepPassed,
-        };
-
-        // Just verify it can be created
-        assert!(matches!(meta.started, _));
-        assert!(matches!(meta.finished, _));
-    }
-
-    #[test]
-    fn test_after_hook_events_meta_default_values() {
-        let meta = AfterHookEventsMeta {
-            started: event::Metadata::new(()),
-            finished: event::Metadata::new(()),
-            scenario_finished: event::ScenarioFinished::StepPassed,
-        };
-
-        // Verify both fields exist
-        assert!(matches!(meta.started, _));
-        assert!(matches!(meta.finished, _));
-    }
-
-    #[cfg(feature = "tracing")]
-    #[test]
-    fn test_create_execution_failure_from_step_result() {
-        use event::source::Source;
-
-        let step = create_test_step();
-
-        // Test with failed step
-        let failed_step = event::Step::<TestWorld>::Failed {
-            captures: None,
-            location: Some(step::Location::new("test.rs", 1, 1)),
-            world: None,
-            error: event::StepError::NotFound,
-        };
-
-        let failure = StepExecutor::create_execution_failure_from_step_result(
-            &failed_step,
-            step.clone(),
-            false,
-        );
-
-        assert!(failure.is_some());
-
-        // Test with skipped step
-        let skipped_step = event::Step::<TestWorld>::Skipped;
-        let failure = StepExecutor::create_execution_failure_from_step_result(
-            &skipped_step,
-            step.clone(),
-            false,
-        );
-
-        assert!(failure.is_some());
-
-        // Test with passed step (should return None)
-        let passed_step = event::Step::<TestWorld>::Passed {
-            captures: regex::Regex::new("").unwrap().capture_locations(),
-            location: Some(step::Location::new("test.rs", 1, 1)),
-        };
-        let failure = StepExecutor::create_execution_failure_from_step_result(
-            &passed_step,
-            step,
-            false,
-        );
-
-        assert!(failure.is_none());
+        // No `Step` of the `Collection` matches, so the first one is
+        // skipped, and that ends the `Scenario`.
+        assert!(matches!(
+            scenario_finished,
+            event::ScenarioFinished::StepSkipped,
+        ));
     }
 
     fn create_test_feature_and_scenario()

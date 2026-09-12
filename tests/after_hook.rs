@@ -63,8 +63,12 @@ async fn fires_each_time() {
     // Check the counts
     let failed_steps = writer.failed_steps();
     let parsing_errors = writer.parsing_errors();
-    assert_eq!(failed_steps, 6, "Expected 6 failed steps");
-    assert_eq!(parsing_errors, 0, "Expected no parsing errors");
+    // 2 `Scenario`s fail on a `Step`, and 2 more stop at a `Step` matching no
+    // function, which `fail_on_skipped()` turns into a failure. The remaining
+    // 2 such `Scenario`s are tagged `@allow.skipped`, so they stay skipped.
+    assert_eq!(failed_steps, 4, "Expected 4 failed steps");
+    // `invalid.feature` is there to be unparseable.
+    assert_eq!(parsing_errors, 1, "Expected 1 parsing error");
 
     // We have 16 scenarios total but only 14 create World instances (2 are completely skipped)
     let before_count = NUMBER_OF_BEFORE_WORLDS.load(Ordering::SeqCst);
