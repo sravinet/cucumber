@@ -9,8 +9,12 @@ use std::{
 };
 
 use derive_more::with_trait::{Display, FromStr};
+use regex::CaptureLocations;
 
-use crate::event::{self, Info};
+use crate::{
+    event::{self, Info, Metadata, source::Source},
+    step,
+};
 
 /// ID of a [`gherkin::Scenario`], uniquely identifying it.
 ///
@@ -48,18 +52,15 @@ pub(super) type IsRetried = bool;
 
 /// Panic of an [`event::HookType::Before`] hook, aborting its
 /// [`gherkin::Scenario`].
-///
-/// [`crate::step::Step`] failures don't travel this way: they're reported by
-/// the `steps` module as it runs, and are carried out of it as an
-/// [`event::ScenarioFinished`].
-///
-/// [`crate::step::Step`]: gherkin::Step
 #[derive(Debug)]
 pub(super) struct BeforeHookPanicked {
     /// [`catch_unwind()`] of the [`event::HookType::Before`] panic.
     ///
     /// [`catch_unwind()`]: std::panic::catch_unwind
     pub(super) panic_info: Info,
+
+    /// [`Metadata`] at the time the [`event::HookType::Before`] hook panicked.
+    pub(super) meta: Metadata,
 }
 
 impl BeforeHookPanicked {
@@ -69,6 +70,97 @@ impl BeforeHookPanicked {
     pub(super) fn scenario_finished_event(&self) -> event::ScenarioFinished {
         event::ScenarioFinished::BeforeHookFailed(Arc::clone(&self.panic_info))
     }
+}
+
+/// Failure of a [`crate::step::Step`], aborting its [`gherkin::Scenario`].
+///
+/// [`crate::step::Step`]: gherkin::Step
+#[derive(Debug)]
+pub(super) struct StepFailure {
+    /// [`crate::step::Step`] that failed.
+    ///
+    /// [`crate::step::Step`]: gherkin::Step
+    pub(super) step: Source<gherkin::Step>,
+
+    /// [`regex`] [`CaptureLocations`] of the [`crate::step::Step`], if it
+    /// matched a function at all.
+    ///
+    /// [`crate::step::Step`]: gherkin::Step
+    pub(super) captures: Option<CaptureLocations>,
+
+    /// [`Location`] of the [`fn`] that matched this [`crate::step::Step`].
+    ///
+    /// [`Location`]: step::Location
+    /// [`crate::step::Step`]: gherkin::Step
+    pub(super) loc: Option<step::Location>,
+
+    /// [`event::StepError`] of the [`crate::step::Step`].
+    ///
+    /// [`crate::step::Step`]: gherkin::Step
+    pub(super) err: event::StepError,
+
+    /// [`Metadata`] at the time the [`crate::step::Step`] failed.
+    ///
+    /// [`crate::step::Step`]: gherkin::Step
+    pub(super) meta: Metadata,
+
+    /// Indicator whether the [`crate::step::Step`] was a [`Background`] one.
+    ///
+    /// [`Background`]: gherkin::Background
+    /// [`crate::step::Step`]: gherkin::Step
+    pub(super) is_background: bool,
+}
+
+/// Outcome of running the [`crate::step::Step`]s of a [`gherkin::Scenario`].
+///
+/// [`crate::step::Step`]: gherkin::Step
+#[derive(Debug)]
+pub(super) enum StepsOutcome {
+    /// Every [`crate::step::Step`] passed.
+    ///
+    /// [`crate::step::Step`]: gherkin::Step
+    Passed,
+
+    /// A [`crate::step::Step`] matched no function, ending the
+    /// [`gherkin::Scenario`].
+    ///
+    /// [`crate::step::Step`]: gherkin::Step
+    Skipped,
+
+    /// A [`crate::step::Step`] failed, ending the [`gherkin::Scenario`].
+    ///
+    /// [`crate::step::Step`]: gherkin::Step
+    Failed(StepFailure),
+}
+
+impl StepsOutcome {
+    /// Creates an [`event::ScenarioFinished`] out of this outcome, describing
+    /// the [`gherkin::Scenario`] outcome to the [`event::HookType::After`]
+    /// hook.
+    pub(super) fn scenario_finished_event(&self) -> event::ScenarioFinished {
+        match self {
+            Self::Passed => event::ScenarioFinished::StepPassed,
+            Self::Skipped => event::ScenarioFinished::StepSkipped,
+            Self::Failed(f) => event::ScenarioFinished::StepFailed(
+                f.captures.clone(),
+                f.loc,
+                f.err.clone(),
+            ),
+        }
+    }
+}
+
+/// [`Metadata`] of the [`event::HookType::After`] hook run.
+///
+/// Its events are emitted only after the failure events of whatever ended the
+/// [`gherkin::Scenario`], so their [`Metadata`] is taken while the hook runs
+/// and carried to the emitting.
+pub(super) struct AfterHookEventsMeta {
+    /// [`Metadata`] at the time the [`event::HookType::After`] hook started.
+    pub(super) started: Metadata,
+
+    /// [`Metadata`] at the time the [`event::HookType::After`] hook finished.
+    pub(super) finished: Metadata,
 }
 
 /// Coerces the given `value` into a type-erased [`Info`].
@@ -166,6 +258,7 @@ mod tests {
     fn test_before_hook_panicked_scenario_finished_event() {
         let failure = BeforeHookPanicked {
             panic_info: coerce_into_info("panic message"),
+            meta: Metadata::new(()),
         };
 
         match failure.scenario_finished_event() {

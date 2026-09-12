@@ -7,11 +7,11 @@ use super::{
         cli_and_types::{RetryOptions, ScenarioType},
         scenario_storage::{Features, FinishedFeaturesSender},
         supporting_structures::{
-            BeforeHookPanicked, IsFailed, IsRetried, ScenarioId,
-            coerce_into_info,
+            IsFailed, IsRetried, ScenarioId, StepsOutcome, coerce_into_info,
         },
     },
     events::EventSender,
+    failure_events::{self, ScenarioFailure, share},
     hooks::HookExecutor,
     steps::StepExecutor,
 };
@@ -191,7 +191,7 @@ where
         let retries = retry_options.map(|opts| opts.retries);
 
         // Create world instance for this scenario
-        let mut world = match W::new().await {
+        let world = match W::new().await {
             Ok(world) => world,
             Err(_err) => {
                 // Emit world creation error as a before hook failure using Before variant
@@ -250,32 +250,16 @@ where
         // Everything a `Scenario` runs, its `After` hook included, belongs to
         // the `Scenario`s `Span`: that's what attributes the logs emitted
         // inside it to this `Scenario` and no other.
-        let run = async {
-            let execution_result = self
-                .execute_scenario_steps(
-                    id,
-                    feature.clone(),
-                    rule.clone(),
-                    scenario.clone(),
-                    &mut world,
-                    retries,
-                    #[cfg(feature = "tracing")]
-                    waiter,
-                )
-                .await;
-
-            self.run_after_hook(
-                id,
-                feature.clone(),
-                rule.clone(),
-                scenario.clone(),
-                execution_result,
-                &mut world,
-                #[cfg(feature = "tracing")]
-                waiter,
-            )
-            .await
-        };
+        let run = self.run_scenario_steps_and_hooks(
+            id,
+            feature.clone(),
+            rule.clone(),
+            scenario.clone(),
+            world,
+            retries,
+            #[cfg(feature = "tracing")]
+            waiter,
+        );
         // Instrumenting the future, rather than entering the `Span`, is what
         // keeps concurrently running `Scenario`s out of it: an entered guard
         // stays on the thread across `.await`s, so every `Span` opened
@@ -307,90 +291,114 @@ where
         self.event_sender.clear_scenario_context();
     }
 
-    /// Executes all steps of a scenario including hooks.
-    async fn execute_scenario_steps(
+    /// Runs the [`crate::step::Step`]s of the given [`gherkin::Scenario`],
+    /// surrounded by its hooks, and reports everything that happened.
+    ///
+    /// [`crate::step::Step`]: gherkin::Step
+    async fn run_scenario_steps_and_hooks(
         &self,
         id: ScenarioId,
         feature: Source<gherkin::Feature>,
         rule: Option<Source<gherkin::Rule>>,
         scenario: Source<gherkin::Scenario>,
-        world: &mut W,
+        mut world: W,
         retries: Option<Retries>,
         #[cfg(feature = "tracing")] waiter: Option<&SpanCloseWaiter>,
-    ) -> Result<event::ScenarioFinished, BeforeHookPanicked> {
-        // Run before hook
-        HookExecutor::run_before_hook(
+    ) -> IsFailed {
+        let before_hook = HookExecutor::run_before_hook(
             self.before_hook.as_ref(),
             id,
             feature.clone(),
             rule.clone(),
             scenario.clone(),
-            world,
-            |event| self.event_sender.send_event(event),
-            #[cfg(feature = "tracing")]
-            waiter,
-        )
-        .await?;
-
-        // Execute steps
-        let step_results = StepExecutor::run_steps(
-            &self.collection,
-            id,
-            feature.clone(),
-            rule.clone(),
-            scenario.clone(),
-            world,
-            retries,
+            &mut world,
             |event| self.event_sender.send_event(event),
             #[cfg(feature = "tracing")]
             waiter,
         )
         .await;
 
-        Ok(step_results)
-    }
-
-    /// Runs the [`HookType::After`] hook of the given [`gherkin::Scenario`],
-    /// reporting whether that [`gherkin::Scenario`] has failed.
-    async fn run_after_hook(
-        &self,
-        id: ScenarioId,
-        feature: Source<gherkin::Feature>,
-        rule: Option<Source<gherkin::Rule>>,
-        scenario: Source<gherkin::Scenario>,
-        step_results: Result<event::ScenarioFinished, BeforeHookPanicked>,
-        world: &mut W,
-        #[cfg(feature = "tracing")] waiter: Option<&SpanCloseWaiter>,
-    ) -> IsFailed {
         // A panicking `Before` hook aborts its `Scenario`, but the `After`
         // hook still runs: it's where users put their cleanup, and skipping it
         // would leak whatever the `Before` hook had already set up.
-        let (scenario_finished, is_failed) = match step_results {
-            Ok(finished) => {
-                let failed = matches!(
-                    finished,
-                    event::ScenarioFinished::StepFailed(_, _, _)
-                );
-                (finished, failed)
+        let (scenario_finished, failure) = match before_hook {
+            Err(panicked) => (
+                panicked.scenario_finished_event(),
+                Some(ScenarioFailure::BeforeHook(panicked)),
+            ),
+            Ok(()) => {
+                let outcome = StepExecutor::run_steps(
+                    &self.collection,
+                    id,
+                    feature.clone(),
+                    rule.clone(),
+                    scenario.clone(),
+                    &mut world,
+                    retries,
+                    |event| self.event_sender.send_event(event),
+                    #[cfg(feature = "tracing")]
+                    waiter,
+                )
+                .await;
+
+                let finished = outcome.scenario_finished_event();
+                match outcome {
+                    StepsOutcome::Failed(failed) => {
+                        (finished, Some(ScenarioFailure::Step(failed)))
+                    }
+                    StepsOutcome::Passed | StepsOutcome::Skipped => {
+                        (finished, None)
+                    }
+                }
             }
-            Err(failure) => (failure.scenario_finished_event(), true),
         };
 
-        HookExecutor::run_after_hook(
+        let after_hook = HookExecutor::run_after_hook(
             self.after_hook.as_ref(),
             id,
-            feature,
-            rule,
-            scenario,
-            Some(world),
+            &feature,
+            rule.as_ref(),
+            &scenario,
+            Some(&mut world),
             &scenario_finished,
-            |event| self.event_sender.send_event(event),
             #[cfg(feature = "tracing")]
             waiter,
         )
         .await;
 
-        is_failed
+        // Only now that the `After` hook is done with the `World` can the
+        // events reporting it be emitted.
+        let world = share(world);
+        let send = |event, meta: &_| {
+            self.event_sender.send_event_with_meta(event, meta);
+        };
+
+        let is_failed = matches!(
+            scenario_finished,
+            event::ScenarioFinished::BeforeHookFailed(_)
+                | event::ScenarioFinished::StepFailed(..)
+        );
+        if let Some(failure) = failure {
+            failure_events::emit_failure_event(
+                feature.clone(),
+                rule.clone(),
+                scenario.clone(),
+                world.clone(),
+                failure,
+                retries,
+                &send,
+            );
+        }
+
+        let after_hook_failed =
+            after_hook.as_ref().is_some_and(|(_, err)| err.is_some());
+        if let Some((meta, err)) = after_hook {
+            failure_events::emit_after_hook_events(
+                feature, rule, scenario, world, meta, err, retries, &send,
+            );
+        }
+
+        is_failed || after_hook_failed
     }
 
     /// Finishes the given [`gherkin::Scenario`], scheduling its retry, if it
