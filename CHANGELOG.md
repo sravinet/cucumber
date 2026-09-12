@@ -28,6 +28,10 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
     - `event::Scenario::step_started()`, `event::Scenario::step_passed()` and `event::Scenario::step_skipped()`.
     - `event::Scenario::background_step_started()`, `event::Scenario::background_step_passed()` and `event::Scenario::background_step_skipped()`.
 - Kept only currently executed row of `Examples` table in expanded `Scenario Outline`s. ([#371], [#369])
+- Restored upstream `Scenario` semantics, changing the `event`s a `Scenario` emits:
+    - A `Step` matching no function is `event::Step::Skipped` again, rather than `event::Step::Failed` with a `StepError::NotFound`. Use `WriterExt::fail_on_skipped()` to fail on it.
+    - A failing or skipped `Step` ends its `Scenario`: the `Step`s after it are neither run nor reported as skipped, so a `Scenario` emits exactly one terminal `Step` event.
+    - `event::Scenario::Hook(HookType::After, _)` events are emitted after the failure event of whatever ended the `Scenario`, instead of before it.
 
 ### Added
 
@@ -47,6 +51,11 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 ### Fixed
 
 - Performance degradation on large `.feature` files. ([#352], [#331])
+- `World` missing from `event::Step::Failed` and `event::Scenario::Hook(_, Hook::Failed)`, which stripped the `World` state a failure happened in from every `Writer`s output.
+- `HookType::After` hook being skipped when the `HookType::Before` hook panicked, leaking whatever that hook had already set up.
+- `event::Scenario::Finished` being emitted twice when a `World` failed to be created.
+- `Scenario` logs being attributed to a root `after hook` span instead of `scenario:after hook`, because the `HookType::After` hook ran outside its `Scenario`s span.
+- `writer::Libtest` doubling the space between a `Step`s keyword and its value.
 - Test output format inconsistencies between implementation and expected outputs
 - Missing metadata context in event transmission for debugging and observability
 
