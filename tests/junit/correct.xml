@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites>
-  <testsuite id="0" name="Errors" package="testsuite/Errors" tests="1" errors="0" failures="1" hostname="localhost" timestamp="2022-12-07T11:54:27.657372Z" time="0">
+  <testsuite id="0" name="Errors" package="testsuite/Errors" tests="1" errors="0" failures="1" hostname="localhost" timestamp="2026-09-12T10:06:20.145062544Z" time="0">
     <testcase name="Feature: tests/features/wait/invalid.feature" time="0">
       <failure type="Parser Error" message="Failed to parse feature: Could not parse feature file: tests/features/wait/invalid.feature"/>
     </testcase>
   </testsuite>
-  <testsuite id="1" name="Feature: Basic: tests/features/wait/rule.feature" package="testsuite/Feature: Basic: tests/features/wait/rule.feature" tests="3" errors="0" failures="2" hostname="localhost" timestamp="2022-12-07T11:54:27.656262Z" time="0.001558">
-    <testcase name="Scenario: 1 sec: tests/features/wait/rule.feature:6:3" time="0.001023">
-      <failure type="Step Panicked" message="Step doesn&apos;t match any function"><![CDATA[  Scenario: 1 sec
+  <testsuite id="1" name="Feature: Basic: tests/features/wait/rule.feature" package="testsuite/Feature: Basic: tests/features/wait/rule.feature" tests="3" errors="0" failures="2" hostname="localhost" timestamp="2026-09-12T10:06:20.144592773Z" time="0.003378252">
+    <testcase name="Scenario: 1 sec: tests/features/wait/rule.feature:6:3" time="0.000959608">
+      <failure type="Step Panicked" message="Step doesn&apos;t match any function"/>
+      <system-out><![CDATA[  Scenario: 1 sec
  INFO scenario:before hook: junit: before
  INFO scenario:background step: junit: step
    ✔> Given 1 sec
@@ -20,10 +21,11 @@
       Defined: tests/features/wait/rule.feature:9:5
       Step doesn't match any function
  INFO scenario:after hook: junit: after
-]]></failure>
+]]></system-out>
     </testcase>
-    <testcase name="Rule: rule: Scenario: 2 secs: tests/features/wait/rule.feature:21:5" time="0.000535">
-      <failure type="Step Panicked" message="Step panicked. Captured output: Too much!"><![CDATA[  Scenario: 2 secs
+    <testcase name="Rule: rule: Scenario: 2 secs: tests/features/wait/rule.feature:21:5" time="0.002418644">
+      <failure type="Step Panicked" message="Step panicked. Captured output: Too much!"/>
+      <system-out><![CDATA[  Scenario: 2 secs
  INFO scenario:before hook: junit: before
  INFO scenario:background step: junit: step
    ✔> Given 1 sec
@@ -35,20 +37,33 @@
    ✘  Then 2 secs
       Step failed:
       Defined: tests/features/wait/rule.feature:24:7
-      Matched: tests/junit.rs:16:1
+      Matched: tests/junit.rs:20:1
       Step panicked. Captured output: Too much!
       World(
           4,
       )
-]]></failure>
+]]></system-out>
     </testcase>
     <testcase name="Scenario: 1 sec: tests/features/wait/rule.feature:13:3" time="0">
       <skipped/>
+      <system-out><![CDATA[  Scenario: 1 sec
+ INFO scenario:before hook: junit: before
+ INFO scenario:background step: junit: step
+   ✔> Given 1 sec
+ INFO scenario:step: junit: step
+   ✔  Given 1 sec
+ INFO scenario:step: junit: step
+   ✔  When 1 sec
+   ?  Then unknown
+      Step skipped: tests/features/wait/rule.feature:16:5
+ INFO scenario:after hook: junit: after
+]]></system-out>
     </testcase>
   </testsuite>
-  <testsuite id="2" name="Feature: Basic: tests/features/wait/nested/rule.feature" package="testsuite/Feature: Basic: tests/features/wait/nested/rule.feature" tests="3" errors="0" failures="2" hostname="localhost" timestamp="2022-12-07T11:54:27.657433Z" time="0.000175">
-    <testcase name="Scenario: 1 sec: tests/features/wait/nested/rule.feature:6:3" time="0.000073">
-      <failure type="Step Panicked" message="Step doesn&apos;t match any function"><![CDATA[  Scenario: 1 sec
+  <testsuite id="2" name="Feature: Basic: tests/features/wait/nested/rule.feature" package="testsuite/Feature: Basic: tests/features/wait/nested/rule.feature" tests="3" errors="0" failures="2" hostname="localhost" timestamp="2026-09-12T10:06:20.145600968Z" time="0.002720918">
+    <testcase name="Scenario: 1 sec: tests/features/wait/nested/rule.feature:6:3" time="0.000333391">
+      <failure type="Step Panicked" message="Step doesn&apos;t match any function"/>
+      <system-out><![CDATA[  Scenario: 1 sec
  INFO scenario:before hook: junit: before
  INFO scenario:background step: junit: step
    ✔> Given 1 sec
@@ -61,10 +76,11 @@
       Defined: tests/features/wait/nested/rule.feature:9:5
       Step doesn't match any function
  INFO scenario:after hook: junit: after
-]]></failure>
+]]></system-out>
     </testcase>
-    <testcase name="Rule: rule: Scenario: 2 secs: tests/features/wait/nested/rule.feature:21:5" time="0.000102">
-      <failure type="Step Panicked" message="Step panicked. Captured output: Too much!"><![CDATA[  Scenario: 2 secs
+    <testcase name="Rule: rule: Scenario: 2 secs: tests/features/wait/nested/rule.feature:21:5" time="0.002387527">
+      <failure type="Step Panicked" message="Step panicked. Captured output: Too much!"/>
+      <system-out><![CDATA[  Scenario: 2 secs
  INFO scenario:before hook: junit: before
  INFO scenario:background step: junit: step
    ✔> Given 1 sec
@@ -76,19 +92,31 @@
    ✘  Then 2 secs
       Step failed:
       Defined: tests/features/wait/nested/rule.feature:24:7
-      Matched: tests/junit.rs:16:1
+      Matched: tests/junit.rs:20:1
       Step panicked. Captured output: Too much!
       World(
           4,
       )
-]]></failure>
+]]></system-out>
     </testcase>
     <testcase name="Scenario: 1 sec: tests/features/wait/nested/rule.feature:13:3" time="0">
       <skipped/>
+      <system-out><![CDATA[  Scenario: 1 sec
+ INFO scenario:before hook: junit: before
+ INFO scenario:background step: junit: step
+   ✔> Given 1 sec
+ INFO scenario:step: junit: step
+   ✔  Given 1 sec
+ INFO scenario:step: junit: step
+   ✔  When 1 sec
+   ?  Then unknown
+      Step skipped: tests/features/wait/nested/rule.feature:16:5
+ INFO scenario:after hook: junit: after
+]]></system-out>
     </testcase>
   </testsuite>
-  <testsuite id="3" name="Feature: Outline: tests/features/wait/outline.feature" package="testsuite/Feature: Outline: tests/features/wait/outline.feature" tests="4" errors="0" failures="0" hostname="localhost" timestamp="2022-12-07T11:54:27.658077Z" time="0.00025">
-    <testcase name="Scenario: wait: tests/features/wait/outline.feature:14:5" time="0.000066">
+  <testsuite id="3" name="Feature: Outline: tests/features/wait/outline.feature" package="testsuite/Feature: Outline: tests/features/wait/outline.feature" tests="4" errors="0" failures="0" hostname="localhost" timestamp="2026-09-12T10:06:20.145970407Z" time="0.009068237">
+    <testcase name="Scenario: wait: tests/features/wait/outline.feature:14:5" time="0.002309407">
       <system-out><![CDATA[  Scenario Outline: wait
  INFO scenario:before hook: junit: before
  INFO scenario:step: junit: step
@@ -100,7 +128,7 @@
  INFO scenario:after hook: junit: after
 ]]></system-out>
     </testcase>
-    <testcase name="Scenario: wait: tests/features/wait/outline.feature:15:5" time="0.000062">
+    <testcase name="Scenario: wait: tests/features/wait/outline.feature:15:5" time="0.002298264">
       <system-out><![CDATA[  Scenario Outline: wait
  INFO scenario:before hook: junit: before
  INFO scenario:step: junit: step
@@ -112,7 +140,7 @@
  INFO scenario:after hook: junit: after
 ]]></system-out>
     </testcase>
-    <testcase name="Scenario: wait: tests/features/wait/outline.feature:16:5" time="0.000062">
+    <testcase name="Scenario: wait: tests/features/wait/outline.feature:16:5" time="0.002237829">
       <system-out><![CDATA[  Scenario Outline: wait
  INFO scenario:before hook: junit: before
  INFO scenario:step: junit: step
@@ -124,7 +152,7 @@
  INFO scenario:after hook: junit: after
 ]]></system-out>
     </testcase>
-    <testcase name="Scenario: wait: tests/features/wait/outline.feature:21:5" time="0.00006">
+    <testcase name="Scenario: wait: tests/features/wait/outline.feature:21:5" time="0.002222737">
       <system-out><![CDATA[  Scenario Outline: wait
  INFO scenario:before hook: junit: before
  INFO scenario:step: junit: step
@@ -137,8 +165,8 @@
 ]]></system-out>
     </testcase>
   </testsuite>
-  <testsuite id="4" name="Feature: Rule Outline: tests/features/wait/rule_outline.feature" package="testsuite/Feature: Rule Outline: tests/features/wait/rule_outline.feature" tests="4" errors="0" failures="0" hostname="localhost" timestamp="2022-12-07T11:54:27.658078Z" time="0.000257">
-    <testcase name="Rule: To them all: Scenario: wait: tests/features/wait/rule_outline.feature:11:7" time="0.000062">
+  <testsuite id="4" name="Feature: Rule Outline: tests/features/wait/rule_outline.feature" package="testsuite/Feature: Rule Outline: tests/features/wait/rule_outline.feature" tests="4" errors="0" failures="0" hostname="localhost" timestamp="2026-09-12T10:06:20.145970923Z" time="0.008787427">
+    <testcase name="Rule: To them all: Scenario: wait: tests/features/wait/rule_outline.feature:11:7" time="0.002212845">
       <system-out><![CDATA[  Scenario Outline: wait
  INFO scenario:before hook: junit: before
  INFO scenario:step: junit: step
@@ -150,7 +178,7 @@
  INFO scenario:after hook: junit: after
 ]]></system-out>
     </testcase>
-    <testcase name="Rule: To them all: Scenario: wait: tests/features/wait/rule_outline.feature:12:7" time="0.000066">
+    <testcase name="Rule: To them all: Scenario: wait: tests/features/wait/rule_outline.feature:12:7" time="0.002202359">
       <system-out><![CDATA[  Scenario Outline: wait
  INFO scenario:before hook: junit: before
  INFO scenario:step: junit: step
@@ -162,7 +190,7 @@
  INFO scenario:after hook: junit: after
 ]]></system-out>
     </testcase>
-    <testcase name="Rule: To them all: Scenario: wait: tests/features/wait/rule_outline.feature:13:7" time="0.000061">
+    <testcase name="Rule: To them all: Scenario: wait: tests/features/wait/rule_outline.feature:13:7" time="0.002191551">
       <system-out><![CDATA[  Scenario Outline: wait
  INFO scenario:before hook: junit: before
  INFO scenario:step: junit: step
@@ -174,7 +202,7 @@
  INFO scenario:after hook: junit: after
 ]]></system-out>
     </testcase>
-    <testcase name="Rule: To them all: Scenario: wait: tests/features/wait/rule_outline.feature:14:7" time="0.000068">
+    <testcase name="Rule: To them all: Scenario: wait: tests/features/wait/rule_outline.feature:14:7" time="0.002180672">
       <system-out><![CDATA[  Scenario Outline: wait
  INFO scenario:before hook: junit: before
  INFO scenario:step: junit: step
