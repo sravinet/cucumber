@@ -287,7 +287,14 @@ The parsing occurs in the execution phase because the `Cucumber` instance is cre
 To prevent automatic CLI argument parsing in test scenarios, explicitly provide CLI options using `with_cli()`:
 
 ```rust
+# extern crate cucumber;
+# extern crate tokio;
+#
 use cucumber::cli;
+# use cucumber::World as _;
+#
+# #[derive(Debug, Default, cucumber::World)]
+# struct MyWorld;
 
 #[tokio::test]
 async fn my_bdd_test() {
@@ -301,6 +308,8 @@ async fn my_bdd_test() {
 
     runner.run("tests/features/").await;
 }
+#
+# fn main() {}
 ```
 
 The [`cli::Empty`] struct provides empty CLI options when no specific options are needed, avoiding the automatic parsing behavior that would otherwise occur.
@@ -310,7 +319,16 @@ The [`cli::Empty`] struct provides empty CLI options when no specific options ar
 If you need specific CLI options in your tests, you can construct them manually:
 
 ```rust
+# extern crate clap;
+# extern crate cucumber;
+# extern crate tokio;
+#
+use clap::Parser as _;
 use cucumber::cli;
+# use cucumber::World as _;
+#
+# #[derive(Debug, Default, cucumber::World)]
+# struct MyWorld;
 
 #[tokio::test]
 async fn test_with_tags() {
@@ -326,6 +344,9 @@ async fn test_with_tags() {
         .run_and_exit("tests/features/")
         .await;
 }
+#
+# fn main() {}
+```
 
 
 

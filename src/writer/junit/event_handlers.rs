@@ -39,7 +39,7 @@ impl<W: World + Debug, Out: io::Write> EventHandler<W, Out> {
     ) -> junit_report::TestSuite {
         TestSuiteBuilder::new(&format!(
             "Feature: {}{}",
-            &feat.name,
+            feat.name,
             feat.path
                 .as_deref()
                 .and_then(|p| p.to_str().map(trim_path))
