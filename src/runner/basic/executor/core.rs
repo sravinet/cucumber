@@ -7,11 +7,11 @@ use super::{
         cli_and_types::{RetryOptions, ScenarioType},
         scenario_storage::{Features, FinishedFeaturesSender},
         supporting_structures::{
-            AfterHookEventsMeta, ExecutionFailure, IsFailed, IsRetried,
-            ScenarioId, coerce_into_info,
+            IsFailed, IsRetried, ScenarioId, StepsOutcome, coerce_into_info,
         },
     },
     events::EventSender,
+    failure_events::{self, ScenarioFailure, share},
     hooks::HookExecutor,
     steps::StepExecutor,
 };
@@ -191,7 +191,7 @@ where
         let retries = retry_options.map(|opts| opts.retries);
 
         // Create world instance for this scenario
-        let mut world = match W::new().await {
+        let world = match W::new().await {
             Ok(world) => world,
             Err(_err) => {
                 // Emit world creation error as a before hook failure using Before variant
@@ -213,49 +213,18 @@ where
                 // Use send_event_with_meta for precise timing of critical failure events
                 self.event_sender.send_event_with_meta(started_event, &meta);
 
-                // Handle the failure using the Before variant for world creation failures
-                self.handle_execution_failure(
-                    ExecutionFailure::Before,
-                    id,
-                    feature.clone(),
-                    rule.clone(),
-                    scenario.clone(),
-                    retries,
-                );
-
-                let finished_event = event::Cucumber::scenario(
-                    feature.clone(),
-                    rule.clone(),
-                    scenario.clone(),
-                    event::RetryableScenario {
-                        event: event::Scenario::Finished,
-                        retries,
-                    },
-                );
-                self.event_sender.send_event(finished_event);
-
-                // Check if scenario will be retried
-                let next_try = retry_options.and_then(RetryOptions::next_try);
-
-                if let Some(next_try) = next_try {
-                    self.storage
-                        .insert_retried_scenario(
-                            feature.clone(),
-                            rule.clone(),
-                            scenario,
-                            scenario_ty,
-                            Some(next_try),
-                        )
-                        .await;
-                }
-
-                self.scenario_finished(
+                // A `World` that cannot be created fails its `Scenario` just
+                // like a panicking `Before` hook does.
+                self.finish_scenario(
                     id,
                     feature,
                     rule,
-                    true, // World creation failure is a failure
-                    next_try.is_some(),
-                );
+                    scenario,
+                    scenario_ty,
+                    true,
+                    retry_options,
+                )
+                .await;
                 return;
             }
         };
@@ -278,13 +247,15 @@ where
         #[cfg(feature = "tracing")]
         let scenario_span_id = scenario_span.id();
 
-        // Execute the scenario with tracing
-        let run = self.execute_scenario_steps(
+        // Everything a `Scenario` runs, its `After` hook included, belongs to
+        // the `Scenario`s `Span`: that's what attributes the logs emitted
+        // inside it to this `Scenario` and no other.
+        let run = self.run_scenario_steps_and_hooks(
             id,
             feature.clone(),
             rule.clone(),
             scenario.clone(),
-            &mut world,
+            world,
             retries,
             #[cfg(feature = "tracing")]
             waiter,
@@ -295,25 +266,23 @@ where
         // meanwhile would nest inside this one.
         #[cfg(feature = "tracing")]
         let run = tracing::Instrument::instrument(run, scenario_span);
-        let execution_result = run.await;
+        let is_failed = run.await;
 
+        // The `Scenario`s logs are only complete once its `Span` has closed,
+        // and they must reach the `Writer` before the `Scenario` finishes.
         #[cfg(feature = "tracing")]
         if let Some((waiter, span_id)) = waiter.zip(scenario_span_id) {
             waiter.wait_for_span_close(span_id).await;
         }
 
-        // Handle the scenario completion
-        self.handle_scenario_completion(
+        self.finish_scenario(
             id,
             feature,
             rule,
             scenario,
             scenario_ty,
-            execution_result,
-            world,
+            is_failed,
             retry_options,
-            #[cfg(feature = "tracing")]
-            waiter,
         )
         .await;
 
@@ -322,168 +291,153 @@ where
         self.event_sender.clear_scenario_context();
     }
 
-    /// Executes all steps of a scenario including hooks.
-    async fn execute_scenario_steps(
+    /// Runs the [`crate::step::Step`]s of the given [`gherkin::Scenario`],
+    /// surrounded by its hooks, and reports everything that happened.
+    ///
+    /// [`crate::step::Step`]: gherkin::Step
+    async fn run_scenario_steps_and_hooks(
         &self,
         id: ScenarioId,
         feature: Source<gherkin::Feature>,
         rule: Option<Source<gherkin::Rule>>,
         scenario: Source<gherkin::Scenario>,
-        world: &mut W,
+        mut world: W,
         retries: Option<Retries>,
         #[cfg(feature = "tracing")] waiter: Option<&SpanCloseWaiter>,
-    ) -> Result<AfterHookEventsMeta, ExecutionFailure<W>> {
-        // Run before hook
-        HookExecutor::run_before_hook(
+    ) -> IsFailed {
+        let before_hook = HookExecutor::run_before_hook(
             self.before_hook.as_ref(),
             id,
             feature.clone(),
             rule.clone(),
             scenario.clone(),
-            world,
-            |event| self.event_sender.send_event(event),
-            #[cfg(feature = "tracing")]
-            waiter,
-        )
-        .await?;
-
-        // Execute steps
-        let step_results = StepExecutor::run_steps(
-            &self.collection,
-            id,
-            feature.clone(),
-            rule.clone(),
-            scenario.clone(),
-            world,
-            retries,
+            &mut world,
             |event| self.event_sender.send_event(event),
             #[cfg(feature = "tracing")]
             waiter,
         )
         .await;
 
-        Ok(step_results)
+        // A panicking `Before` hook aborts its `Scenario`, but the `After`
+        // hook still runs: it's where users put their cleanup, and skipping it
+        // would leak whatever the `Before` hook had already set up.
+        let (scenario_finished, failure) = match before_hook {
+            Err(panicked) => (
+                panicked.scenario_finished_event(),
+                Some(ScenarioFailure::BeforeHook(panicked)),
+            ),
+            Ok(()) => {
+                let outcome = StepExecutor::run_steps(
+                    &self.collection,
+                    id,
+                    feature.clone(),
+                    rule.clone(),
+                    scenario.clone(),
+                    &mut world,
+                    retries,
+                    |event| self.event_sender.send_event(event),
+                    #[cfg(feature = "tracing")]
+                    waiter,
+                )
+                .await;
+
+                let finished = outcome.scenario_finished_event();
+                match outcome {
+                    StepsOutcome::Failed(failed) => {
+                        (finished, Some(ScenarioFailure::Step(failed)))
+                    }
+                    StepsOutcome::Passed | StepsOutcome::Skipped => {
+                        (finished, None)
+                    }
+                }
+            }
+        };
+
+        let after_hook = HookExecutor::run_after_hook(
+            self.after_hook.as_ref(),
+            id,
+            &feature,
+            rule.as_ref(),
+            &scenario,
+            Some(&mut world),
+            &scenario_finished,
+            #[cfg(feature = "tracing")]
+            waiter,
+        )
+        .await;
+
+        // Only now that the `After` hook is done with the `World` can the
+        // events reporting it be emitted.
+        let world = share(world);
+        let send = |event, meta: &_| {
+            self.event_sender.send_event_with_meta(event, meta);
+        };
+
+        let is_failed = matches!(
+            scenario_finished,
+            event::ScenarioFinished::BeforeHookFailed(_)
+                | event::ScenarioFinished::StepFailed(..)
+        );
+        if let Some(failure) = failure {
+            failure_events::emit_failure_event(
+                feature.clone(),
+                rule.clone(),
+                scenario.clone(),
+                world.clone(),
+                failure,
+                retries,
+                &send,
+            );
+        }
+
+        let after_hook_failed =
+            after_hook.as_ref().is_some_and(|(_, err)| err.is_some());
+        if let Some((meta, err)) = after_hook {
+            failure_events::emit_after_hook_events(
+                feature, rule, scenario, world, meta, err, retries, &send,
+            );
+        }
+
+        is_failed || after_hook_failed
     }
 
-    /// Handles scenario completion and after hooks.
-    async fn handle_scenario_completion(
+    /// Finishes the given [`gherkin::Scenario`], scheduling its retry, if it
+    /// has failed and has retries left.
+    async fn finish_scenario(
         &self,
         id: ScenarioId,
         feature: Source<gherkin::Feature>,
         rule: Option<Source<gherkin::Rule>>,
         scenario: Source<gherkin::Scenario>,
         scenario_ty: ScenarioType,
-        step_results: Result<AfterHookEventsMeta, ExecutionFailure<W>>,
-        mut world: W,
+        is_failed: IsFailed,
         retry_options: Option<RetryOptions>,
-        #[cfg(feature = "tracing")] waiter: Option<&SpanCloseWaiter>,
     ) {
-        let retries = retry_options.map(|opts| opts.retries);
-        // Check if this is actually a retry attempt (current > 0)
-        let _is_retry = retries.as_ref().is_some_and(|r| r.current > 0);
-
-        let (_meta, scenario_finished, is_failed) = match step_results {
-            Ok(meta) => {
-                let finished = meta.scenario_finished.clone();
-                let failed = matches!(
-                    finished,
-                    event::ScenarioFinished::StepFailed(_, _, _)
-                );
-                (meta, finished, failed)
-            }
-            Err(failure) => {
-                let _finished = failure.get_scenario_finished_event();
-                let failed = true; // ExecutionFailure always indicates failure
-                // Handle execution failure
-                self.handle_execution_failure(
-                    failure,
-                    id,
-                    feature.clone(),
-                    rule.clone(),
-                    scenario.clone(),
-                    retries,
-                );
-
-                // Check if scenario will be retried
-                let next_try = retry_options
-                    .filter(|_| failed)
-                    .and_then(RetryOptions::next_try);
-
-                if let Some(next_try) = next_try {
-                    // Insert scenario back into storage for retry
-                    self.storage
-                        .insert_retried_scenario(
-                            feature.clone(),
-                            rule.clone(),
-                            scenario.clone(),
-                            scenario_ty,
-                            Some(next_try),
-                        )
-                        .await;
-                }
-
-                // Notify scenario finished
-                self.scenario_finished(
-                    id,
-                    feature,
-                    rule,
-                    failed,
-                    next_try.is_some(),
-                );
-                return;
-            }
-        };
-
-        // Run after hook
-        let after_hook_meta = HookExecutor::run_after_hook(
-            self.after_hook.as_ref(),
-            id,
-            feature.clone(),
-            rule.clone(),
-            scenario.clone(),
-            Some(&mut world),
-            &scenario_finished,
-            |event| self.event_sender.send_event(event),
-            #[cfg(feature = "tracing")]
-            waiter,
-        )
-        .await;
-
-        // After hook meta contains timing information that can be used for future events
-        let _started_time = after_hook_meta.started;
-        let _finished_time = after_hook_meta.finished;
-
-        // Send finished event
-        let finished_event = event::Cucumber::scenario(
+        self.event_sender.send_event(event::Cucumber::scenario(
             feature.clone(),
             rule.clone(),
             scenario.clone(),
             event::RetryableScenario {
                 event: event::Scenario::Finished,
-                retries,
+                retries: retry_options.map(|opts| opts.retries),
             },
-        );
-        self.event_sender.send_event(finished_event);
+        ));
 
-        // Check if scenario will be retried
         let next_try = retry_options
             .filter(|_| is_failed)
             .and_then(RetryOptions::next_try);
-
         if let Some(next_try) = next_try {
-            // Insert scenario back into storage for retry
             self.storage
                 .insert_retried_scenario(
                     feature.clone(),
                     rule.clone(),
-                    scenario.clone(),
+                    scenario,
                     scenario_ty,
                     Some(next_try),
                 )
                 .await;
         }
 
-        // Notify scenario finished (use next_try.is_some() to indicate if it will be retried)
         self.scenario_finished(
             id,
             feature,
@@ -491,106 +445,6 @@ where
             is_failed,
             next_try.is_some(),
         );
-    }
-
-    /// Handles execution failures during scenario execution.
-    ///
-    /// Note: The actual failure events are already emitted by the respective
-    /// modules (hooks, steps) where the failures occur. This method is kept
-    /// for potential future use but currently just sends the finished event.
-    fn handle_execution_failure(
-        &self,
-        mut failure: ExecutionFailure<W>,
-        id: ScenarioId,
-        feature: Source<gherkin::Feature>,
-        rule: Option<Source<gherkin::Rule>>,
-        scenario: Source<gherkin::Scenario>,
-        retries: Option<Retries>,
-    ) {
-        // Extract world state from failure for potential recovery or debugging
-        let recovered_world = failure.take_world();
-
-        // Use scenario ID for failure correlation and debugging context
-        let _failure_context = id; // Keep reference for debugging and error correlation
-
-        // Get detailed failure information using utility methods
-        let failure_description = failure.get_failure_description();
-        let is_background_failure = failure.is_background_step();
-        let failure_metadata = failure.get_metadata();
-        let step_info = failure.get_step_info();
-
-        // Use failure description for enhanced error reporting
-        #[cfg(feature = "tracing")]
-        {
-            tracing::error!(
-                scenario_id = ?id,
-                scenario_name = %scenario.name,
-                feature_name = %feature.name,
-                failure_description = %failure_description,
-                is_background_failure = %is_background_failure,
-                world_recovered = recovered_world.is_some(),
-                has_timing_metadata = failure_metadata.is_some(),
-                has_step_info = step_info.is_some(),
-                "Handling execution failure for scenario"
-            );
-
-            // Use metadata for detailed timing analysis if available
-            #[allow(unused_variables)]
-            // meta used conditionally in cfg features
-            if let Some(meta) = failure_metadata {
-                #[cfg(feature = "timestamps")]
-                tracing::debug!(
-                    scenario_id = ?id,
-                    failure_timestamp = ?meta.at,
-                    "Failure occurred with timing metadata"
-                );
-            }
-
-            // Log step-specific information if available
-            if let Some(step) = step_info {
-                tracing::debug!(
-                    scenario_id = ?id,
-                    step_value = %step.value,
-                    step_type = ?step.ty,
-                    step_keyword = %step.keyword,
-                    "Step failure details"
-                );
-            }
-        }
-
-        // Use failure information for non-tracing builds as well
-        #[cfg(not(feature = "tracing"))]
-        {
-            // Validate failure information is accessible for debugging
-            let _has_description = !failure_description.is_empty();
-            let _has_metadata = failure_metadata.is_some();
-            let _has_step = step_info.is_some();
-            let _background_step = is_background_failure;
-        }
-
-        // Implement recovery logic if world was extracted
-        if let Some(_world) = recovered_world {
-            #[cfg(feature = "tracing")]
-            tracing::debug!(
-                scenario_id = ?id,
-                "World state recovered from failure - available for cleanup or recovery operations"
-            );
-        }
-
-        // Failure events are already emitted by the respective modules
-        // (hooks module for hook failures, steps module for step failures)
-        // This method just sends the finished event
-
-        let failure_event = event::Cucumber::scenario(
-            feature,
-            rule,
-            scenario,
-            event::RetryableScenario {
-                event: event::Scenario::Finished,
-                retries,
-            },
-        );
-        self.event_sender.send_event(failure_event);
     }
 
     /// Sends a single event.
@@ -844,50 +698,6 @@ mod tests {
         assert_eq!(received_feature.name, feature.name);
         assert!(!is_failed);
         assert!(!is_retried);
-    }
-
-    #[tokio::test]
-    async fn test_handle_execution_failure() {
-        let (executor, mut receiver) = create_test_executor();
-        let (feature, scenario) = create_test_feature_and_scenario();
-        let id = ScenarioId::new();
-
-        let info =
-            crate::runner::basic::supporting_structures::coerce_into_info(
-                "Before hook failed",
-            );
-        let meta = event::Metadata::new(());
-        let failure = ExecutionFailure::BeforeHookPanicked {
-            world: None,
-            panic_info: info,
-            meta,
-        };
-
-        executor.handle_execution_failure(
-            failure,
-            id,
-            feature.clone(),
-            None, // No rule
-            scenario.clone(),
-            None, // No retries
-        );
-
-        // Should send finished event
-        let event = receiver.try_next().unwrap();
-        assert!(event.is_some());
-        match event.unwrap().unwrap().value {
-            event::Cucumber::Feature(
-                _,
-                event::Feature::Scenario(
-                    _,
-                    event::RetryableScenario {
-                        event: event::Scenario::Finished,
-                        ..
-                    },
-                ),
-            ) => {}
-            _ => panic!("Expected Scenario::Finished event"),
-        }
     }
 
     #[cfg(feature = "observability")]

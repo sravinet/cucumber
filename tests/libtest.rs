@@ -16,7 +16,6 @@ fn step(world: &mut World, _secs: usize) {
 }
 
 #[tokio::test]
-#[ignore] // TODO: libtest JSON format has changed - need to update expected output
 async fn output() {
     let mut file = NamedTempFile::new().unwrap();
     drop(
@@ -52,7 +51,6 @@ async fn output() {
 }
 
 #[tokio::test]
-#[ignore] // TODO: libtest JSON format with report_time has changed - need to update expected output
 async fn output_report_time() {
     let mut cli = cli::Opts::<_, _, writer::libtest::Cli>::default();
     cli.writer.report_time = Some(writer::libtest::ReportTime::Plain);

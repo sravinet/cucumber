@@ -8,6 +8,7 @@
 
 mod core;
 mod events;
+mod failure_events;
 mod hooks;
 mod steps;
 

@@ -1,8 +1,9 @@
-use std::io::Read as _;
+use std::{fs, io::Read as _};
 
 use cucumber::{World as _, given, then, when, writer};
 use futures::FutureExt as _;
 use quick_xml::{Reader, events::Event};
+use regex::RegexBuilder;
 use tempfile::NamedTempFile;
 use tracing_subscriber::{
     Layer as _,
@@ -24,8 +25,11 @@ fn step(world: &mut World, _secs: usize) {
 }
 
 #[tokio::test]
-#[ignore = "TODO: Fix tracing global subscriber conflict in test environment"]
-async fn output_structural_validation() {
+async fn output() {
+    // `tracing` takes a single global subscriber per process, so this is the
+    // only test here that may run a `Cucumber`: a second one would both fail
+    // to install its own subscriber and have its logs land in this one's
+    // `Scenario`s.
     let mut file = NamedTempFile::new().unwrap();
     drop(
         World::cucumber()
@@ -53,8 +57,30 @@ async fn output_structural_validation() {
     let mut buffer = String::new();
     file.read_to_string(&mut buffer).unwrap();
 
-    // Validate XML structure and essential content
+    // Required to strip out non-deterministic parts of output, so we could
+    // compare them well.
+    let non_deterministic = RegexBuilder::new(
+        "time(stamp)?=\"[^\"]+\"\
+         |: [^\\.\\s]*\\.(feature|rs)(:\\d+:\\d+)?\
+         |^\\s+\
+         |\\s?\n",
+    )
+    .multi_line(true)
+    .build()
+    .unwrap();
+
+    assert_eq!(
+        non_deterministic.replace_all(&buffer, ""),
+        non_deterministic.replace_all(
+            &fs::read_to_string("tests/junit/correct.xml").unwrap(),
+            "",
+        ),
+    );
+
+    // The golden above pins the whole report; these check that it stays a
+    // well-formed JUnit one, and keep saying which part broke when it doesn't.
     validate_junit_structure(&buffer);
+    validate_junit_essential_content(&buffer);
 }
 
 fn validate_junit_structure(xml_content: &str) {
@@ -117,6 +143,24 @@ fn validate_junit_structure(xml_content: &str) {
                     _ => {}
                 }
             }
+            // `<failure/>`, `<skipped/>`, and a `<testcase/>` with nothing to
+            // report, are empty elements: they start and end at once.
+            Ok(Event::Empty(ref e)) => match e.name().as_ref() {
+                "failure" => {
+                    assert!(in_testcase, "failure must be inside testcase");
+                    current_testcase_has_failure = true;
+                }
+                "skipped" => {
+                    assert!(in_testcase, "skipped must be inside testcase");
+                    current_testcase_has_skipped = true;
+                }
+                "testcase" => {
+                    assert!(in_testsuite, "testcase must be inside testsuite");
+                    testcase_count += 1;
+                    success_count += 1;
+                }
+                _ => {}
+            },
             Ok(Event::End(ref e)) => match e.name().as_ref() {
                 "testsuites" => {
                     in_testsuites = false;
@@ -164,39 +208,6 @@ fn validate_junit_structure(xml_content: &str) {
     println!("  Failures: {}", failure_count);
     println!("  Skipped: {}", skipped_count);
     println!("  Success: {}", success_count);
-}
-
-#[tokio::test]
-async fn output_semantic_validation() {
-    let mut file = NamedTempFile::new().unwrap();
-    drop(
-        World::cucumber()
-            .before(|_, _, _, _| {
-                async { tracing::info!("before") }.boxed_local()
-            })
-            .after(|_, _, _, _, _| {
-                async { tracing::info!("after") }.boxed_local()
-            })
-            .with_writer(writer::JUnit::new(file.reopen().unwrap(), 1))
-            .fail_on_skipped()
-            .with_default_cli()
-            .configure_and_init_tracing(
-                DefaultFields::new(),
-                Format::default().with_ansi(false).without_time(),
-                |layer| {
-                    tracing_subscriber::registry()
-                        .with(LevelFilter::INFO.and_then(layer))
-                },
-            )
-            .run("tests/features/wait")
-            .await,
-    );
-
-    let mut buffer = String::new();
-    file.read_to_string(&mut buffer).unwrap();
-
-    // Validate essential semantic content regardless of formatting
-    validate_junit_essential_content(&buffer);
 }
 
 fn validate_junit_essential_content(xml_content: &str) {

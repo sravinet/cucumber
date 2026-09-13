@@ -84,8 +84,10 @@ impl LibtestUtils {
         );
         let step_name = match step {
             Either::Left(hook) => format!("{hook} hook"),
+            // `gherkin::Step::keyword` carries its own trailing space, so
+            // only the `Background` prefix needs one of its own.
             Either::Right((step, is_bg)) => format!(
-                "{}: {}{}{} {}",
+                "{}: {} {}{}",
                 step.position.line,
                 if is_bg {
                     feature
@@ -95,7 +97,6 @@ impl LibtestUtils {
                 } else {
                     ""
                 },
-                if is_bg { " " } else { "" },
                 step.keyword,
                 step.value,
             ),
@@ -256,7 +257,7 @@ impl BackgroundUtils {
         step: &gherkin::Step,
     ) -> String {
         format!(
-            "{}: {} {} {}",
+            "{}: {} {}{}",
             step.position.line,
             Self::get_background_keyword(feature),
             step.keyword,
@@ -266,7 +267,7 @@ impl BackgroundUtils {
 
     /// Formats a regular step name.
     pub fn format_regular_step_name(step: &gherkin::Step) -> String {
-        format!("{}: {} {}", step.position.line, step.keyword, step.value,)
+        format!("{}: {}{}", step.position.line, step.keyword, step.value)
     }
 }
 
@@ -317,10 +318,13 @@ mod tests {
         }
     }
 
-    // Helper function to create a mock step
+    // Helper function to create a mock step.
+    //
+    // `keyword` is given as it's written in a `.feature` file, and gets the
+    // trailing space `gherkin` parses it with.
     fn mock_step(keyword: &str, value: &str, line: u32) -> gherkin::Step {
         gherkin::Step {
-            keyword: keyword.to_string(),
+            keyword: format!("{keyword} "),
             ty: gherkin::StepType::Given, // Default to Given
             value: value.to_string(),
             docstring: None,
@@ -352,7 +356,9 @@ mod tests {
 
             assert!(name.contains("Feature: Test Feature"));
             assert!(name.contains("5: Scenario: Test Scenario"));
-            assert!(name.contains("7: Given some condition"));
+            // The empty `Background` prefix still takes its space, exactly
+            // as upstream `cucumber` renders it.
+            assert!(name.contains("7:  Given some condition"), "{name}");
         }
 
         #[test]
