@@ -17,6 +17,7 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 - Bumped up [MSRV] to 1.88, as the minimum supported `gherkin` 0.15 requires it.
 - Bumped up minimum supported `serde_json` version to 1.0.93, as earlier ones cannot serialize 128-bit integers used by the JSON writer.
 - Bumped up minimum supported `inventory` version to 0.3.8, as earlier ones register no `Step`s at all on a modern toolchain, leaving every `Step` unmatched.
+- Bumped up the minimum supported versions that were declared below what this crate actually builds and runs with, and so were never exercised: `pin-project` to 1.0.2, `serde` to 1.0.220, `tracing` to 0.1.21, and, for `cucumber-codegen`, `proc-macro2` to 1.0.83, `quote` to 1.0.35, `regex` to 1.9 and `syn` to 2.0.87.
 - Bumped up `junit-report` dependency to 0.9, whose types are exposed by `writer::junit`, so that it pulls in a `quick-xml` free of [RUSTSEC-2026-0194](https://rustsec.org/advisories/RUSTSEC-2026-0194) and [RUSTSEC-2026-0195](https://rustsec.org/advisories/RUSTSEC-2026-0195).
 - Replaced `Arc` with `PartialEq`/`Hash` pointer-optimized `Source` in `event`s: ([#352])
     - `Source<gherkin::Feature>` in `event::Cucumber::Feature`.

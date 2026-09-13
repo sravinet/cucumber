@@ -43,6 +43,7 @@ jobs:
     if: ${{ always() }}
     needs:
       - clippy
+      - direct-minimal-versions
       - feature
       - msrv
       - rustdoc
@@ -54,13 +55,14 @@ jobs:
     steps:
       - name: Report results of required jobs
         run: |
-          echo 'clippy:    ${{ needs.clippy.result }}'
-          echo 'feature:   ${{ needs.feature.result }}'
-          echo 'msrv:      ${{ needs.msrv.result }}'
-          echo 'rustdoc:   ${{ needs.rustdoc.result }}'
-          echo 'rustfmt:   ${{ needs.rustfmt.result }}'
-          echo 'test:      ${{ needs.test.result }}'
-          echo 'test-book: ${{ needs.test-book.result }}'
+          echo 'clippy:                  ${{ needs.clippy.result }}'
+          echo 'direct-minimal-versions: ${{ needs.direct-minimal-versions.result }}'
+          echo 'feature:                 ${{ needs.feature.result }}'
+          echo 'msrv:                    ${{ needs.msrv.result }}'
+          echo 'rustdoc:                 ${{ needs.rustdoc.result }}'
+          echo 'rustfmt:                 ${{ needs.rustfmt.result }}'
+          echo 'test:                    ${{ needs.test.result }}'
+          echo 'test-book:               ${{ needs.test-book.result }}'
       - name: Fail if any required job did not succeed
         if: ${{ contains(needs.*.result, 'failure')
              || contains(needs.*.result, 'cancelled')
@@ -148,6 +150,35 @@ jobs:
           cargo check -p cucumber --no-default-features $features
         env:
           RUSTFLAGS: -D warnings
+
+  direct-minimal-versions:
+    name: minimal versions (declared)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: nightly
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+
+      # `-Z minimal-versions` lets a transitive requirement lift a direct
+      # dependency above the version declared for it here, so a declared
+      # minimum that doesn't work is never built by that job. This one pins
+      # every direct dependency to exactly what its manifest declares.
+      - run: cargo +nightly update -Z direct-minimal-versions
+
+      - run: cargo check --workspace --all-features
+        env:
+          RUSTFLAGS: -D warnings
+
+      # The `Step`s of a `World` register at link time, and an `inventory` too
+      # old for the toolchain registers none of them without failing to build,
+      # so the check above cannot stand in for running the tests.
+      - run: make test.cargo crate=cucumber
 
   msrv:
     name: MSRV
