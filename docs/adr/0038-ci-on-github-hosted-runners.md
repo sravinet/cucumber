@@ -85,6 +85,18 @@ dependency and build caching, `workflow_dispatch` for manual runs,
 checked, and `rustsec/audit-check@v2` in place of the archived
 `actions-rs/audit-check@v1`.
 
+### 7. Declared dependency minimums
+
+`-Z minimal-versions` lets a transitive requirement lift a direct dependency
+above the version declared for it here, so a declared minimum that doesn't work
+is never built by the jobs that use it. The `direct-minimal-versions` job pins
+every direct dependency to exactly what its manifest declares, then checks the
+workspace and runs the `cucumber` test suite against that resolution.
+
+Running the tests, not just checking, is the point: `inventory` too old for the
+toolchain registers no `Step`s at all without failing to build, so a `check`
+alone reports a healthy tree whose every `Scenario` would be skipped.
+
 ## Consequences
 
 ### Positive
@@ -96,6 +108,8 @@ checked, and `rustsec/audit-check@v2` in place of the archived
   (see [ADR-0033](0033-feature-flag-test-matrix-strategy.md)).
 - No self-hosted infrastructure to maintain; caching keeps the matrix
   affordable.
+- The declared dependency minimums are the ones actually built and tested, so
+  they stop being decorative.
 
 ### Negative
 
@@ -104,6 +118,10 @@ checked, and `rustsec/audit-check@v2` in place of the archived
 - Over-long comments are no longer reported by the formatter.
 - Raising the MSRV to 1.88 and `serde_json` to 1.0.93 narrows the supported
   range for downstream users.
+- `direct-minimal-versions` resolves against crates.io, so a dependency raising
+  its own floor in a new release can turn the job red without a change here.
+  The fix is to raise the declared minimum it names, which is the job doing its
+  work.
 
 ## References
 
