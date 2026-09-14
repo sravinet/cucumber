@@ -40,6 +40,7 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 - Enhanced event system with proper metadata integration for improved observability and debugging capabilities.
 - Comprehensive step failure handling methods for better error context and recovery.
 - Modular step builder infrastructure for enterprise-scale BDD architectures.
+- `CUCUMBER_FILTER_TAGS` environment variable support. ([#372])
 
 ### Changed
 
@@ -49,6 +50,8 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
   - This affects debug output parsing and external tools that consume step event output
 - Updated all test output files to use canonical struct variant format
 - Enhanced `send_event_with_meta` to properly wrap events with execution context metadata
+- Upgraded [`itertools`] crate from 0.14 to 0.15 version. ([#396])
+- Upgraded [`rand`] crate from 0.9 to 0.10 version. ([#392])
 
 ### Fixed
 
@@ -60,11 +63,19 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 - `writer::Libtest` doubling the space between a `Step`s keyword and its value.
 - Test output format inconsistencies between implementation and expected outputs
 - Missing metadata context in event transmission for debugging and observability
+- Incorrectly disallowed spaces inside placeholders for `Examples`. ([#388], [#387])
+- `clippy::trivial_regex` lint triggering on `#[given]`/`#[when]`/`#[then]` steps without regular expression. ([#384])
 
 [#331]: /../../issues/331
 [#352]: /../../pull/352
 [#369]: /../../issues/369
 [#371]: /../../pull/371
+[#372]: /../../pull/372
+[#384]: /../../pull/384
+[#387]: /../../issues/387
+[#388]: /../../pull/388
+[#392]: /../../pull/392
+[#396]: /../../pull/396
 [0c7dfc3c]: /../../commit/0c7dfc3c80f0f58ce9a52f252485d1d14e6eb0ed
 [4010c1ad]: /../../commit/4010c1ad6a53d6b7f0b28cefea73c8c13e880e9f
 [9705253b]: /../../commit/9705253bda5caadfe3eea91f50420222158dd944
@@ -848,6 +859,8 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 [`clap`]: https://docs.rs/clap
 [`gherkin`]: https://docs.rs/gherkin
 [`gherkin_rust`]: https://docs.rs/gherkin_rust
+[`itertools`]: https://docs.rs/itertools
+[`rand`]: https://docs.rs/rand
 [`tracing`]: https://docs.rs/tracing
 
 [Cargo feature]: https://doc.rust-lang.org/cargo/reference/features.html

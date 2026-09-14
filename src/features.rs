@@ -32,7 +32,7 @@ pub mod tracing {
 pub mod test_deps {
     use std::{future::Future, ops::Range, time::Duration};
 
-    use rand::Rng;
+    use rand::RngExt as _;
 
     /// Generates a random `u32` in the provided range.
     #[must_use]

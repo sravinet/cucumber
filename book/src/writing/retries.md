@@ -50,7 +50,7 @@ Feature: Heads and tails
 # use std::time::Duration;
 #
 # use cucumber::{World, given, then, when};
-# use rand::Rng as _;
+# use rand::RngExt as _;
 # use tokio::time::sleep;
 #
 # #[derive(Debug, Default, World)]
@@ -67,7 +67,7 @@ async fn coin(_: &mut FlipWorld) {
 async fn flip(world: &mut FlipWorld) {
     sleep(Duration::from_secs(2)).await;
 
-    world.flipped = match rand::thread_rng().gen_range(0.0..1.0) {
+    world.flipped = match rand::rng().random_range(0.0..1.0) {
         p if p < 0.2 => "edge",
         p if p < 0.5 => "heads",
         _ => "tails",
