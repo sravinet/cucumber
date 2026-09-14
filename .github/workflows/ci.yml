@@ -262,6 +262,15 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: book
+          # `make test.book` passes `-L target/debug/deps` to `mdbook test`,
+          # which resolves each `extern crate` by scanning that directory. A
+          # restored `target/` still holds the rlibs of the dependency graph it
+          # was saved with, so as soon as that graph changes, the stale rlib and
+          # the freshly built one both sit there and `rustc` fails with `E0464:
+          # multiple candidates for rlib dependency` rather than picking one.
+          # Cache only `~/.cargo`, so the registry is still reused but the build
+          # artifacts `-L` sees are always exactly this run's.
+          cache-targets: "false"
       - uses: peaceiris/actions-mdbook@v2
         with:
           # Pinned: mdBook 0.5 renamed `book.toml` keys, so an unpinned
