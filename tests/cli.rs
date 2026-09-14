@@ -1,5 +1,8 @@
+use std::env;
+
 use clap::Parser;
 use cucumber::{World as _, cli, given, writer::Stats};
+use serial_test::{parallel, serial};
 
 #[derive(cli::Args)]
 struct CustomCli {
@@ -29,6 +32,7 @@ fn invalid_step(_world: &mut World) {
 // This test uses a subcommand with the global option `--tags` to filter on two
 // failing tests and verifies that the error output contains 2 failing steps.
 #[tokio::test]
+#[parallel]
 async fn tags_option_filters_all_scenarios_with_subcommand() {
     let cli = cli::Opts::<_, _, _, CustomCli>::try_parse_from(&[
         "test",
@@ -48,6 +52,7 @@ async fn tags_option_filters_all_scenarios_with_subcommand() {
 // This test uses a subcommand with the global option `--tags` to filter on one
 // failing test and verifies that the error output contains 1 failing step.
 #[tokio::test]
+#[parallel]
 async fn tags_option_filters_scenario1_with_subcommand() {
     let cli = cli::Opts::<_, _, _, CustomCli>::try_parse_from(&[
         "test",
@@ -67,6 +72,7 @@ async fn tags_option_filters_scenario1_with_subcommand() {
 // This test verifies that the global option `--tags` is still available without
 // subcommands and that the error output contains 1 failing step.
 #[tokio::test]
+#[parallel]
 async fn tags_option_filters_scenario1_no_subcommand() {
     let cli = cli::Opts::<_, _, _, CustomCli>::try_parse_from(&[
         "test",
@@ -76,6 +82,32 @@ async fn tags_option_filters_scenario1_no_subcommand() {
 
     let writer =
         World::cucumber().with_cli(cli).run("tests/features/cli").await;
+
+    assert!(writer.execution_has_failed(), "Cucumber should have failed");
+    assert_eq!(writer.failed_steps(), 1, "Expected 1 failed step");
+}
+
+// This test verifies that the `CUCUMBER_FILTER_TAGS` env var filters `Scenario`s
+// the same way the `--tags` CLI option does.
+#[tokio::test]
+#[serial]
+async fn tags_option_filters_scenario1_via_env() {
+    // SAFETY: `#[serial]` keeps this test from running alongside any other test
+    //         in this binary, so no other thread reads the environment here.
+    unsafe {
+        env::set_var("CUCUMBER_FILTER_TAGS", "@scenario-1");
+    }
+
+    let cli = cli::Opts::<_, _, _, CustomCli>::try_parse_from(["test"])
+        .expect("Invalid command line");
+
+    let writer =
+        World::cucumber().with_cli(cli).run("tests/features/cli").await;
+
+    // SAFETY: see above.
+    unsafe {
+        env::remove_var("CUCUMBER_FILTER_TAGS");
+    }
 
     assert!(writer.execution_has_failed(), "Cucumber should have failed");
     assert_eq!(writer.failed_steps(), 1, "Expected 1 failed step");

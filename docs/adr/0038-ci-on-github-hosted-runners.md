@@ -85,6 +85,18 @@ dependency and build caching, `workflow_dispatch` for manual runs,
 checked, and `rustsec/audit-check@v2` in place of the archived
 `actions-rs/audit-check@v1`.
 
+The Book job is the one exception to build caching: it sets
+`cache-targets: false`, keeping the `~/.cargo` half and dropping `target/`.
+`make test.book` passes `-L target/debug/deps` to `mdbook test`, and `rustc`
+resolves each `extern crate` in a Book snippet by scanning that directory, so it
+needs exactly one candidate per crate name. A restored `target/` still holds the
+rlibs of the dependency graph it was saved with; the moment that graph changes,
+the stale rlib and the freshly built one both sit there and every snippet naming
+that crate fails with `E0464: multiple candidates for rlib dependency`. Since
+`Cargo.lock` is not committed, each run resolves afresh, so this is reachable
+without touching a manifest at all. Caching only `~/.cargo` keeps the download
+half of the win and leaves `-L` looking at exactly one build.
+
 ### 7. Declared dependency minimums
 
 `-Z minimal-versions` lets a transitive requirement lift a direct dependency
