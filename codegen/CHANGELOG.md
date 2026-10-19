@@ -14,6 +14,7 @@ All user visible changes to `cucumber-codegen` crate will be documented in this 
 ### BC Breaks
 
 - Bumped up [MSRV] to 1.87 to get rid of `once_cell` crate, for `#[expect]` attribute usage, and because of migration to 2024 edition. ([4010c1ad], [f1307038], [b46930c3], [9705253b], [todo])
+- Bumped up [MSRV] to 1.99, the latest stable Rust.
 - Bumped up minimum supported `proc-macro2` version to 1.0.91, as `syn` 3 requires it.
 
 ### Changed

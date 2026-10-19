@@ -2,7 +2,7 @@
 name = "cucumber"
 version = "0.21.1"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.99"
 description = """\
     Cucumber testing framework for Rust, with async support. \
     Fully native, no external test runners or dependencies.\
@@ -109,7 +109,7 @@ tracing-subscriber = { version = "0.3.16", optional = true }
 quick-xml = "0.42"
 rand = "0.10"
 serde_json = "1.0.93"
-serial_test = "3.0"
+serial_test = "4.0.1"
 tempfile = "3.2"
 tokio = { version = "1.40", features = ["macros", "rt-multi-thread", "sync", "time"] }
 

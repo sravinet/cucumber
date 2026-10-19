@@ -15,6 +15,7 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 
 - Bumped up [MSRV] to 1.87 to get rid of `once_cell` crate, for `#[expect]` attribute usage, and because of migration to 2024 edition. ([4010c1ad], [f1307038], [b46930c3], [9705253b], [0c7dfc3c])
 - Bumped up [MSRV] to 1.88, as the minimum supported `gherkin` 0.15 requires it.
+- Bumped up [MSRV] to 1.99, the latest stable Rust.
 - Bumped up minimum supported `serde_json` version to 1.0.93, as earlier ones cannot serialize 128-bit integers used by the JSON writer.
 - Bumped up minimum supported `inventory` version to 0.3.8, as earlier ones register no `Step`s at all on a modern toolchain, leaving every `Step` unmatched.
 - Bumped up the minimum supported versions that were declared below what this crate actually builds and runs with, and so were never exercised: `pin-project` to 1.0.2, `serde` to 1.0.220, `tracing` to 0.1.21, and, for `cucumber-codegen`, `proc-macro2` to 1.0.83, `quote` to 1.0.35, `regex` to 1.9 and `syn` to 2.0.87.
