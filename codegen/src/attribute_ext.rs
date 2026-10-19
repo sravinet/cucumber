@@ -70,7 +70,7 @@ fn is_data_table_type(ty: &syn::Type) -> bool {
             false
         }
         syn::Type::Array(_)
-        | syn::Type::BareFn(_)
+        | syn::Type::FnPtr(_)
         | syn::Type::Group(_)
         | syn::Type::ImplTrait(_)
         | syn::Type::Infer(_)

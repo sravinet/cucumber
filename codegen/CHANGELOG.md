@@ -14,10 +14,15 @@ All user visible changes to `cucumber-codegen` crate will be documented in this 
 ### BC Breaks
 
 - Bumped up [MSRV] to 1.87 to get rid of `once_cell` crate, for `#[expect]` attribute usage, and because of migration to 2024 edition. ([4010c1ad], [f1307038], [b46930c3], [9705253b], [todo])
+- Bumped up [MSRV] to 1.99, the latest stable Rust.
+- Bumped up minimum supported `proc-macro2` version to 1.0.91, as `syn` 3 requires it.
 
 ### Changed
 
 - Upgraded [`itertools`] crate from 0.14 to 0.15 version. ([#396])
+- Upgraded [`cucumber-expressions`] crate from 0.4 to 0.5 version. ([a4cbd3d2])
+- Upgraded [`synthez`] crate from 0.3 to 0.5 version. ([a4cbd3d2])
+- Upgraded [`syn`] crate from 2.0 to 3.0 version.
 
 ### Fixed
 
@@ -25,6 +30,7 @@ All user visible changes to `cucumber-codegen` crate will be documented in this 
 
 [#384]: /../../pull/384
 [#396]: /../../pull/396
+[a4cbd3d2]: /../../commit/a4cbd3d282fe8e01f05609eabea6410c0e2b46a3
 [4010c1ad]: /../../commit/4010c1ad6a53d6b7f0b28cefea73c8c13e880e9f
 [9705253b]: /../../commit/9705253bda5caadfe3eea91f50420222158dd944
 [b46930c3]: /../../commit/b46930c32ef5ae490df8063905144a45de27eda1
@@ -423,8 +429,10 @@ See `cucumber` crate [changelog](https://github.com/cucumber-rs/cucumber/blob/v0
 
 
 
+[`cucumber-expressions`]: https://docs.rs/cucumber-expressions
 [`itertools`]: https://docs.rs/itertools
 [`syn`]: https://docs.rs/syn
+[`synthez`]: https://docs.rs/synthez
 [Cargo feature]: https://doc.rust-lang.org/cargo/reference/features.html
 [Cucumber Expressions]: https://cucumber.github.io/cucumber-expressions
 [MSRV]: https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field

@@ -2,7 +2,7 @@
 name = "cucumber"
 version = "0.21.1"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.99"
 description = """\
     Cucumber testing framework for Rust, with async support. \
     Fully native, no external test runners or dependencies.\
@@ -72,7 +72,7 @@ console = "0.16"
 derive_more = { version = "2.0", features = ["as_ref", "debug", "deref", "deref_mut", "display", "error", "from", "from_str", "into"] }
 either = "1.6"
 futures = "0.3.17"
-gherkin = "0.15"
+gherkin = "0.16"
 globwalk = "0.9"
 humantime = "2.1"
 itertools = "0.15"
@@ -80,17 +80,17 @@ linked-hash-map = "0.5.3"
 pin-project = "1.0.2"
 ref-cast = "1.0.16"
 regex = "1.9"
-sealed = "0.6"
+sealed = "0.7"
 smart-default = "0.7.1"
 
 # "macros" feature dependencies.
 anyhow = { version = "1.0.58", optional = true }
 cucumber-codegen = { version = "=0.21.1", path = "./codegen", optional = true }
-cucumber-expressions = { version = "0.4", features = ["into-regex"], optional = true }
+cucumber-expressions = { version = "0.5", features = ["into-regex"], optional = true }
 inventory = { version = "0.3.8", optional = true }
 
 # "output-json" and/or "libtest" features dependencies.
-base64 = { version = "0.22", optional = true }
+base64 = { version = "0.23", optional = true }
 Inflector = { version = "0.11", default-features = false, optional = true }
 mime = { version = "0.3.16", optional = true }
 serde = { version = "1.0.220", features = ["derive"], optional = true }
@@ -109,7 +109,7 @@ tracing-subscriber = { version = "0.3.16", optional = true }
 quick-xml = "0.42"
 rand = "0.10"
 serde_json = "1.0.93"
-serial_test = "3.0"
+serial_test = "4.0.1"
 tempfile = "3.2"
 tokio = { version = "1.40", features = ["macros", "rt-multi-thread", "sync", "time"] }
 
