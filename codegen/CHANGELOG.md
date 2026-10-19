@@ -14,12 +14,14 @@ All user visible changes to `cucumber-codegen` crate will be documented in this 
 ### BC Breaks
 
 - Bumped up [MSRV] to 1.87 to get rid of `once_cell` crate, for `#[expect]` attribute usage, and because of migration to 2024 edition. ([4010c1ad], [f1307038], [b46930c3], [9705253b], [todo])
+- Bumped up minimum supported `proc-macro2` version to 1.0.91, as `syn` 3 requires it.
 
 ### Changed
 
 - Upgraded [`itertools`] crate from 0.14 to 0.15 version. ([#396])
 - Upgraded [`cucumber-expressions`] crate from 0.4 to 0.5 version. ([a4cbd3d2])
-- Upgraded [`synthez`] crate from 0.3 to 0.4 version. ([a4cbd3d2])
+- Upgraded [`synthez`] crate from 0.3 to 0.5 version. ([a4cbd3d2])
+- Upgraded [`syn`] crate from 2.0 to 3.0 version.
 
 ### Fixed
 

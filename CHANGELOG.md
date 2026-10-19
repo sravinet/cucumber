@@ -34,6 +34,7 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
     - A `Step` matching no function is `event::Step::Skipped` again, rather than `event::Step::Failed` with a `StepError::NotFound`. Use `WriterExt::fail_on_skipped()` to fail on it.
     - A failing or skipped `Step` ends its `Scenario`: the `Step`s after it are neither run nor reported as skipped, so a `Scenario` emits exactly one terminal `Step` event.
     - `event::Scenario::Hook(HookType::After, _)` events are emitted after the failure event of whatever ended the `Scenario`, instead of before it.
+- Fixed precedence of operations in tag expressions to align with upstream, by upgrading [`gherkin`] crate to 0.16 version. ([0d544772], [gherkin#52], [gherkin#51])
 
 ### Added
 
@@ -53,6 +54,10 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 - Upgraded [`itertools`] crate from 0.14 to 0.15 version. ([#396])
 - Upgraded [`rand`] crate from 0.9 to 0.10 version. ([#392])
 - Upgraded [`cucumber-expressions`] crate from 0.4 to 0.5 version. ([a4cbd3d2])
+- Upgraded [`gherkin`] crate from 0.15 to 0.16 version. ([0d544772])
+- Allowed `And`-like and `But`-like keywords at the beginning of `Scenario`, automatically considering them as `Given`-type steps. ([gherkin#53])
+- Upgraded `base64` crate from 0.22 to 0.23 version.
+- Upgraded `sealed` crate from 0.6 to 0.7 version.
 
 ### Fixed
 
@@ -77,7 +82,11 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 [#388]: /../../pull/388
 [#392]: /../../pull/392
 [#396]: /../../pull/396
+[0d544772]: /../../commit/0d5447723a6158c19dbdde43481edf2b57e1be32
 [a4cbd3d2]: /../../commit/a4cbd3d282fe8e01f05609eabea6410c0e2b46a3
+[gherkin#51]: https://github.com/cucumber-rs/gherkin/issues/51
+[gherkin#52]: https://github.com/cucumber-rs/gherkin/pull/52
+[gherkin#53]: https://github.com/cucumber-rs/gherkin/pull/53
 [0c7dfc3c]: /../../commit/0c7dfc3c80f0f58ce9a52f252485d1d14e6eb0ed
 [4010c1ad]: /../../commit/4010c1ad6a53d6b7f0b28cefea73c8c13e880e9f
 [9705253b]: /../../commit/9705253bda5caadfe3eea91f50420222158dd944
