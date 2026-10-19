@@ -52,6 +52,7 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 - Enhanced `send_event_with_meta` to properly wrap events with execution context metadata
 - Upgraded [`itertools`] crate from 0.14 to 0.15 version. ([#396])
 - Upgraded [`rand`] crate from 0.9 to 0.10 version. ([#392])
+- Upgraded [`cucumber-expressions`] crate from 0.4 to 0.5 version. ([a4cbd3d2])
 
 ### Fixed
 
@@ -76,6 +77,7 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 [#388]: /../../pull/388
 [#392]: /../../pull/392
 [#396]: /../../pull/396
+[a4cbd3d2]: /../../commit/a4cbd3d282fe8e01f05609eabea6410c0e2b46a3
 [0c7dfc3c]: /../../commit/0c7dfc3c80f0f58ce9a52f252485d1d14e6eb0ed
 [4010c1ad]: /../../commit/4010c1ad6a53d6b7f0b28cefea73c8c13e880e9f
 [9705253b]: /../../commit/9705253bda5caadfe3eea91f50420222158dd944
@@ -857,6 +859,7 @@ All user visible changes to `cucumber` crate will be documented in this file. Th
 
 
 [`clap`]: https://docs.rs/clap
+[`cucumber-expressions`]: https://docs.rs/cucumber-expressions
 [`gherkin`]: https://docs.rs/gherkin
 [`gherkin_rust`]: https://docs.rs/gherkin_rust
 [`itertools`]: https://docs.rs/itertools
